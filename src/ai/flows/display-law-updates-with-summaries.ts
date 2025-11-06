@@ -34,10 +34,14 @@ export async function displayLawUpdatesWithSummaries(lawUpdates: LawUpdate[]): P
   return displayLawUpdatesWithSummariesFlow(lawUpdates);
 }
 
+const LawUpdateSummaryOutputSchema = z.object({
+  summary: z.string().describe('A concise summary of the law update.'),
+});
+
 const lawUpdateSummaryPrompt = ai.definePrompt({
   name: 'lawUpdateSummaryPrompt',
   input: {schema: LawUpdateSchema},
-  output: {schema: z.string().describe('A concise summary of the law update.')},
+  output: {schema: LawUpdateSummaryOutputSchema},
   prompt: `Summarize the following legal update in a single sentence:
 
 Title: {{{title}}}
@@ -57,7 +61,7 @@ const displayLawUpdatesWithSummariesFlow = ai.defineFlow(
 
     for (const update of lawUpdates) {
       const {output} = await lawUpdateSummaryPrompt(update);
-      const aiSummary = output || update.summary;
+      const aiSummary = output?.summary || update.summary;
       updatesWithSummaries.push({
         ...update,
         aiSummary: aiSummary,
