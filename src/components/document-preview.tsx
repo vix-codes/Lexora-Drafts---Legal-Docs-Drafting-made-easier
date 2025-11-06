@@ -71,9 +71,9 @@ export function DocumentPreview({ draft, isLoading, documentTypeLabel }: Documen
           </div>
         ) : draft ? (
           <div className="prose prose-sm prose-invert max-w-none rounded-md border bg-background p-4 h-full overflow-auto">
-            <pre className="whitespace-pre-wrap font-body text-sm text-foreground bg-transparent p-0 m-0">
+            <div className="whitespace-pre-wrap font-body text-sm text-foreground bg-transparent p-0 m-0 text-justify space-y-4">
               {draft}
-            </pre>
+            </div>
           </div>
         ) : (
           <div className="flex h-full items-center justify-center rounded-lg border-2 border-dashed">
