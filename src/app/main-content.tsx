@@ -1,7 +1,7 @@
 'use client';
 
-import { useEffect, useState, useMemo, useActionState } from 'react';
-import { useFormStatus } from 'react-dom';
+import { useEffect, useState, useMemo } from 'react';
+import { useActionState } from 'react';
 import {
   Card,
   CardContent,
@@ -23,31 +23,17 @@ import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { documentTemplates, type DocumentTemplate, type TemplateField } from '@/lib/data';
 import { generateDraftAction } from '@/app/actions';
-import { Loader2, Sparkles, Wand2 } from 'lucide-react';
+import { Wand2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { DocumentPreview } from '@/components/document-preview';
-
-function SubmitButton() {
-  const { pending } = useFormStatus();
-  return (
-    <Button type="submit" disabled={pending}>
-      {pending ? (
-        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-      ) : (
-        <Sparkles className="mr-2 h-4 w-4" />
-      )}
-      Generate Draft
-    </Button>
-  );
-}
+import { SubmitButton } from '@/components/submit-button';
 
 export default function MainContent() {
   const { toast } = useToast();
-  const [formKey, setFormKey] = useState(Date.now());
   const [selectedTemplateValue, setSelectedTemplateValue] = useState<string | null>(null);
   const [initialState, setInitialState] = useState<{ draft?: string; error?: string }>({});
 
-  const [state, formAction] = useActionState(generateDraftAction, initialState);
+  const [state, formAction, pending] = useActionState(generateDraftAction, initialState);
 
   useEffect(() => {
     if (state?.error) {
@@ -58,35 +44,39 @@ export default function MainContent() {
       });
     }
   }, [state, toast]);
-  
+
   const handleTemplateChange = (value: string) => {
     setSelectedTemplateValue(value);
+    // Do not reset the entire form state here, just update the selected template
+    // setInitialState({ draft: undefined, error: undefined });
   };
-  
+
   const handleReset = () => {
-    setFormKey(Date.now());
     setSelectedTemplateValue(null);
     setInitialState({ draft: undefined, error: undefined });
+    // A full form reset can be achieved by changing the key of the form, but let's handle state clearing instead.
+    // For now, we just clear the draft and selection.
+    // A better implementation might use form.reset() from react-hook-form if we were using it more deeply.
+    const form = document.querySelector('form');
+    form?.reset();
   };
 
   const selectedTemplate = useMemo(() => {
     return documentTemplates.find(t => t.value === selectedTemplateValue) || null;
   }, [selectedTemplateValue]);
-  
-  const { pending } = useFormStatus();
 
   const selectedTemplateLabel = useMemo(() => {
-    return selectedTemplate?.label ?? "Document";
+    return selectedTemplate?.label ?? 'Document';
   }, [selectedTemplate]);
 
   return (
     <>
-      <form key={formKey} action={formAction}>
+      <form action={formAction}>
         <Card>
           <CardHeader>
             <CardTitle className="font-headline flex items-center gap-2">
               <Wand2 className="h-5 w-5 text-primary" />
-              Draft Generator
+              Lexora Drafts
             </CardTitle>
             <CardDescription>Select a document type and fill in the details to generate your draft.</CardDescription>
           </CardHeader>

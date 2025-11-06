@@ -1,6 +1,7 @@
 import Header from '@/components/header';
 import LawFeed from '@/components/law-feed';
 import MainContent from '@/app/main-content';
+import { Lawbot } from '@/components/lawbot';
 
 export default function Home() {
   return (
@@ -12,6 +13,7 @@ export default function Home() {
         </div>
         <LawFeed />
       </main>
+      <Lawbot />
     </div>
   );
 }
