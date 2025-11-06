@@ -34,19 +34,27 @@ export async function displayLawUpdatesWithSummaries(lawUpdates: LawUpdate[]): P
   return displayLawUpdatesWithSummariesFlow(lawUpdates);
 }
 
-const LawUpdateSummaryOutputSchema = z.object({
-  summary: z.string().describe('A concise summary of the law update.'),
+const LawUpdateSummariesOutputSchema = z.object({
+  summaries: z.array(
+    z.object({
+      original_timestamp: z.number().describe('The timestamp of the original law update this summary corresponds to.'),
+      summary: z.string().describe('A concise summary of the law update.'),
+    })
+  ),
 });
 
 const lawUpdateSummaryPrompt = ai.definePrompt({
   name: 'lawUpdateSummaryPrompt',
-  input: {schema: LawUpdateSchema},
-  output: {schema: LawUpdateSummaryOutputSchema},
-  prompt: `Summarize the following legal update in a single sentence:
+  input: {schema: z.object({lawUpdates: z.array(LawUpdateSchema)})},
+  output: {schema: LawUpdateSummariesOutputSchema},
+  prompt: `Summarize each of the following legal updates in a single sentence. For each summary, you must include the original_timestamp of the update it corresponds to.
 
+{{#each lawUpdates}}
+Law Update (timestamp: {{{timestamp}}}):
 Title: {{{title}}}
 Summary: {{{summary}}}
-Link: {{{link}}}
+---
+{{/each}}
 `,
 });
 
@@ -57,16 +65,28 @@ const displayLawUpdatesWithSummariesFlow = ai.defineFlow(
     outputSchema: DisplayLawUpdatesWithSummariesOutputSchema,
   },
   async lawUpdates => {
-    const updatesWithSummaries: LawUpdateWithSummary[] = [];
-
-    for (const update of lawUpdates) {
-      const {output} = await lawUpdateSummaryPrompt(update);
-      const aiSummary = output?.summary || update.summary;
-      updatesWithSummaries.push({
-        ...update,
-        aiSummary: aiSummary,
-      });
+    if (lawUpdates.length === 0) {
+      return [];
     }
+
+    const {output} = await lawUpdateSummaryPrompt({lawUpdates});
+
+    if (!output || !output.summaries) {
+      return lawUpdates.map(update => ({
+        ...update,
+        aiSummary: update.summary,
+      }));
+    }
+
+    const summaryMap = new Map(output.summaries.map(s => [s.original_timestamp, s.summary]));
+
+    const updatesWithSummaries = lawUpdates.map(update => {
+      const aiSummary = summaryMap.get(update.timestamp) || update.summary;
+      return {
+        ...update,
+        aiSummary,
+      };
+    });
 
     return updatesWithSummaries;
   }
