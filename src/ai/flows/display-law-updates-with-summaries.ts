@@ -56,10 +56,11 @@ const displayLawUpdatesWithSummariesFlow = ai.defineFlow(
     const updatesWithSummaries: LawUpdateWithSummary[] = [];
 
     for (const update of lawUpdates) {
-      const {output: aiSummary} = await lawUpdateSummaryPrompt(update);
+      const {output} = await lawUpdateSummaryPrompt(update);
+      const aiSummary = output || update.summary;
       updatesWithSummaries.push({
         ...update,
-        aiSummary: aiSummary!,
+        aiSummary: aiSummary,
       });
     }
 
