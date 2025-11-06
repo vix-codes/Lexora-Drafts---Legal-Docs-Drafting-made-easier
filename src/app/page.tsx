@@ -11,9 +11,11 @@ export default function Home() {
         <div className="flex flex-col gap-6 lg:gap-8 min-w-0">
           <MainContent />
         </div>
-        <LawFeed />
+        <aside className="hidden md:flex flex-col gap-6 lg:gap-8">
+          <LawFeed />
+          <Lawbot />
+        </aside>
       </main>
-      <Lawbot />
     </div>
   );
 }
