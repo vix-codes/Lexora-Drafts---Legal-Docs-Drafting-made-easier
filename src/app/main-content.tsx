@@ -76,7 +76,7 @@ export default function MainContent() {
           <CardHeader>
             <CardTitle className="font-headline flex items-center gap-2">
               <Wand2 className="h-5 w-5 text-primary" />
-              lawIntel
+              Lexora Drafts
             </CardTitle>
             <CardDescription>Select a document type and fill in the details to generate your draft.</CardDescription>
           </CardHeader>
