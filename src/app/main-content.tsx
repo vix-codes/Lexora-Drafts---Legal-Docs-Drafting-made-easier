@@ -44,7 +44,7 @@ function SubmitButton() {
 export default function MainContent() {
   const { toast } = useToast();
   const [formKey, setFormKey] = useState(Date.now());
-  const [selectedTemplate, setSelectedTemplate] = useState<DocumentTemplate | null>(null);
+  const [selectedTemplateValue, setSelectedTemplateValue] = useState<string | null>(null);
   const [initialState, setInitialState] = useState<{ draft?: string; error?: string }>({});
 
   const [state, formAction] = useFormState(generateDraftAction, initialState);
@@ -58,17 +58,21 @@ export default function MainContent() {
       });
     }
   }, [state, toast]);
-
+  
   const handleTemplateChange = (value: string) => {
-    const template = documentTemplates.find(t => t.value === value) || null;
-    setSelectedTemplate(template);
-    handleReset();
-  };
-
-  const handleReset = () => {
-    setFormKey(Date.now());
+    setSelectedTemplateValue(value);
     setInitialState({ draft: undefined, error: undefined });
   };
+  
+  const handleReset = () => {
+    setFormKey(Date.now());
+    setSelectedTemplateValue(null);
+    setInitialState({ draft: undefined, error: undefined });
+  };
+
+  const selectedTemplate = useMemo(() => {
+    return documentTemplates.find(t => t.value === selectedTemplateValue) || null;
+  }, [selectedTemplateValue]);
   
   const { pending } = useFormStatus();
 
@@ -90,7 +94,7 @@ export default function MainContent() {
           <CardContent className="space-y-6">
             <div className="space-y-2">
               <Label htmlFor="documentType">Document Type</Label>
-              <Select name="documentType" required onValueChange={handleTemplateChange}>
+              <Select name="documentType" required onValueChange={handleTemplateChange} value={selectedTemplateValue || ''}>
                 <SelectTrigger id="documentType">
                   <SelectValue placeholder="Choose a legal document..." />
                 </SelectTrigger>
