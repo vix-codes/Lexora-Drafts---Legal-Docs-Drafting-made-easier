@@ -1,7 +1,7 @@
 'use client';
 
-import { useEffect, useState, useMemo } from 'react';
-import { useFormState, useFormStatus } from 'react-dom';
+import { useEffect, useState, useMemo, useActionState } from 'react';
+import { useFormStatus } from 'react-dom';
 import {
   Card,
   CardContent,
@@ -47,7 +47,7 @@ export default function MainContent() {
   const [selectedTemplateValue, setSelectedTemplateValue] = useState<string | null>(null);
   const [initialState, setInitialState] = useState<{ draft?: string; error?: string }>({});
 
-  const [state, formAction] = useFormState(generateDraftAction, initialState);
+  const [state, formAction] = useActionState(generateDraftAction, initialState);
 
   useEffect(() => {
     if (state?.error) {
@@ -61,7 +61,6 @@ export default function MainContent() {
   
   const handleTemplateChange = (value: string) => {
     setSelectedTemplateValue(value);
-    setInitialState({ draft: undefined, error: undefined });
   };
   
   const handleReset = () => {
