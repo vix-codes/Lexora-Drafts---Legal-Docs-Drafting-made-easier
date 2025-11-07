@@ -5,7 +5,7 @@ import { Bot } from 'lucide-react';
 
 const CHATBOT_BASE_URL = 'https://intelgpt.vercel.app/';
 // By appending the `embed=true` and theme parameters, we ensure the Vercel app renders in embed mode.
-const CHATBOT_URL_WITH_THEME = `${CHATBOT_BASE_URL}?embed=true&backgroundColor=hsl(241_30%_19%)&textColor=hsl(0_0%_98%)`;
+const CHATBOT_URL_WITH_THEME = `${CHATBOT_BASE_URL}?embed=true&theme=dark&backgroundColor=hsl(241_30%_19%)&textColor=hsl(0_0%_98%)&primaryColor=hsl(242_100%_70%)&hideTitle=true`;
 
 
 export function Lawbot() {
@@ -21,7 +21,7 @@ export function Lawbot() {
       <CardContent className="flex-1 p-0">
         <iframe
           src={CHATBOT_URL_WITH_THEME}
-          className="w-full h-full min-h-[500px] border-0"
+          className="w-full h-full min-h-[300px] border-0"
           title="Lawbot"
           allow="microphone"
         />
