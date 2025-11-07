@@ -7,7 +7,7 @@ import { Bot, Search, ExternalLink } from 'lucide-react';
 import Link from 'next/link';
 
 const CHATBOT_URL = 'https://intelgpt.vercel.app/';
-const FIND_LAWYER_URL = 'https://intelgpt.vercel.app/find-a-lawyer';
+const FIND_LAWYER_URL = 'https://intelgpt.vercel.app/find-lawyer';
 
 export function Lawbot() {
   return (
