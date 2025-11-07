@@ -1,3 +1,4 @@
+
 'use client';
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -70,8 +71,8 @@ export function DocumentPreview({ draft, isLoading, documentTypeLabel }: Documen
             <Skeleton className="h-4 w-1/2" />
           </div>
         ) : draft ? (
-          <div className="prose prose-sm prose-invert max-w-none rounded-md border bg-background p-4 h-full overflow-auto">
-            <div className="whitespace-pre-wrap font-body text-sm text-foreground bg-transparent p-0 m-0 text-justify space-y-4">
+          <div className="prose prose-sm prose-invert max-w-none rounded-md border bg-background p-4 h-full overflow-auto whitespace-pre-wrap">
+            <div className="font-body text-sm text-foreground bg-transparent p-0 m-0">
               {draft}
             </div>
           </div>
