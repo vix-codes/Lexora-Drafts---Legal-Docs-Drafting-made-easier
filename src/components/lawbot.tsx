@@ -8,7 +8,7 @@ const CHATBOT_URL_WITH_THEME = `${CHATBOT_BASE_URL}?backgroundColor=hsl(241_30%_
 
 export function Lawbot() {
   return (
-    <Card className="flex-1 flex flex-col overflow-hidden">
+    <Card className="flex-1">
       <CardHeader>
         <CardTitle className="font-headline flex items-center gap-2">
           <Bot className="h-5 w-5 text-primary" />
@@ -16,10 +16,10 @@ export function Lawbot() {
         </CardTitle>
         <CardDescription>Get instant answers to your legal questions from our AI assistant.</CardDescription>
       </CardHeader>
-      <CardContent className="flex-1 p-0">
+      <CardContent className="p-0">
         <iframe
           src={CHATBOT_URL_WITH_THEME}
-          className="w-full h-full border-0"
+          className="w-full h-[500px] border-0"
           title="Lawbot"
           allow="microphone"
         />
