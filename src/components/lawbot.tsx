@@ -1,60 +1,50 @@
 'use client';
 
-import { useState } from 'react';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { X, MessageSquare, Bot } from 'lucide-react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from './ui/button';
 import { Input } from './ui/input';
+import { Bot, Search } from 'lucide-react';
 
 const CHATBOT_URL = 'https://intelgpt.vercel.app/';
 
 export function Lawbot() {
-  const [isOpen, setIsOpen] = useState(false);
-
-  const toggleChat = () => {
-    setIsOpen(!isOpen);
-  };
-
   return (
-    <>
-      <div className="fixed bottom-4 right-4 z-50">
-        <Button onClick={toggleChat} size="icon" className="rounded-full h-14 w-14 shadow-lg">
-          {isOpen ? <X className="h-6 w-6" /> : <Bot className="h-6 w-6" />}
-          <span className="sr-only">Toggle Lawbot</span>
-        </Button>
-      </div>
-
-      {isOpen && (
-        <div className="fixed bottom-20 right-4 z-50">
-          <Card className="w-[350px] h-[500px] flex flex-col shadow-2xl">
-            <CardHeader className="flex flex-row items-center justify-between p-4 border-b">
-              <CardTitle className="text-lg font-headline flex items-center gap-2">
-                <Bot className="h-5 w-5" />
-                Lawbot
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="p-0 flex-1">
-              {CHATBOT_URL === 'YOUR_VERCEL_APP_URL_HERE' ? (
-                <div className="flex flex-col items-center justify-center h-full text-center p-4 space-y-4">
-                   <div className="flex flex-col items-center justify-center h-full text-center p-4">
-                     <p className="text-muted-foreground">
-                       Please replace the placeholder URL in{' '}
-                       <code className="bg-muted px-1 py-0.5 rounded-sm">src/components/lawbot.tsx</code> to enable the chatbot.
-                     </p>
-                   </div>
-                </div>
-              ) : (
-                <iframe
-                  src={CHATBOT_URL}
-                  className="w-full h-full border-0"
-                  title="Lawbot"
-                  allow="microphone"
-                />
-              )}
-            </CardContent>
-          </Card>
-        </div>
-      )}
-    </>
+    <div className="flex flex-col gap-6 lg:gap-8">
+      <Card className="flex-1 flex flex-col">
+        <CardHeader>
+          <CardTitle className="font-headline flex items-center gap-2">
+            <Bot className="h-5 w-5 text-primary" />
+            Ask Query to Lawbot
+          </CardTitle>
+          <CardDescription>Get instant answers to your legal questions from our AI assistant.</CardDescription>
+        </CardHeader>
+        <CardContent className="flex-1 p-0">
+          <iframe
+            src={CHATBOT_URL}
+            className="w-full h-[300px] border-0"
+            title="Lawbot"
+            allow="microphone"
+          />
+        </CardContent>
+      </Card>
+      <Card>
+        <CardHeader>
+          <CardTitle className="font-headline flex items-center gap-2">
+            <Search className="h-5 w-5 text-primary" />
+            Find a Lawyer
+          </CardTitle>
+          <CardDescription>Search for legal professionals in your area.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <form className="flex w-full items-center space-x-2">
+            <Input type="text" placeholder="Enter your city or pincode..." />
+            <Button type="submit" variant="outline" size="icon">
+              <Search className="h-4 w-4" />
+              <span className="sr-only">Search</span>
+            </Button>
+          </form>
+        </CardContent>
+      </Card>
+    </div>
   );
 }
