@@ -3,9 +3,11 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
-import { Bot, Search } from 'lucide-react';
+import { Bot, Search, ExternalLink } from 'lucide-react';
+import Link from 'next/link';
 
 const CHATBOT_URL = 'https://intelgpt.vercel.app/';
+const FIND_LAWYER_URL = 'https://intelgpt.vercel.app/find-a-lawyer';
 
 export function Lawbot() {
   return (
@@ -36,13 +38,12 @@ export function Lawbot() {
           <CardDescription>Search for legal professionals in your area.</CardDescription>
         </CardHeader>
         <CardContent>
-          <form className="flex w-full items-center space-x-2">
-            <Input type="text" placeholder="Enter your city or pincode..." />
-            <Button type="submit" variant="outline" size="icon">
-              <Search className="h-4 w-4" />
-              <span className="sr-only">Search</span>
+          <Link href={FIND_LAWYER_URL} target="_blank" rel="noopener noreferrer" className="w-full">
+            <Button className="w-full">
+              <ExternalLink className="mr-2 h-4 w-4" />
+              Expand to search lawyers
             </Button>
-          </form>
+          </Link>
         </CardContent>
       </Card>
     </div>
