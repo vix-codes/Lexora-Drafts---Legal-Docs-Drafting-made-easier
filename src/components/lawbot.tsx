@@ -19,7 +19,7 @@ export function Lawbot() {
       <CardContent className="flex-1 p-0">
         <iframe
           src={CHATBOT_URL_WITH_THEME}
-          className="w-full h-[300px] border-0"
+          className="w-full h-full border-0"
           title="Lawbot"
           allow="microphone"
         />
