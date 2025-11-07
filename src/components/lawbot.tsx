@@ -6,8 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { X, MessageSquare, Bot } from 'lucide-react';
 import { Input } from './ui/input';
 
-// TODO: Replace with your Vercel app URL
-const CHATBOT_URL = 'YOUR_VERCEL_APP_URL_HERE';
+const CHATBOT_URL = 'https://intelgpt.vercel.app/';
 
 export function Lawbot() {
   const [isOpen, setIsOpen] = useState(false);
