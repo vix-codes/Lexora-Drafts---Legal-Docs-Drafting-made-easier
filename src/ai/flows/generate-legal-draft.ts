@@ -31,9 +31,12 @@ export async function generateLegalDraft(input: GenerateLegalDraftInput): Promis
 
 const generateLegalDraftPrompt = ai.definePrompt({
   name: 'generateLegalDraftPrompt',
-  input: {schema: GenerateLegalDraftInputSchema},
+  input: {schema: z.object({
+    documentType: z.string(),
+    formDataString: z.string(),
+  })},
   output: {schema: GenerateLegalDraftOutputSchema},
-  prompt: `Generate a well-structured legal document of type {{{documentType}}} under Indian law using these details: {{{formData}}}. Include subject line, clauses, parties involved, and signature sections. After each major clause or section, add a brief, simple one-sentence explanation in parentheses, like this: (This clause explains...). Format the entire output as a single block of plain text, with clean formatting for legal readability.`,
+  prompt: `Generate a well-structured legal document of type {{{documentType}}} under Indian law using these details: {{{formDataString}}}. Include subject line, clauses, parties involved, and signature sections. After each major clause or section, add a brief, simple one-sentence explanation in parentheses, like this: (This clause explains...). Format the entire output as a single block of plain text, with clean formatting for legal readability.`,
 });
 
 const generateLegalDraftFlow = ai.defineFlow(
@@ -42,8 +45,16 @@ const generateLegalDraftFlow = ai.defineFlow(
     inputSchema: GenerateLegalDraftInputSchema,
     outputSchema: GenerateLegalDraftOutputSchema,
   },
-  async input => {
-    const {output} = await generateLegalDraftPrompt(input);
+  async ({ documentType, formData }) => {
+    // Convert the form data object to a readable string for the prompt
+    const formDataString = Object.entries(formData)
+      .map(([key, value]) => `${key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())}: ${value}`)
+      .join('\n');
+
+    const {output} = await generateLegalDraftPrompt({
+      documentType,
+      formDataString,
+    });
     return output!;
   }
 );
