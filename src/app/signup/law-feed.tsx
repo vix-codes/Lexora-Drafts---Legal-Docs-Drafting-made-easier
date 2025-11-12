@@ -1,3 +1,5 @@
+'use server';
+
 import { displayLawUpdatesWithSummaries } from '@/ai/flows/display-law-updates-with-summaries';
 import { formatDistanceToNow } from 'date-fns';
 import { ExternalLink } from 'lucide-react';

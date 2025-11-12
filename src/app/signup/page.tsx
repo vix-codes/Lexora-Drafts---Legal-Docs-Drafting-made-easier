@@ -6,7 +6,7 @@ import { AuthForm } from '@/firebase/auth/auth-form';
 import { signUpWithEmail } from '@/firebase/auth/mutations';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Logo } from '@/components/icons';
-import LawFeed from '@/components/law-feed';
+import LawFeed from './law-feed';
 import { Suspense } from 'react';
 import { Skeleton } from '@/components/ui/skeleton';
 
