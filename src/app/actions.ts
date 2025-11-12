@@ -4,7 +4,7 @@ import { getFirestore, doc, addDoc, collection, serverTimestamp } from 'firebase
 import { getApps, initializeApp, cert } from 'firebase-admin/app';
 import { getAuth as getAdminAuth } from 'firebase-admin/auth';
 import { generateLegalDraft } from '@/ai/flows/generate-legal-draft';
-import { app } from '@/firebase/client'; // Use client app for firestore
+import { getFirestore as getAdminFirestore } from 'firebase-admin/firestore';
 
 type DraftState = {
   draft?: string;
@@ -39,6 +39,12 @@ export const generateAndSaveDraft = async (prevState: DraftState, formData: Form
     return { error: 'User not authenticated. Please log in.' };
   }
 
+  const adminApp = getAdminApp();
+  if (!adminApp) {
+    console.error('Firebase Admin SDK initialization failed.');
+    return { error: 'Server configuration error. Could not save draft.' };
+  }
+
   try {
     // 1. Generate the legal draft using the AI flow
     const result = await generateLegalDraft({
@@ -48,8 +54,8 @@ export const generateAndSaveDraft = async (prevState: DraftState, formData: Form
     
     const draftContent = result.legalDraft;
 
-    // 2. Save the generated draft to Firestore
-    const db = getFirestore(app);
+    // 2. Save the generated draft to Firestore using the Admin SDK
+    const db = getAdminFirestore(adminApp);
     const draftsCollectionRef = collection(db, 'users', userId, 'drafts');
     await addDoc(draftsCollectionRef, {
       userId: userId,
