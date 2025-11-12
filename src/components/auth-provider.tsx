@@ -6,6 +6,7 @@ import { getAuth, onAuthStateChanged, type User } from 'firebase/auth';
 import { app } from '@/firebase/client';
 import { Skeleton } from './ui/skeleton';
 import { Logo } from './icons';
+import Link from 'next/link';
 
 const AuthContext = createContext<{ user: User | null }>({ user: null });
 
@@ -55,16 +56,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       router.push('/login');
     }
   }, [user, isUserLoading, router, pathname]);
-
+  
+  // Show loading screen while we determine auth state
   if (isUserLoading) {
     return <LoadingScreen />;
   }
 
   const isPublicRoute = publicRoutes.some(route => pathname.startsWith(route));
-  if (isPublicRoute || user) {
-      return <AuthContext.Provider value={{ user }}>{children}</AuthContext.Provider>;
-  }
 
+  // If it's a public route, render it.
+  // If it's a private route and the user exists, render it.
+  if (isPublicRoute || user) {
+    return <AuthContext.Provider value={{ user }}>{children}</AuthContext.Provider>;
+  }
+  
+  // Otherwise, the effect hook will redirect, so we show a loading screen.
   return <LoadingScreen />;
 }
 
