@@ -1,3 +1,4 @@
+
 'use server';
 
 /**
@@ -56,7 +57,6 @@ export async function displayLawUpdatesWithSummaries(): Promise<LawUpdate[]> {
 
     return output.summaries;
   } catch (error) {
-    console.error('Error generating law update summaries:', error);
     // On error, fall back to the original mock data without AI summaries.
     return lawUpdates.map(update => ({
         ...update,
