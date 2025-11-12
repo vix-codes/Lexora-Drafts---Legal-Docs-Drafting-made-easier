@@ -1,6 +1,5 @@
 'use client';
 
-import { useRef } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -11,7 +10,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
-import { SubmitButton } from '@/components/submit-button';
+import { Button, type ButtonProps } from '@/components/ui/button';
+import { Loader2 } from 'lucide-react';
 
 const formSchema = z.object({
   email: z.string().email({ message: 'Please enter a valid email address.' }),
@@ -24,10 +24,17 @@ interface AuthFormProps {
   mode: 'login' | 'signup';
 }
 
+function FormSubmitButton({ children, isSubmitting, ...props }: ButtonProps & { isSubmitting: boolean }) {
+  return (
+    <Button {...props} type="submit" disabled={isSubmitting}>
+      {isSubmitting ? <Loader2 className="animate-spin" /> : children}
+    </Button>
+  );
+}
+
 export function AuthForm({ mode }: AuthFormProps) {
   const { toast } = useToast();
   const router = useRouter();
-  const formRef = useRef<HTMLFormElement>(null);
 
   const {
     register,
@@ -68,16 +75,35 @@ export function AuthForm({ mode }: AuthFormProps) {
         router.push('/');
       }
     } catch (error: any) {
+      let description = 'An unexpected error occurred.';
+      if (error.code) {
+        switch (error.code) {
+            case 'auth/user-not-found':
+                description = 'No account found with this email. Please sign up.';
+                break;
+            case 'auth/wrong-password':
+                description = 'Incorrect password. Please try again.';
+                break;
+            case 'auth/email-already-in-use':
+                description = 'This email is already in use. Please log in.';
+                break;
+            case 'auth/network-request-failed':
+                description = 'Network error. Please check your connection and authorized domains in Firebase.';
+                break;
+            default:
+                description = error.message;
+        }
+      }
       toast({
         variant: 'destructive',
         title: 'Authentication Failed',
-        description: error.message || 'An unexpected error occurred.',
+        description: description,
       });
     }
   };
 
   return (
-    <form ref={formRef} onSubmit={handleSubmit(handleAuthAction)} className="space-y-6">
+    <form onSubmit={handleSubmit(handleAuthAction)} className="space-y-6">
       <div className="space-y-2">
         <Label htmlFor="email">Email</Label>
         <Input
@@ -86,6 +112,7 @@ export function AuthForm({ mode }: AuthFormProps) {
           placeholder="name@example.com"
           {...register('email')}
           required
+          autoComplete="email"
         />
         {errors.email && <p className="text-destructive text-sm mt-1">{errors.email.message}</p>}
       </div>
@@ -97,24 +124,13 @@ export function AuthForm({ mode }: AuthFormProps) {
           placeholder="••••••••"
           {...register('password')}
           required
+          autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
         />
         {errors.password && <p className="text-destructive text-sm mt-1">{errors.password.message}</p>}
       </div>
-      <Button disabled={isSubmitting} className="w-full" type="submit">
-        {isSubmitting ? 'Processing...' : (mode === 'login' ? 'Log In' : 'Sign Up')}
-      </Button>
+      <FormSubmitButton isSubmitting={isSubmitting} className="w-full">
+        {mode === 'login' ? 'Log In' : 'Sign Up'}
+      </FormSubmitButton>
     </form>
-  );
-}
-
-// A new Button component to replace SubmitButton which relies on useFormStatus (for Server Actions)
-import { Button, type ButtonProps } from '@/components/ui/button';
-import { Loader2 } from 'lucide-react';
-
-function FormSubmitButton({ children, disabled, ...props }: ButtonProps & { disabled: boolean }) {
-  return (
-    <Button {...props} type="submit" disabled={disabled}>
-      {disabled ? <Loader2 className="animate-spin" /> : children}
-    </Button>
   );
 }
