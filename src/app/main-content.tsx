@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useEffect, useState, useMemo } from 'react';
@@ -132,7 +133,9 @@ export default function MainContent() {
           </CardFooter>
         </Card>
       </form>
-      <DocumentPreview draft={state?.draft} isLoading={pending} documentTypeLabel={selectedTemplateLabel} />
+      {(pending || state?.draft) && (
+        <DocumentPreview draft={state?.draft} isLoading={pending} documentTypeLabel={selectedTemplateLabel} />
+      )}
     </>
   );
 }
