@@ -46,15 +46,35 @@ const generateLegalDraftFlow = ai.defineFlow(
     outputSchema: GenerateLegalDraftOutputSchema,
   },
   async ({ documentType, formData }) => {
-    // Convert the form data object to a readable string for the prompt
     const formDataString = Object.entries(formData)
       .map(([key, value]) => `${key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())}: ${value}`)
       .join('\n');
 
-    const {output} = await generateLegalDraftPrompt({
-      documentType,
-      formDataString,
-    });
-    return output!;
+    try {
+      const {output} = await generateLegalDraftPrompt({
+        documentType,
+        formDataString,
+      });
+      return output!;
+    } catch (error) {
+      console.warn('AI draft generation failed, falling back to basic template.', error);
+      
+      // Fallback mechanism to generate a basic draft if the AI fails.
+      const fallbackDraft = `
+DOCUMENT TYPE: ${documentType.toUpperCase()}
+      
+---
+      
+DETAILS:
+${formDataString}
+      
+---
+      
+DISCLAIMER:
+This is a basic, non-legally binding draft generated as a fallback. The AI service may be temporarily unavailable. Please review and consult with a legal professional.
+      `;
+      
+      return { legalDraft: fallbackDraft.trim() };
+    }
   }
 );
