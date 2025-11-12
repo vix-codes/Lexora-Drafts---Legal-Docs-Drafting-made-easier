@@ -1,5 +1,5 @@
 import Header from '@/components/header';
-import LawFeed from '@/components/law-feed';
+import LegalPrecedents from '@/components/legal-precedents';
 import HomeContent from '@/app/home-content';
 
 export default function Page() {
@@ -7,7 +7,7 @@ export default function Page() {
     <div className="flex flex-col min-h-screen bg-background text-foreground">
       <Header />
       <HomeContent>
-        <LawFeed />
+        <LegalPrecedents />
       </HomeContent>
     </div>
   );
