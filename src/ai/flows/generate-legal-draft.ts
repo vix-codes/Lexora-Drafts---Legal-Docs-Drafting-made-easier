@@ -37,6 +37,18 @@ const generateLegalDraftPrompt = ai.definePrompt({
   })},
   output: {schema: GenerateLegalDraftOutputSchema},
   prompt: `Generate a well-structured legal document of type {{{documentType}}} under Indian law using these details: {{{formDataString}}}. Include subject line, clauses, parties involved, and signature sections. After each major clause or section, add a brief, simple one-sentence explanation in parentheses, like this: (This clause explains...). Format the entire output as a single block of plain text, with clean formatting for legal readability.`,
+  config: {
+    safetySettings: [
+        {
+          category: 'HARM_CATEGORY_DANGEROUS_CONTENT',
+          threshold: 'BLOCK_NONE',
+        },
+        {
+          category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT',
+          threshold: 'BLOCK_NONE',
+        },
+    ]
+  }
 });
 
 const generateLegalDraftFlow = ai.defineFlow(
