@@ -1,7 +1,6 @@
 'use client';
 
-import { useFormState } from 'react-dom';
-import { useEffect, useRef } from 'react';
+import { useActionState, useEffect, useRef } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -25,7 +24,7 @@ interface AuthFormProps {
 
 export function AuthForm({ mode, action }: AuthFormProps) {
   const { toast } = useToast();
-  const [state, formAction] = useFormState(action, { success: false });
+  const [state, formAction] = useActionState(action, { success: false });
   const router = useRouter();
   const formRef = useRef<HTMLFormElement>(null);
 
