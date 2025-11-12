@@ -1,10 +1,11 @@
 'use server';
 
-import { getFirestore, doc, addDoc, collection, serverTimestamp } from 'firebase/firestore';
-import { getApps, initializeApp, cert } from 'firebase-admin/app';
-import { getAuth as getAdminAuth } from 'firebase-admin/auth';
 import { generateLegalDraft } from '@/ai/flows/generate-legal-draft';
+import { getApps, initializeApp, cert } from 'firebase-admin/app';
 import { getFirestore as getAdminFirestore } from 'firebase-admin/firestore';
+import { getAuth as getAdminAuth } from 'firebase-admin/auth';
+import { serverTimestamp } from 'firebase/firestore';
+
 
 type DraftState = {
   draft?: string;
@@ -18,6 +19,7 @@ function getAdminApp() {
     : undefined;
 
     if (!serviceAccount) {
+        console.error('Firebase Admin SDK service account key is not available in environment variables.');
         return null;
     }
 
@@ -41,8 +43,7 @@ export const generateAndSaveDraft = async (prevState: DraftState, formData: Form
 
   const adminApp = getAdminApp();
   if (!adminApp) {
-    console.error('Firebase Admin SDK initialization failed.');
-    return { error: 'Server configuration error. Could not save draft.' };
+    return { error: 'Server configuration error. Could not save draft. Please ensure your service account key is set up correctly.' };
   }
 
   try {
@@ -56,12 +57,13 @@ export const generateAndSaveDraft = async (prevState: DraftState, formData: Form
 
     // 2. Save the generated draft to Firestore using the Admin SDK
     const db = getAdminFirestore(adminApp);
-    const draftsCollectionRef = collection(db, 'users', userId, 'drafts');
-    await addDoc(draftsCollectionRef, {
+    const draftsCollectionRef = db.collection('users').doc(userId).collection('drafts');
+    
+    await draftsCollectionRef.add({
       userId: userId,
       documentType: docType,
       content: draftContent,
-      createdAt: serverTimestamp(),
+      createdAt: getAdminFirestore.FieldValue.serverTimestamp(),
     });
 
     // 3. Return the generated draft to the client
