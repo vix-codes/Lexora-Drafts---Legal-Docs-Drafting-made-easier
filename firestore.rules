@@ -1,0 +1,84 @@
+/**
+ * @file Firestore Security Rules for Lexora Drafts application.
+ *
+ * Core Philosophy:
+ * This ruleset prioritizes user authentication and data access control for user profiles
+ * while allowing public read access to legal templates, law feed updates, and the legal glossary.
+ *
+ * Data Structure:
+ * - /users/{userId}: Stores user profiles with usernames, accessible only to the authenticated user.
+ * - /templates/{templateId}: Stores legal templates, publicly readable.
+ * - /lawFeed/{updateId}: Stores law feed updates, publicly readable.
+ * - /glossary/{termId}: Stores legal terms and definitions, publicly readable.
+ *
+ * Key Security Decisions:
+ * - Strict user-ownership model for user profiles under /users/{userId}.
+ * - Public read access for /templates, /lawFeed, and /glossary to support the application's
+ *   core features of providing legal templates, law updates, and a glossary.
+ */
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    /**
+     * @description Controls access to user profiles.
+     * @path /users/{userId}
+     * @allow (create) - User with UID 'user_abc' can create their profile with id 'user_abc'.
+     * @allow (get, list, update, delete) - User with UID 'user_abc' can get, list, update, or delete their profile with id 'user_abc'.
+     * @deny (create) - User with UID 'user_xyz' cannot create a profile with id 'user_abc'.
+     * @deny (get, list, update, delete) - User with UID 'user_xyz' cannot get, list, update, or delete the profile of user 'user_abc'.
+     * @principle Enforces document ownership for all operations on user profiles.
+     */
+    match /users/{userId} {
+      function isOwner(userId) {
+        return request.auth.uid == userId;
+      }
+
+      function isExistingOwner(userId) {
+        return request.auth.uid == userId && resource != null;
+      }
+
+      allow get: if isOwner(userId);
+      allow list: if false;
+      allow create: if isOwner(userId) && request.auth.uid == userId;
+      allow update: if isExistingOwner(userId);
+      allow delete: if isExistingOwner(userId);
+    }
+
+    /**
+     * @description Allows public read access to legal templates.
+     * @path /templates/{templateId}
+     * @allow (get, list) - Any user can read templates.
+     * @deny (create, update, delete) - No user can create, update, or delete templates without authentication.
+     * @principle Public read access for templates.
+     */
+    match /templates/{templateId} {
+      allow get, list: if true;
+      allow create, update, delete: if false;
+    }
+
+    /**
+     * @description Allows public read access to law feed updates.
+     * @path /lawFeed/{updateId}
+     * @allow (get, list) - Any user can read law feed updates.
+     * @deny (create, update, delete) - No user can create, update, or delete law feed updates without authentication.
+     * @principle Public read access for law feed updates.
+     */
+    match /lawFeed/{updateId} {
+      allow get, list: if true;
+      allow create, update, delete: if false;
+    }
+
+    /**
+     * @description Allows public read access to glossary terms.
+     * @path /glossary/{termId}
+     * @allow (get, list) - Any user can read glossary terms.
+     * @deny (create, update, delete) - No user can create, update, or delete glossary terms without authentication.
+     * @principle Public read access for glossary terms.
+     */
+    match /glossary/{termId} {
+      allow get, list: if true;
+      allow create, update, delete: if false;
+    }
+  }
+}

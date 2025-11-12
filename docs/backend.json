@@ -1,0 +1,99 @@
+{
+  "entities": {
+    "User": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "User",
+      "type": "object",
+      "description": "Represents a user account for the application.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the user."
+        },
+        "username": {
+          "type": "string",
+          "description": "The username of the user."
+        }
+      },
+      "required": [
+        "id",
+        "username"
+      ]
+    }
+  },
+  "auth": {
+    "providers": [
+      "password",
+      "anonymous"
+    ]
+  },
+  "firestore": {
+    "structure": [
+      {
+        "path": "/users/{userId}",
+        "definition": {
+          "entityName": "User",
+          "schema": {
+            "$ref": "#/backend/entities/User"
+          },
+          "description": "Stores user profiles. Includes 'id' and 'username'.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier for the user."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/templates/{templateId}",
+        "definition": {
+          "entityName": "template",
+          "schema": {
+            "$ref": "#/backend/entities/template"
+          },
+          "description": "Stores legal templates with type, inputs, structure, and lastUpdated.",
+          "params": [
+            {
+              "name": "templateId",
+              "description": "The unique identifier for the legal template."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/lawFeed/{updateId}",
+        "definition": {
+          "entityName": "lawFeed",
+          "schema": {
+            "$ref": "#/backend/entities/lawFeed"
+          },
+          "description": "Stores law feed updates with title, summary, link, and timestamp.",
+          "params": [
+            {
+              "name": "updateId",
+              "description": "The unique identifier for the law feed update."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/glossary/{termId}",
+        "definition": {
+          "entityName": "glossary",
+          "schema": {
+            "$ref": "#/backend/entities/glossary"
+          },
+          "description": "Stores legal terms and definitions.",
+          "params": [
+            {
+              "name": "termId",
+              "description": "The unique identifier for the glossary term."
+            }
+          ]
+        }
+      }
+    ],
+    "reasoning": "This Firestore structure is designed to support the Lexora Drafts application. Since login is available, the `/users/{userId}` collection will hold user profiles with usernames. The structure focuses on storing legal templates, law feed updates, and a glossary, all critical for the application's core features. Authorization Independence isn't directly applicable to the template or glossary data as it's assumed to be globally accessible for reading. If access control for specific templates or glossary terms becomes necessary, a membership map (`members: {uid: role}`) or dedicated role collections would be added.\n\nThe application's requirements are supported as follows:\n\n1.  User Authentication: The `/users/{userId}` collection stores basic user information (username). Password-based authentication handles user creation and login. Anonymous auth would mean using the user id to persist some data like document drafts, but this is not mentioned as a requirement, only the option to create user accounts.\n\n2.  Smart Legal Draft Generation & Quick Templates Library: The `/templates` collection stores legal templates, enabling quick generation of legal drafts. No authorization independence is required here, as the templates are public read.\n\n3.  Law & Case Updates Feed: The `/lawFeed` collection stores law updates, ensuring the application provides up-to-date legal information. This data is also assumed to be publicly readable.\n\n4.  Legal Glossary Panel: The `/glossary` collection stores legal terms and their definitions, providing a searchable glossary. The documents should be public read.\n\nQAPs are supported by ensuring that list operations on `/templates`, `/lawFeed`, and `/glossary` are secure, as these are public-read collections."
+  }
+}
