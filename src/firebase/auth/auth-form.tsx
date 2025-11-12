@@ -1,9 +1,12 @@
 'use client';
 
-import { useActionState, useEffect, useRef } from 'react';
+import { useRef } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
+import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword } from 'firebase/auth';
+import { getFirestore, doc, setDoc, serverTimestamp } from 'firebase/firestore';
+import { app } from '@/firebase/client';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
@@ -19,34 +22,62 @@ type FormValues = z.infer<typeof formSchema>;
 
 interface AuthFormProps {
   mode: 'login' | 'signup';
-  action: (formData: FormData) => Promise<{ success: boolean; error?: string }>;
 }
 
-export function AuthForm({ mode, action }: AuthFormProps) {
+export function AuthForm({ mode }: AuthFormProps) {
   const { toast } = useToast();
-  const [state, formAction] = useActionState(action, { success: false });
   const router = useRouter();
   const formRef = useRef<HTMLFormElement>(null);
 
   const {
     register,
-    formState: { errors },
+    handleSubmit,
+    formState: { errors, isSubmitting },
   } = useForm<FormValues>({
     resolver: zodResolver(formSchema),
   });
 
-  useEffect(() => {
-    if (state?.error) {
+  const handleAuthAction = async (data: FormValues) => {
+    const auth = getAuth(app);
+    const { email, password } = data;
+
+    try {
+      if (mode === 'signup') {
+        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+        const user = userCredential.user;
+        
+        // Add user profile to Firestore
+        const db = getFirestore(app);
+        const userRef = doc(db, 'users', user.uid);
+        await setDoc(userRef, {
+          email: user.email,
+          createdAt: serverTimestamp(),
+        });
+        
+        toast({
+          title: 'Account Created',
+          description: "You've been successfully signed up!",
+        });
+        router.push('/');
+      } else {
+        await signInWithEmailAndPassword(auth, email, password);
+        toast({
+          title: 'Signed In',
+          description: "Welcome back!",
+        });
+        router.push('/');
+      }
+    } catch (error: any) {
       toast({
         variant: 'destructive',
         title: 'Authentication Failed',
-        description: state.error,
+        description: error.message || 'An unexpected error occurred.',
       });
     }
-  }, [state, toast, router]);
+  };
 
   return (
-    <form ref={formRef} action={formAction} className="space-y-6">
+    <form ref={formRef} onSubmit={handleSubmit(handleAuthAction)} className="space-y-6">
       <div className="space-y-2">
         <Label htmlFor="email">Email</Label>
         <Input
@@ -69,9 +100,21 @@ export function AuthForm({ mode, action }: AuthFormProps) {
         />
         {errors.password && <p className="text-destructive text-sm mt-1">{errors.password.message}</p>}
       </div>
-      <SubmitButton className="w-full">
-        {mode === 'login' ? 'Log In' : 'Sign Up'}
-      </SubmitButton>
+      <Button disabled={isSubmitting} className="w-full" type="submit">
+        {isSubmitting ? 'Processing...' : (mode === 'login' ? 'Log In' : 'Sign Up')}
+      </Button>
     </form>
+  );
+}
+
+// A new Button component to replace SubmitButton which relies on useFormStatus (for Server Actions)
+import { Button, type ButtonProps } from '@/components/ui/button';
+import { Loader2 } from 'lucide-react';
+
+function FormSubmitButton({ children, disabled, ...props }: ButtonProps & { disabled: boolean }) {
+  return (
+    <Button {...props} type="submit" disabled={disabled}>
+      {disabled ? <Loader2 className="animate-spin" /> : children}
+    </Button>
   );
 }

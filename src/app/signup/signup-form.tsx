@@ -1,9 +1,7 @@
-
 'use client';
 
 import Link from 'next/link';
 import { AuthForm } from '@/firebase/auth/auth-form';
-import { signUpWithEmail } from '@/app/actions';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Logo } from '@/components/icons';
 import type { ReactNode } from 'react';
@@ -38,7 +36,7 @@ export default function SignupForm({ children }: { children: ReactNode }) {
                 <CardDescription>Fill out the form below to get started.</CardDescription>
             </CardHeader>
             <CardContent>
-            <AuthForm mode="signup" action={signUpWithEmail} />
+            <AuthForm mode="signup" />
             </CardContent>
             <CardFooter className="flex justify-center text-sm">
             <p>

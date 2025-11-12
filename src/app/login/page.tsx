@@ -2,7 +2,6 @@
 
 import Link from 'next/link';
 import { AuthForm } from '@/firebase/auth/auth-form';
-import { signInWithEmail } from '@/app/actions';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Logo } from '@/components/icons';
 
@@ -19,7 +18,7 @@ export default function LoginPage() {
           <CardDescription>Enter your credentials to access your account.</CardDescription>
         </CardHeader>
         <CardContent>
-          <AuthForm mode="login" action={signInWithEmail} />
+          <AuthForm mode="login" />
         </CardContent>
         <CardFooter className="flex justify-center text-sm">
           <p>
