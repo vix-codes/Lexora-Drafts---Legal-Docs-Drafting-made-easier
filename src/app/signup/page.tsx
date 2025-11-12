@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { AuthForm } from '@/firebase/auth/auth-form';
 import { signUpWithEmail } from '@/app/actions';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Logo } from '@/components/icons';
 import LawFeed from './law-feed';
 import { Suspense } from 'react';
