@@ -9,6 +9,11 @@ import { getAuth } from 'firebase-admin/auth';
 export async function signUpWithEmail(formData: FormData) {
   const cookieStore = cookies();
   const serverClient = createServerClient();
+  
+  if (!serverClient) {
+    return { success: false, error: 'Server not configured for authentication. Please set FIREBASE_SERVICE_ACCOUNT_KEY.' };
+  }
+
   const auth = getAuth(serverClient);
   const email = formData.get('email') as string;
   const password = formData.get('password') as string;
@@ -37,6 +42,11 @@ export async function signUpWithEmail(formData: FormData) {
 export async function signInWithEmail(formData: FormData) {
   const cookieStore = cookies();
   const serverClient = createServerClient();
+
+  if (!serverClient) {
+    return { success: false, error: 'Server not configured for authentication. Please set FIREBASE_SERVICE_ACCOUNT_KEY.' };
+  }
+  
   const auth = getAuth(serverClient);
   const email = formData.get('email') as string;
   const password = formData.get('password') as string;
