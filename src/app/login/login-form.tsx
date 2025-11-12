@@ -10,7 +10,7 @@ import type { ReactNode } from 'react';
 export default function LoginForm({ children }: { children: ReactNode }) {
   return (
     <div className="flex min-h-screen items-stretch bg-background">
-      <div className="hidden lg:flex lg:w-1/2 flex-col justify-between bg-card p-8 text-card-foreground">
+      <div className="hidden lg:flex lg:w-1/2 flex-col justify-between bg-card p-8 text-card-foreground auth-bg">
         <div className="flex items-center gap-3">
             <Logo className="h-8 w-8 text-primary" />
             <h1 className="font-headline text-2xl font-semibold tracking-tight">lawIntel</h1>

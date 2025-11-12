@@ -35,3 +35,12 @@
     @apply bg-background text-foreground;
   }
 }
+
+@layer components {
+  .auth-bg {
+    background-image: url('/images/auth-background.png');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+  }
+}
