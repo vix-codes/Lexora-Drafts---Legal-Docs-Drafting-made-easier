@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useEffect, useState, useMemo } from 'react';
@@ -23,19 +22,40 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { documentTemplates, type DocumentTemplate, type TemplateField } from '@/lib/data';
-import { generateDraftAction } from '@/app/actions';
+import { generateLegalDraft } from '@/ai/flows/generate-legal-draft';
 import { Wand2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { DocumentPreview } from '@/components/document-preview';
 import { SubmitButton } from '@/components/submit-button';
 
+type DraftState = {
+  draft?: string;
+  error?: string;
+};
+
+const generateDraftAction = async (prevState: DraftState, formData: FormData): Promise<DraftState> => {
+  const docType = formData.get('documentType') as string;
+  const rawData = Object.fromEntries(formData.entries());
+
+  try {
+    const result = await generateLegalDraft({
+      documentType: docType,
+      formData: rawData,
+    });
+    return { draft: result.legalDraft };
+  } catch (error) {
+    console.error(error);
+    return { error: 'Failed to generate draft. Please try again.' };
+  }
+};
+
+
 export default function DraftPage() {
   const { toast } = useToast();
   const [selectedTemplateValue, setSelectedTemplateValue] = useState<string | null>(null);
-  const [initialState, setInitialState] = useState<{ draft?: string; error?: string }>({});
   const [isDraftVisible, setIsDraftVisible] = useState(false);
 
-  const [state, formAction, pending] = useActionState(generateDraftAction, initialState);
+  const [state, formAction, pending] = useActionState(generateDraftAction, { draft: undefined, error: undefined });
 
   useEffect(() => {
     if (state?.error) {
@@ -52,7 +72,6 @@ export default function DraftPage() {
 
   const handleTemplateChange = (value: string) => {
     setSelectedTemplateValue(value);
-    setInitialState({});
     setIsDraftVisible(false);
   };
 
@@ -60,7 +79,6 @@ export default function DraftPage() {
     const form = document.querySelector('form');
     form?.reset();
     setSelectedTemplateValue(null);
-    setInitialState({});
     setIsDraftVisible(false);
   };
 
@@ -135,7 +153,7 @@ export default function DraftPage() {
             <Button variant="ghost" type="button" onClick={handleReset} disabled={pending}>
               Reset
             </Button>
-            <SubmitButton disabled={!selectedTemplate} />
+            <SubmitButton disabled={!selectedTemplate}>Generate Draft</SubmitButton>
           </CardFooter>
         </Card>
       </form>

@@ -1,23 +1,12 @@
 'use client';
 
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 import { AuthForm } from '@/firebase/auth/auth-form';
-import { signInWithEmail } from '@/firebase/auth/mutations';
+import { signInWithEmail } from '@/app/actions';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Logo } from '@/components/icons';
 
 export default function LoginPage() {
-  const router = useRouter();
-
-  const handleLogin = async (values: { email: string; password: any }) => {
-    const result = await signInWithEmail(values.email, values.password);
-    if (result.success) {
-      router.push('/');
-    }
-    return result;
-  };
-
   return (
     <div className="flex min-h-screen items-center justify-center bg-background p-4">
       <Card className="w-full max-w-sm">
@@ -30,7 +19,7 @@ export default function LoginPage() {
           <CardDescription>Enter your credentials to access your account.</CardDescription>
         </CardHeader>
         <CardContent>
-          <AuthForm mode="login" onSubmit={handleLogin} />
+          <AuthForm mode="login" action={signInWithEmail} />
         </CardContent>
         <CardFooter className="flex justify-center text-sm">
           <p>

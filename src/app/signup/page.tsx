@@ -1,9 +1,8 @@
 'use client';
 
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 import { AuthForm } from '@/firebase/auth/auth-form';
-import { signUpWithEmail } from '@/firebase/auth/mutations';
+import { signUpWithEmail } from '@/app/actions';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Logo } from '@/components/icons';
 import LawFeed from './law-feed';
@@ -25,16 +24,6 @@ function LawFeedLoading() {
 }
 
 export default function SignupPage() {
-  const router = useRouter();
-
-  const handleSignup = async (values: { email: string; password: any }) => {
-    const result = await signUpWithEmail(values.email, values.password);
-    if (result.success) {
-      router.push('/');
-    }
-    return result;
-  };
-
   return (
     <div className="flex min-h-screen items-stretch bg-background">
       <div className="hidden lg:flex lg:w-1/2 flex-col justify-between bg-card p-8 text-card-foreground">
@@ -67,7 +56,7 @@ export default function SignupPage() {
                 <CardDescription>Fill out the form below to get started.</CardDescription>
             </CardHeader>
             <CardContent>
-            <AuthForm mode="signup" onSubmit={handleSignup} />
+            <AuthForm mode="signup" action={signUpWithEmail} />
             </CardContent>
             <CardFooter className="flex justify-center text-sm">
             <p>

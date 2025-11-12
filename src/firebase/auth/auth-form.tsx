@@ -1,14 +1,15 @@
 'use client';
 
-import { useState } from 'react';
-import { useForm, type SubmitHandler } from 'react-hook-form';
+import { useFormState } from 'react-dom';
+import { useEffect, useRef } from 'react';
+import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2 } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { SubmitButton } from '@/components/submit-button';
 
 const formSchema = z.object({
   email: z.string().email({ message: 'Please enter a valid email address.' }),
@@ -19,37 +20,34 @@ type FormValues = z.infer<typeof formSchema>;
 
 interface AuthFormProps {
   mode: 'login' | 'signup';
-  onSubmit: (values: FormValues) => Promise<{ success: boolean; error?: string }>;
+  action: (formData: FormData) => Promise<{ success: boolean; error?: string }>;
 }
 
-export function AuthForm({ mode, onSubmit }: AuthFormProps) {
+export function AuthForm({ mode, action }: AuthFormProps) {
   const { toast } = useToast();
-  const [isLoading, setIsLoading] = useState(false);
+  const [state, formAction] = useFormState(action, { success: false });
+  const router = useRouter();
+  const formRef = useRef<HTMLFormElement>(null);
+
   const {
     register,
-    handleSubmit,
     formState: { errors },
   } = useForm<FormValues>({
     resolver: zodResolver(formSchema),
   });
 
-  const handleFormSubmit: SubmitHandler<FormValues> = async (data) => {
-    setIsLoading(true);
-    const result = await onSubmit(data);
-    setIsLoading(false);
-
-    if (!result.success) {
+  useEffect(() => {
+    if (state?.error) {
       toast({
         variant: 'destructive',
         title: 'Authentication Failed',
-        description: result.error || 'An unknown error occurred.',
+        description: state.error,
       });
     }
-    // On success, the AuthProvider will handle redirection
-  };
+  }, [state, toast, router]);
 
   return (
-    <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-6">
+    <form ref={formRef} action={formAction} className="space-y-6">
       <div className="space-y-2">
         <Label htmlFor="email">Email</Label>
         <Input
@@ -57,7 +55,7 @@ export function AuthForm({ mode, onSubmit }: AuthFormProps) {
           type="email"
           placeholder="name@example.com"
           {...register('email')}
-          disabled={isLoading}
+          required
         />
         {errors.email && <p className="text-destructive text-sm mt-1">{errors.email.message}</p>}
       </div>
@@ -68,17 +66,13 @@ export function AuthForm({ mode, onSubmit }: AuthFormProps) {
           type="password"
           placeholder="••••••••"
           {...register('password')}
-          disabled={isLoading}
+          required
         />
         {errors.password && <p className="text-destructive text-sm mt-1">{errors.password.message}</p>}
       </div>
-      <Button type="submit" className="w-full" disabled={isLoading}>
-        {isLoading ? (
-          <Loader2 className="animate-spin" />
-        ) : (
-          mode === 'login' ? 'Log In' : 'Sign Up'
-        )}
-      </Button>
+      <SubmitButton className="w-full">
+        {mode === 'login' ? 'Log In' : 'Sign Up'}
+      </SubmitButton>
     </form>
   );
 }

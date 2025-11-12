@@ -1,26 +1,15 @@
-
 'use client';
 
 import { useFormStatus } from 'react-dom';
 import { Button, type ButtonProps } from '@/components/ui/button';
-import { Loader2, Sparkles } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 
-export function SubmitButton({ disabled }: ButtonProps) {
+export function SubmitButton({ children, ...props }: ButtonProps) {
   const { pending } = useFormStatus();
 
   return (
-    <Button type="submit" disabled={disabled || pending}>
-      {pending ? (
-        <>
-          <Loader2 className="animate-spin" />
-          Generating...
-        </>
-      ) : (
-        <>
-          <Sparkles />
-          Generate Draft
-        </>
-      )}
+    <Button {...props} type="submit" disabled={props.disabled || pending}>
+      {pending ? <Loader2 className="animate-spin" /> : children}
     </Button>
   );
 }
