@@ -1,13 +1,11 @@
-'use client';
 
-import Link from 'next/link';
-import { AuthForm } from '@/firebase/auth/auth-form';
-import { signUpWithEmail } from '@/app/actions';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Logo } from '@/components/icons';
-import LawFeed from './law-feed';
 import { Suspense } from 'react';
 import { Skeleton } from '@/components/ui/skeleton';
+import { displayLawUpdatesWithSummaries } from '@/ai/flows/display-law-updates-with-summaries';
+import { formatDistanceToNow } from 'date-fns';
+import { ExternalLink } from 'lucide-react';
+import SignupForm from './signup-form';
+import type { LawUpdate } from '@/ai/flows/display-law-updates-with-summaries';
 
 function LawFeedLoading() {
     return (
@@ -23,51 +21,43 @@ function LawFeedLoading() {
     )
 }
 
+async function LawFeed() {
+  const updates: LawUpdate[] = await displayLawUpdatesWithSummaries();
+
+  if (!updates || updates.length === 0) {
+    return <p className="text-muted-foreground">No recent updates available.</p>;
+  }
+
+  return (
+    <div className="space-y-6">
+      {updates.slice(0, 3).map((update, index) => (
+        <div key={index} className="space-y-1">
+          <h3 className="font-semibold text-primary">{update.title}</h3>
+          <p className="text-sm text-muted-foreground leading-relaxed">{update.summary}</p>
+          <div className="flex items-center justify-between text-xs text-muted-foreground/80 pt-1">
+            <span>{formatDistanceToNow(new Date(update.timestamp * 1000), { addSuffix: true })}</span>
+            <a
+              href={update.link}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1 hover:text-primary transition-colors"
+            >
+              Read More <ExternalLink className="h-3 w-3" />
+            </a>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 export default function SignupPage() {
   return (
-    <div className="flex min-h-screen items-stretch bg-background">
-      <div className="hidden lg:flex lg:w-1/2 flex-col justify-between bg-card p-8 text-card-foreground">
-        <div className="flex items-center gap-3">
-            <Logo className="h-8 w-8 text-primary" />
-            <h1 className="font-headline text-2xl font-semibold tracking-tight">lawIntel</h1>
-        </div>
-        <div>
-            <h2 className="font-headline text-3xl font-semibold mb-4">Stay Ahead of the Curve</h2>
-            <p className="text-muted-foreground mb-8">
-                Get summaries of the latest legal developments in India.
-            </p>
-            <Suspense fallback={<LawFeedLoading />}>
-                {/* @ts-expect-error Server Component */}
-                <LawFeed />
-            </Suspense>
-        </div>
-        <div className="text-xs text-muted-foreground">
-            &copy; {new Date().getFullYear()} lawIntel. All rights reserved.
-        </div>
-      </div>
-      <div className="flex w-full flex-col items-center justify-center p-4 lg:w-1/2">
-        <Card className="w-full max-w-sm border-0 lg:border">
-            <CardHeader className="text-center">
-                <div className="flex justify-center items-center gap-3 mb-4 lg:hidden">
-                    <Logo className="h-8 w-8 text-primary" />
-                    <h1 className="font-headline text-2xl font-semibold tracking-tight">lawIntel</h1>
-                </div>
-                <CardTitle>Create an Account</CardTitle>
-                <CardDescription>Fill out the form below to get started.</CardDescription>
-            </CardHeader>
-            <CardContent>
-            <AuthForm mode="signup" action={signUpWithEmail} />
-            </CardContent>
-            <CardFooter className="flex justify-center text-sm">
-            <p>
-                Already have an account?{' '}
-                <Link href="/login" className="font-medium text-primary hover:underline">
-                Log in
-                </Link>
-            </p>
-            </CardFooter>
-        </Card>
-      </div>
-    </div>
+    <SignupForm>
+        <Suspense fallback={<LawFeedLoading />}>
+            {/* @ts-expect-error Server Component */}
+            <LawFeed />
+        </Suspense>
+    </SignupForm>
   );
 }

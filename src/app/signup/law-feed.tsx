@@ -1,11 +1,13 @@
+
 'use server';
 
 import { displayLawUpdatesWithSummaries } from '@/ai/flows/display-law-updates-with-summaries';
 import { formatDistanceToNow } from 'date-fns';
 import { ExternalLink } from 'lucide-react';
+import type { LawUpdate } from '@/ai/flows/display-law-updates-with-summaries';
 
 export default async function LawFeed() {
-  const updates = await displayLawUpdatesWithSummaries();
+  const updates: LawUpdate[] = await displayLawUpdatesWithSummaries();
 
   if (!updates || updates.length === 0) {
     return <p className="text-muted-foreground">No recent updates available.</p>;
