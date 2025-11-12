@@ -17,7 +17,7 @@ const fontInter = Inter({
 });
 
 export const metadata = {
-  title: 'lawIntel',
+  title: 'Lexora',
   description: 'Legal Documents. Simplified. Instantly.',
 };
 
