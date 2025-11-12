@@ -26,7 +26,7 @@ interface AuthFormProps {
 
 function FormSubmitButton({ children, isSubmitting, ...props }: ButtonProps & { isSubmitting: boolean }) {
   return (
-    <Button {...props} type="submit" disabled={isSubmitting}>
+    <Button {...props} type="submit" disabled={isSubmitting} className="w-full">
       {isSubmitting ? <Loader2 className="animate-spin" /> : children}
     </Button>
   );
@@ -128,7 +128,7 @@ export function AuthForm({ mode }: AuthFormProps) {
         />
         {errors.password && <p className="text-destructive text-sm mt-1">{errors.password.message}</p>}
       </div>
-      <FormSubmitButton isSubmitting={isSubmitting} className="w-full">
+      <FormSubmitButton isSubmitting={isSubmitting}>
         {mode === 'login' ? 'Log In' : 'Sign Up'}
       </FormSubmitButton>
     </form>
