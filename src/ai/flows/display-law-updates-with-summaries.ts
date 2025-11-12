@@ -1,3 +1,4 @@
+
 'use server';
 
 /**
@@ -69,25 +70,31 @@ const displayLawUpdatesWithSummariesFlow = ai.defineFlow(
       return [];
     }
 
-    const {output} = await lawUpdateSummaryPrompt({lawUpdates});
+    try {
+      const {output} = await lawUpdateSummaryPrompt({lawUpdates});
 
-    if (!output || !output.summaries) {
+      if (!output || !output.summaries) {
+        throw new Error('No summaries returned from AI.');
+      }
+
+      const summaryMap = new Map(output.summaries.map(s => [s.original_timestamp, s.summary]));
+
+      const updatesWithSummaries = lawUpdates.map(update => {
+        const aiSummary = summaryMap.get(update.timestamp) || update.summary;
+        return {
+          ...update,
+          aiSummary,
+        };
+      });
+
+      return updatesWithSummaries;
+    } catch (error) {
+      console.error('Failed to generate AI summaries, falling back to original summaries:', error);
+      // Fallback to original summaries if the AI call fails
       return lawUpdates.map(update => ({
         ...update,
         aiSummary: update.summary,
       }));
     }
-
-    const summaryMap = new Map(output.summaries.map(s => [s.original_timestamp, s.summary]));
-
-    const updatesWithSummaries = lawUpdates.map(update => {
-      const aiSummary = summaryMap.get(update.timestamp) || update.summary;
-      return {
-        ...update,
-        aiSummary,
-      };
-    });
-
-    return updatesWithSummaries;
   }
 );
