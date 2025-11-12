@@ -22,7 +22,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { documentTemplates, type DocumentTemplate, type TemplateField } from '@/lib/data';
-import { generateAndSaveDraft } from '@/app/actions';
+import { generateDraft } from '@/app/actions';
 import { Wand2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { DocumentPreview } from '@/components/document-preview';
@@ -40,7 +40,7 @@ export default function DraftPage() {
   const [selectedTemplateValue, setSelectedTemplateValue] = useState<string | null>(null);
   const [isDraftVisible, setIsDraftVisible] = useState(false);
 
-  const [state, formAction, pending] = useActionState(generateAndSaveDraft, { draft: undefined, error: undefined });
+  const [state, formAction, pending] = useActionState(generateDraft, { draft: undefined, error: undefined });
 
   useEffect(() => {
     if (state?.error) {
@@ -82,16 +82,13 @@ export default function DraftPage() {
   return (
     <div className="flex flex-col min-h-screen bg-background text-foreground p-4 lg:p-6 space-y-6">
       <form action={formAction}>
-        {/* Hidden input to pass userId to the server action */}
-        <input type="hidden" name="userId" value={user?.uid || ''} />
-
         <Card>
           <CardHeader>
             <CardTitle className="font-headline flex items-center gap-2">
               <Wand2 className="h-5 w-5 text-primary" />
               Lexora Drafts
             </CardTitle>
-            <CardDescription>Select a document type and fill in the details to generate and save your draft.</CardDescription>
+            <CardDescription>Select a document type and fill in the details to generate your draft.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
             <div className="space-y-2">
@@ -141,7 +138,7 @@ export default function DraftPage() {
             <Button variant="ghost" type="button" onClick={handleReset} disabled={pending}>
               Reset
             </Button>
-            <SubmitButton disabled={!selectedTemplate || !user}>Generate & Save Draft</SubmitButton>
+            <SubmitButton disabled={!selectedTemplate || !user}>Generate Draft</SubmitButton>
           </CardFooter>
         </Card>
       </form>

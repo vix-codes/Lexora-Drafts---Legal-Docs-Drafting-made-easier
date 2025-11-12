@@ -2,19 +2,18 @@
  * @file Firestore Security Rules for Lexora Drafts application.
  *
  * Core Philosophy:
- * This ruleset prioritizes user authentication and data access control for user profiles
- * and their generated drafts, while allowing public read access to legal templates,
+ * This ruleset prioritizes user authentication and data access control for user profiles,
+ * while allowing public read access to legal templates,
  * law feed updates, and the legal glossary.
  *
  * Data Structure:
  * - /users/{userId}: Stores user profiles, accessible only to the authenticated user.
- * - /users/{userId}/drafts/{draftId}: Stores user-generated drafts, accessible only to the owning user.
  * - /templates/{templateId}: Stores legal templates, publicly readable.
  * - /lawFeed/{updateId}: Stores law feed updates, publicly readable.
  * - /glossary/{termId}: Stores legal terms and definitions, publicly readable.
  *
  * Key Security Decisions:
- * - Strict user-ownership model for user profiles and their drafts.
+ * - Strict user-ownership model for user profiles.
  * - Public read access for /templates, /lawFeed, and /glossary.
  */
 rules_version = '2';
@@ -32,16 +31,6 @@ service cloud.firestore {
 
       // User profiles can only be read or written to by the owner.
       allow read, write: if isOwner();
-
-      /**
-       * @description Controls access to a user's drafts.
-       * @path /users/{userId}/drafts/{draftId}
-       * @principle Enforces that only the user who owns the parent user profile
-       *            can create, read, update, or delete their own drafts.
-       */
-      match /drafts/{draftId} {
-        allow read, write: if isOwner();
-      }
     }
 
     /**
