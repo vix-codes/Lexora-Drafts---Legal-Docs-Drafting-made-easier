@@ -3,16 +3,17 @@
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from './ui/button';
-import { Download, FileText, Loader2 } from 'lucide-react';
+import { Download, FileText, Loader2, X } from 'lucide-react';
 import { Skeleton } from './ui/skeleton';
 
 interface DocumentPreviewProps {
   draft: string | undefined;
   isLoading: boolean;
   documentTypeLabel: string;
+  onClose: () => void;
 }
 
-export function DocumentPreview({ draft, isLoading, documentTypeLabel }: DocumentPreviewProps) {
+export function DocumentPreview({ draft, isLoading, documentTypeLabel, onClose }: DocumentPreviewProps) {
   const handleDownload = () => {
     if (!draft) return;
     
@@ -50,12 +51,18 @@ export function DocumentPreview({ draft, isLoading, documentTypeLabel }: Documen
           </CardTitle>
           <CardDescription>Review the generated document below.</CardDescription>
         </div>
-        {draft && !isLoading && (
-          <Button onClick={handleDownload} size="sm">
-            <Download className="mr-2 h-4 w-4" />
-            Download as .doc
+        <div className="flex items-center gap-2">
+          {draft && !isLoading && (
+            <Button onClick={handleDownload} size="sm" variant="outline">
+              <Download className="mr-2 h-4 w-4" />
+              Download
+            </Button>
+          )}
+          <Button onClick={onClose} size="icon" variant="ghost">
+            <X className="h-4 w-4" />
+            <span className="sr-only">Close</span>
           </Button>
-        )}
+        </div>
       </CardHeader>
       <CardContent className="flex-1">
         {isLoading ? (

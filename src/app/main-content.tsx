@@ -33,6 +33,7 @@ export default function MainContent() {
   const { toast } = useToast();
   const [selectedTemplateValue, setSelectedTemplateValue] = useState<string | null>(null);
   const [initialState, setInitialState] = useState<{ draft?: string; error?: string }>({});
+  const [isDraftVisible, setIsDraftVisible] = useState(false);
 
   const [state, formAction, pending] = useActionState(generateDraftAction, initialState);
 
@@ -44,23 +45,28 @@ export default function MainContent() {
         description: state.error,
       });
     }
+    if (state?.draft) {
+      setIsDraftVisible(true);
+    }
   }, [state, toast]);
 
   const handleTemplateChange = (value: string) => {
     setSelectedTemplateValue(value);
-    // Do not reset the entire form state here, just update the selected template
-    // setInitialState({ draft: undefined, error: undefined });
+    setInitialState({});
+    setIsDraftVisible(false);
   };
 
   const handleReset = () => {
-    setSelectedTemplateValue(null);
-    setInitialState({ draft: undefined, error: undefined });
-    // A full form reset can be achieved by changing the key of the form, but let's handle state clearing instead.
-    // For now, we just clear the draft and selection.
-    // A better implementation might use form.reset() from react-hook-form if we were using it more deeply.
     const form = document.querySelector('form');
     form?.reset();
+    setSelectedTemplateValue(null);
+    setInitialState({});
+    setIsDraftVisible(false);
   };
+
+  const handleClosePreview = () => {
+    setIsDraftVisible(false);
+  }
 
   const selectedTemplate = useMemo(() => {
     return documentTemplates.find(t => t.value === selectedTemplateValue) || null;
@@ -129,12 +135,17 @@ export default function MainContent() {
             <Button variant="ghost" type="button" onClick={handleReset} disabled={pending}>
               Reset
             </Button>
-            <SubmitButton />
+            <SubmitButton disabled={!selectedTemplate} />
           </CardFooter>
         </Card>
       </form>
-      {(pending || state?.draft) && (
-        <DocumentPreview draft={state?.draft} isLoading={pending} documentTypeLabel={selectedTemplateLabel} />
+      {(pending || (isDraftVisible && state?.draft)) && (
+        <DocumentPreview 
+          draft={state?.draft} 
+          isLoading={pending} 
+          documentTypeLabel={selectedTemplateLabel}
+          onClose={handleClosePreview}
+        />
       )}
     </>
   );
