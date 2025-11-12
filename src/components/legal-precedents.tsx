@@ -4,14 +4,11 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { BookMarked, ExternalLink } from 'lucide-react';
+import Link from 'next/link';
 
 const PRECEDENTS_BASE_URL = 'https://intelgpt.vercel.app/precedents';
 
 export default function LegalPrecedents() {
-  const openPrecedents = () => {
-    window.open(PRECEDENTS_BASE_URL, '_blank', 'noopener,noreferrer');
-  };
-
   return (
     <Card>
       <CardHeader>
@@ -24,9 +21,11 @@ export default function LegalPrecedents() {
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <Button onClick={openPrecedents} className="w-full">
-          <ExternalLink className="mr-2 h-4 w-4" />
-          Explore Cases
+        <Button asChild className="w-full">
+          <Link href={PRECEDENTS_BASE_URL}>
+            <ExternalLink className="mr-2 h-4 w-4" />
+            Explore Cases
+          </Link>
         </Button>
       </CardContent>
     </Card>

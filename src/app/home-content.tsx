@@ -7,14 +7,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Search } from 'lucide-react';
 import type { ReactNode } from 'react';
+import Link from 'next/link';
 
 const FIND_LAWYER_BASE_URL = 'https://intelgpt.vercel.app/find-lawyer';
 
 export default function HomeContent({ children }: { children: ReactNode }) {
-  const openLawyerSearch = () => {
-    window.open(FIND_LAWYER_BASE_URL, '_blank', 'noopener,noreferrer');
-  };
-
   return (
     <main className="grid grid-cols-1 md:grid-cols-2 gap-6 lg:gap-8 p-4 lg:p-6">
       <MainContent />
@@ -28,9 +25,11 @@ export default function HomeContent({ children }: { children: ReactNode }) {
           <CardDescription>Search for legal professionals in your area.</CardDescription>
         </CardHeader>
         <CardContent>
-          <Button onClick={openLawyerSearch} className="w-full">
-            <Search className="mr-2 h-4 w-4" />
-            Search Lawyers
+          <Button asChild className="w-full">
+            <Link href={FIND_LAWYER_BASE_URL}>
+              <Search className="mr-2 h-4 w-4" />
+              Search Lawyers
+            </Link>
           </Button>
         </CardContent>
       </Card>

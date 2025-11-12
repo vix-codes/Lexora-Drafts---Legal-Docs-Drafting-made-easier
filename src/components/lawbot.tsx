@@ -4,14 +4,11 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Bot, MessageSquare } from 'lucide-react';
+import Link from 'next/link';
 
 const CHATBOT_BASE_URL = 'https://intelgpt.vercel.app/';
 
 export function Lawbot() {
-  const openLawbot = () => {
-    window.open(CHATBOT_BASE_URL, '_blank', 'noopener,noreferrer');
-  };
-
   return (
     <Card>
       <CardHeader>
@@ -22,9 +19,11 @@ export function Lawbot() {
         <CardDescription>Get instant answers to your legal questions from our AI assistant.</CardDescription>
       </CardHeader>
       <CardContent>
-        <Button onClick={openLawbot} className="w-full">
-          <MessageSquare className="mr-2 h-4 w-4" />
-          Start Chat
+        <Button asChild className="w-full">
+          <Link href={CHATBOT_BASE_URL}>
+            <MessageSquare className="mr-2 h-4 w-4" />
+            Start Chat
+          </Link>
         </Button>
       </CardContent>
     </Card>
