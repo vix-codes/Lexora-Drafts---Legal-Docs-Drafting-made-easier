@@ -1,15 +1,13 @@
 'use client';
 import {
-  getAuth,
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
-  type Auth,
 } from 'firebase/auth';
 import { doc, setDoc, serverTimestamp, getDoc } from 'firebase/firestore';
-import { getSdks } from '@/firebase';
+import { initializeFirebase } from '@/firebase';
 
 export async function signUpWithEmail(email: string, password: string): Promise<{ success: boolean; error?: string }> {
-    const { auth, firestore } = getSdks(getAuth().app);
+    const { auth, firestore } = initializeFirebase();
   try {
     const userCredential = await createUserWithEmailAndPassword(auth, email, password);
     const user = userCredential.user;
@@ -31,7 +29,7 @@ export async function signUpWithEmail(email: string, password: string): Promise<
 }
 
 export async function signInWithEmail(email: string, password: string): Promise<{ success: boolean; error?: string }> {
-    const { auth, firestore } = getSdks(getAuth().app);
+    const { auth, firestore } = initializeFirebase();
   try {
     const userCredential = await signInWithEmailAndPassword(auth, email, password);
     const user = userCredential.user;
