@@ -32,6 +32,10 @@ function FormSubmitButton({ children, isSubmitting, ...props }: ButtonProps & { 
   );
 }
 
+function getUsernameFromEmail(email: string) {
+    return email.split('@')[0];
+}
+
 export function AuthForm({ mode }: AuthFormProps) {
   const { toast } = useToast();
   const router = useRouter();
@@ -58,6 +62,7 @@ export function AuthForm({ mode }: AuthFormProps) {
         const userRef = doc(db, 'users', user.uid);
         await setDoc(userRef, {
           email: user.email,
+          username: getUsernameFromEmail(user.email!),
           createdAt: serverTimestamp(),
         });
         

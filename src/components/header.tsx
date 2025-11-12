@@ -6,11 +6,24 @@ import { BookText, LogOut } from 'lucide-react';
 import { Logo } from './icons';
 import { Glossary } from './glossary';
 import { Button } from './ui/button';
+import { useAuth } from './auth-provider';
+
+function getUsername(email: string | null | undefined): string {
+    if (!email) return 'Guest';
+    const username = email.split('@')[0];
+    return username.charAt(0).toUpperCase() + username.slice(1);
+}
 
 export default function Header() {
+  const { user } = useAuth();
+
   const handleSignOut = async () => {
     const auth = getAuth(app);
-    await firebaseSignOut(auth);
+    try {
+        await firebaseSignOut(auth);
+    } catch (error) {
+        console.error("Error signing out: ", error);
+    }
   };
 
   return (
@@ -19,19 +32,20 @@ export default function Header() {
         <Logo className="h-7 w-7 text-primary" />
         <h1 className="font-headline text-xl font-semibold tracking-tight">lawIntel</h1>
       </div>
-      <div className="flex items-center gap-2">
-        <Glossary>
-          <Button variant="ghost" size="icon">
-            <BookText className="h-5 w-5" />
-            <span className="sr-only">Open Glossary</span>
-          </Button>
-        </Glossary>
-        <form action={handleSignOut}>
-          <Button variant="ghost" size="icon" type="submit">
-            <LogOut className="h-5 w-5" />
-            <span className="sr-only">Sign Out</span>
-          </Button>
-        </form>
+      <div className="flex items-center gap-4">
+        {user && <span className="text-sm font-medium text-muted-foreground">Hi, {getUsername(user.email)}</span>}
+        <div className="flex items-center gap-2">
+            <Glossary>
+            <Button variant="ghost" size="icon">
+                <BookText className="h-5 w-5" />
+                <span className="sr-only">Open Glossary</span>
+            </Button>
+            </Glossary>
+            <Button variant="ghost" size="icon" onClick={handleSignOut}>
+                <LogOut className="h-5 w-5" />
+                <span className="sr-only">Sign Out</span>
+            </Button>
+        </div>
       </div>
     </header>
   );
