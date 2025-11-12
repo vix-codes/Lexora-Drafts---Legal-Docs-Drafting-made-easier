@@ -1,14 +1,16 @@
 'use client';
 
+import { getAuth, signOut as firebaseSignOut } from 'firebase/auth';
+import { app } from '@/firebase/client';
 import { BookText, LogOut } from 'lucide-react';
 import { Logo } from './icons';
 import { Glossary } from './glossary';
 import { Button } from './ui/button';
-import { signOut } from '@/app/actions';
 
 export default function Header() {
   const handleSignOut = async () => {
-    await signOut();
+    const auth = getAuth(app);
+    await firebaseSignOut(auth);
   };
 
   return (
