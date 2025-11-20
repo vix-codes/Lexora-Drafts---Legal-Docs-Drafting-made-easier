@@ -57,6 +57,7 @@ export async function displayLawUpdatesWithSummaries(): Promise<LawUpdate[]> {
 
     return output.summaries;
   } catch (error) {
+    console.error("AI summarization failed, falling back to mock data. Error:", error);
     // On error, fall back to the original mock data without AI summaries.
     return lawUpdates.map(update => ({
         ...update,
