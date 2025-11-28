@@ -13,7 +13,7 @@ export default function SignupForm({ children }: { children: ReactNode }) {
         <div className="auth-content text-card-foreground">
             <div className="flex items-center gap-3">
                 <Logo className="h-8 w-8 text-primary" />
-                <h1 className="font-headline text-2xl font-semibold tracking-tight">Lexora</h1>
+                <h1 className="font-headline text-2xl font-semibold tracking-tight">lexintel</h1>
             </div>
             <div>
                 <h2 className="font-headline text-3xl font-semibold mb-4">Stay Ahead of the Curve</h2>
@@ -23,7 +23,7 @@ export default function SignupForm({ children }: { children: ReactNode }) {
                 {children}
             </div>
             <div className="text-xs text-muted-foreground">
-                &copy; {new Date().getFullYear()} Lexora. All rights reserved.
+                &copy; {new Date().getFullYear()} lexintel. All rights reserved.
             </div>
         </div>
       </div>
@@ -32,7 +32,7 @@ export default function SignupForm({ children }: { children: ReactNode }) {
             <CardHeader className="text-center">
                 <div className="flex justify-center items-center gap-3 mb-4 lg:hidden">
                     <Logo className="h-8 w-8 text-primary" />
-                    <h1 className="font-headline text-2xl font-semibold tracking-tight">Lexora</h1>
+                    <h1 className="font-headline text-2xl font-semibold tracking-tight">lexintel</h1>
                 </div>
                 <CardTitle>Create an Account</CardTitle>
                 <CardDescription>Fill out the form below to get started.</CardDescription>

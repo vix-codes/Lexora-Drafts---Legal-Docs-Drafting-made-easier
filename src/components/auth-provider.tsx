@@ -18,7 +18,7 @@ function LoadingScreen() {
         <div className="flex flex-col items-center gap-4">
             <div className="flex items-center gap-3">
                 <Logo className="h-8 w-8 text-primary animate-pulse" />
-                <h1 className="font-headline text-2xl font-semibold tracking-tight">Lexora</h1>
+                <h1 className="font-headline text-2xl font-semibold tracking-tight">lexintel</h1>
             </div>
             <div className="flex items-center gap-2">
                 <Skeleton className="h-4 w-4 rounded-full" />
