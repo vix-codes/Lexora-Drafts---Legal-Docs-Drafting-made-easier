@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useEffect, useState, useMemo } from 'react';
@@ -82,6 +83,7 @@ export default function DraftPage() {
   return (
     <div className="flex flex-col min-h-screen bg-background text-foreground p-4 lg:p-6 space-y-6">
       <form action={formAction}>
+        {user && <input type="hidden" name="userId" value={user.uid} />}
         <Card>
           <CardHeader>
             <CardTitle className="font-headline flex items-center gap-2">
