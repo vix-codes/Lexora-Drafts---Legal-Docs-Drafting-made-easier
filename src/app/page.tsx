@@ -3,13 +3,14 @@
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Bot, FileText, Search, BookOpen } from 'lucide-react';
+import { Bot, FileText, Search } from 'lucide-react';
 import Link from 'next/link';
 import Header from '@/components/header';
 import Footer from '@/components/footer';
 import HomeContent from './home-content';
 import { useAuth } from '@/components/auth-provider';
 import { useState } from 'react';
+import { LawyerProfilePromptCard } from '@/components/lawyer-profile-prompt-card';
 
 const features = [
   {
@@ -29,12 +30,6 @@ const features = [
     title: 'Find a Lawyer',
     description: 'Search our network of verified legal professionals across India by location.',
     link: '/find-lawyer',
-  },
-  {
-    icon: <BookOpen className="h-8 w-8 text-primary" />,
-    title: 'Legal Glossary',
-    description: 'Understand complex legal jargon with a searchable library of simple definitions.',
-    link: '/', // The glossary is in a sheet, can be opened from header in other pages
   },
 ];
 
@@ -71,7 +66,7 @@ function PublicLandingPage() {
               Instant access. No login required.
             </p>
           </div>
-          <div className="mt-12 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          <div className="mt-12 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-8">
             {features.map((feature) => (
               <Link href={feature.link} key={feature.title} className="block group">
                 <Card className="h-full hover:border-primary transition-colors hover:shadow-lg">
@@ -85,6 +80,7 @@ function PublicLandingPage() {
                 </Card>
               </Link>
             ))}
+             <LawyerProfilePromptCard />
           </div>
         </div>
       </section>
