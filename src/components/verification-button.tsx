@@ -26,20 +26,20 @@ export function VerificationButton({
   const handleClick = async () => {
     setIsSubmitting(true);
     try {
-      const result = await requestVerification(userId, documentType, draftContent, formInputs);
-      if (result.success) {
-        toast({
-          title: 'Request Sent',
-          description: result.message,
-        });
-      } else {
-        // This will now catch the specific error message from the server action
-        throw new Error(result.message || 'An unknown error occurred.');
-      }
+      // The action now might not throw directly but will use the emitter.
+      // The client-side toast is now for optimistic UI feedback.
+      await requestVerification(userId, documentType, draftContent, formInputs);
+      
+      toast({
+        title: 'Request Sent',
+        description: 'Your request has been sent to the lawyer for verification.',
+      });
+
     } catch (error: any) {
+      // This catch block might still be useful for network errors or other non-permission issues.
       toast({
         variant: 'destructive',
-        title: 'Error',
+        title: 'Submission Error',
         description: error.message || 'Could not send verification request.',
       });
     } finally {

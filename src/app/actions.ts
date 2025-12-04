@@ -6,6 +6,8 @@ import { getFirestore, collection, addDoc, serverTimestamp, doc, updateDoc, arra
 import { documentTemplates } from '@/lib/data';
 import { initializeApp, getApps, getApp, type FirebaseApp } from 'firebase/app';
 import { firebaseConfig } from '@/firebase/config';
+import { errorEmitter } from '@/firebase/error-emitter';
+import { FirestorePermissionError } from '@/firebase/errors';
 
 // Correctly initialize Firebase app for server-side usage
 function getFirebaseApp(): FirebaseApp {
@@ -49,8 +51,8 @@ export const generateDraft = async (prevState: DraftState, formData: FormData): 
           userId: userId,
         });
       } catch (dbError) {
+        // Not using the emitter here as it's a non-critical logging operation.
         console.error('Failed to log activity:', dbError);
-        // We don't block the user flow if logging fails
       }
     }
 
@@ -99,34 +101,39 @@ export async function requestVerification(
   documentType: string,
   draftContent: string,
   formInputs: Record<string, any>
-) {
+): Promise<void> {
   if (!userId || !draftContent) {
-    return { success: false, message: 'User ID and draft content are required to send a request.' };
+    throw new Error('User ID and draft content are required.');
   }
 
-  try {
-    const app = getFirebaseApp();
-    const db = getFirestore(app);
-    const requestsRef = collection(db, 'verificationRequests');
+  const app = getFirebaseApp();
+  const db = getFirestore(app);
+  const requestsRef = collection(db, 'verificationRequests');
 
-    await addDoc(requestsRef, {
-      userId,
-      documentType,
-      draftContent,
-      formInputs,
-      status: 'pending',
-      lawyerComments: [],
-      createdAt: serverTimestamp(),
-      updatedAt: serverTimestamp(),
-    });
-    return { success: true, message: 'Your request has been sent to the lawyer.' };
-  } catch (error) {
-    console.error('Error creating verification request:', error);
-    return { success: false, message: 'Failed to send verification request.' };
-  }
+  const requestData = {
+    userId,
+    documentType,
+    draftContent,
+    formInputs,
+    status: 'pending',
+    lawyerComments: [],
+    createdAt: serverTimestamp(),
+    updatedAt: serverTimestamp(),
+  };
+
+  // No try/catch. Use .catch() to handle and emit specific errors.
+  addDoc(requestsRef, requestData).catch((error) => {
+      const permissionError = new FirestorePermissionError({
+        path: requestsRef.path,
+        operation: 'create',
+        requestResourceData: requestData,
+      });
+      // This will be caught by the client-side listener.
+      errorEmitter.emit('permission-error', permissionError);
+  });
 }
 
-export async function addLawyerComment(requestId: string, commentText: string) {
+export async function addLawyerComment(requestId: string, commentText: string): Promise<void> {
   if (!requestId || !commentText) {
     throw new Error('Request ID and comment are required.');
   }
@@ -134,26 +141,29 @@ export async function addLawyerComment(requestId: string, commentText: string) {
   const db = getFirestore(app);
   const requestRef = doc(db, 'verificationRequests', requestId);
 
-  try {
-    const newComment = {
-      text: commentText,
-      timestamp: new Date(), // Using client-side date for simplicity, serverTimestamp is better
-    };
+  const newComment = {
+    text: commentText,
+    timestamp: new Date(),
+  };
 
-    await updateDoc(requestRef, {
+  const updateData = {
       status: 'reviewed',
       lawyerComments: arrayUnion(newComment),
       updatedAt: serverTimestamp(),
       lawyerNotification: 'Your draft has been reviewed. Please see lawyer comments.',
+  };
+
+  updateDoc(requestRef, updateData).catch((error) => {
+    const permissionError = new FirestorePermissionError({
+      path: requestRef.path,
+      operation: 'update',
+      requestResourceData: updateData,
     });
-    return { success: true, message: 'Comment added and user notified.' };
-  } catch (error) {
-    console.error('Error adding lawyer comment:', error);
-    return { success: false, message: 'Failed to add comment.' };
-  }
+    errorEmitter.emit('permission-error', permissionError);
+  });
 }
 
-export async function approveRequest(requestId: string) {
+export async function approveRequest(requestId: string): Promise<void> {
   if (!requestId) {
     throw new Error('Request ID is required.');
   }
@@ -161,15 +171,18 @@ export async function approveRequest(requestId: string) {
   const db = getFirestore(app);
   const requestRef = doc(db, 'verificationRequests', requestId);
 
-  try {
-    await updateDoc(requestRef, {
-      status: 'approved',
-      updatedAt: serverTimestamp(),
-      lawyerNotification: 'Your draft has been approved.',
+  const updateData = {
+    status: 'approved',
+    updatedAt: serverTimestamp(),
+    lawyerNotification: 'Your draft has been approved.',
+  };
+
+  updateDoc(requestRef, updateData).catch((error) => {
+    const permissionError = new FirestorePermissionError({
+      path: requestRef.path,
+      operation: 'update',
+      requestResourceData: updateData,
     });
-    return { success: true, message: 'Draft approved and user notified.' };
-  } catch (error) {
-    console.error('Error approving request:', error);
-    return { success: false, message: 'Failed to approve request.' };
-  }
+    errorEmitter.emit('permission-error', permissionError);
+  });
 }

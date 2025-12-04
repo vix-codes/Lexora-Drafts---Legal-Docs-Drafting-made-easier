@@ -7,6 +7,7 @@ import { getAuth, onAuthStateChanged, signOut, type User } from 'firebase/auth';
 import { app } from '@/firebase/client';
 import { Skeleton } from './ui/skeleton';
 import { Logo } from './icons';
+import { FirebaseErrorListener } from './FirebaseErrorListener';
 
 const AuthContext = createContext<{ user: User | null }>({ user: null });
 
@@ -59,12 +60,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // Handle authenticated users
     if (user) {
       if (isLawyer) {
-        // If lawyer is logged in, and tries to access a public only page, redirect to panel
-        if (pathIsPublicOnly) {
-          router.push('/lawyer-panel');
-        }
-        // If lawyer is anywhere else, redirect to panel.
-        else if (!pathIsLawyerOnly) {
+        // If lawyer is logged in and not on their panel, redirect them.
+        if (!pathIsLawyerOnly) {
           router.push('/lawyer-panel');
         }
       } else { // Regular user
@@ -97,7 +94,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return <LoadingScreen />;
   }
 
-  return <AuthContext.Provider value={{ user }}>{children}</AuthContext.Provider>;
+  return (
+    <AuthContext.Provider value={{ user }}>
+      {children}
+      <FirebaseErrorListener />
+    </AuthContext.Provider>
+  );
 }
 
 export const useAuth = () => useContext(AuthContext);
