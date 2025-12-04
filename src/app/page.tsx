@@ -47,8 +47,7 @@ function PublicLandingPage() {
           Legal Intelligence, <span className="text-primary">Simplified.</span>
         </h1>
         <p className="mt-4 max-w-2xl mx-auto text-lg text-muted-foreground">
-          Lexintel provides AI-powered tools to help you navigate the complexities of Indian law.
-          Generate drafts, get answers, and connect with professionals—all in one place.
+          Lexintel makes Indian law easier to access. From quick legal explanations to ready-to-use drafts and lawyer discovery, everything is available in one platform.
         </p>
         <div className="mt-8 flex justify-center gap-4">
           <Button asChild size="lg">
