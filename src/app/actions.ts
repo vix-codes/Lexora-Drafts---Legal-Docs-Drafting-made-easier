@@ -62,12 +62,12 @@ export const askLawbot = async (query: string, history: Message[]): Promise<Lega
 export const findLawyersExternally = async (location: string) => {
   // This is a mock function to simulate fetching data from Google Maps API.
   // In a real application, you would use a library like @googlemaps/google-maps-services-js
-  // to call the Places API.
+  // to call the Places API with a secure API key.
   await new Promise(resolve => setTimeout(resolve, 1500)); // Simulate network delay
 
   console.log(`Simulating external search for lawyers near: ${location}`);
   
-  // Return mock data that mimics the Google Places API response structure.
+  // Return more realistic mock data that mimics the Google Places API response structure.
   return [
     {
       name: "Maheshwari & Co. | Top Law Firm",
