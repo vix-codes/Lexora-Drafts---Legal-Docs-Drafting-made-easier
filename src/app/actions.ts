@@ -3,8 +3,18 @@
 import { generateLegalDraft } from '@/ai/flows/generate-legal-draft';
 import { answerLegalQuery, type LegalQueryOutput } from '@/ai/flows/answer-legal-query';
 import { getFirestore, collection, addDoc, serverTimestamp, doc, updateDoc, arrayUnion } from 'firebase/firestore';
-import { app } from '@/firebase/client';
 import { documentTemplates } from '@/lib/data';
+import { initializeApp, getApps, getApp, type FirebaseApp } from 'firebase/app';
+import { firebaseConfig } from '@/firebase/config';
+
+// Correctly initialize Firebase app for server-side usage
+function getFirebaseApp(): FirebaseApp {
+  if (getApps().length > 0) {
+    return getApp();
+  }
+  return initializeApp(firebaseConfig);
+}
+
 
 type DraftState = {
   draft?: string;
@@ -27,6 +37,7 @@ export const generateDraft = async (prevState: DraftState, formData: FormData): 
     // Log activity to Firestore
     if (userId) {
       try {
+        const app = getFirebaseApp();
         const db = getFirestore(app);
         const activitiesRef = collection(db, 'users', userId, 'activities');
         const docLabel = documentTemplates.find(t => t.value === docType)?.label ?? 'document';
@@ -93,6 +104,7 @@ export async function requestVerification(
     throw new Error('User ID and draft content are required.');
   }
 
+  const app = getFirebaseApp();
   const db = getFirestore(app);
   const requestsRef = collection(db, 'verificationRequests');
 
@@ -118,6 +130,7 @@ export async function addLawyerComment(requestId: string, commentText: string) {
   if (!requestId || !commentText) {
     throw new Error('Request ID and comment are required.');
   }
+  const app = getFirebaseApp();
   const db = getFirestore(app);
   const requestRef = doc(db, 'verificationRequests', requestId);
 
@@ -144,6 +157,7 @@ export async function approveRequest(requestId: string) {
   if (!requestId) {
     throw new Error('Request ID is required.');
   }
+  const app = getFirebaseApp();
   const db = getFirestore(app);
   const requestRef = doc(db, 'verificationRequests', requestId);
 
