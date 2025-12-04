@@ -117,6 +117,31 @@
         "govIdUrl": { "type": "string", "format": "uri" }
       },
       "required": ["id", "name", "email", "location", "specializations", "isVerified"]
+    },
+    "RecentActivity": {
+      "title": "Recent Activity",
+      "type": "object",
+      "description": "Represents a single activity item for a user.",
+      "properties": {
+        "action": {
+          "type": "string",
+          "description": "The action performed, e.g., 'Generated'."
+        },
+        "subject": {
+          "type": "string",
+          "description": "The subject of the action, e.g., 'Rental Agreement'."
+        },
+        "timestamp": {
+          "type": "string",
+          "format": "date-time",
+          "description": "The timestamp when the activity occurred."
+        },
+        "userId": {
+          "type": "string",
+          "description": "The UID of the user who performed the action."
+        }
+      },
+      "required": ["action", "subject", "timestamp", "userId"]
     }
   },
   "auth": {
@@ -131,6 +156,12 @@
         "$ref": "#/entities/UserProfile"
       },
       "description": "Stores user profiles, keyed by their Firebase Auth UID."
+    },
+    "/users/{userId}/activities/{activityId}": {
+        "schema": {
+            "$ref": "#/entities/RecentActivity"
+        },
+        "description": "Stores a log of recent activities for a specific user."
     },
     "/lawyers/{lawyerId}": {
       "schema": {

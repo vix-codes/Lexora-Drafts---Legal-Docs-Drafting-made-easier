@@ -8,12 +8,13 @@
  *
  * Data Structure:
  * - /users/{userId}: Stores user profiles, accessible only to the authenticated user.
+ * - /users/{userId}/activities/{activityId}: Stores activity logs, accessible only to the owner.
  * - /templates/{templateId}: Stores legal templates, publicly readable.
  * - /lawFeed/{updateId}: Stores law feed updates, publicly readable.
  * - /glossary/{termId}: Stores legal terms and definitions, publicly readable.
  *
  * Key Security Decisions:
- * - Strict user-ownership model for user profiles.
+ * - Strict user-ownership model for user profiles and their activities.
  * - Public read access for /templates, /lawFeed, and /glossary.
  */
 rules_version = '2';
@@ -31,6 +32,15 @@ service cloud.firestore {
 
       // User profiles can only be read or written to by the owner.
       allow read, write: if isOwner();
+
+      /**
+       * @description Controls access to a user's recent activity log.
+       * @path /users/{userId}/activities/{activityId}
+       */
+      match /activities/{activityId} {
+        // Only the owner can read or write their own activity.
+        allow read, write: if isOwner();
+      }
     }
 
     /**

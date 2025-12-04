@@ -1,28 +1,79 @@
+'use client';
+
 import Header from '@/components/header';
 import LegalPrecedents from '@/components/legal-precedents';
 import HomeContent from '@/app/home-content';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { BookText, History } from 'lucide-react';
+import { BookText, History, Loader2 } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
+import { useAuth } from '@/components/auth-provider';
+import { useCollection } from '@/firebase/firestore/use-collection';
+import { collection, getFirestore, query, orderBy, limit } from 'firebase/firestore';
+import { app } from '@/firebase/client';
+import { useMemo } from 'react';
+import { formatDistanceToNow } from 'date-fns';
+import { Skeleton } from '@/components/ui/skeleton';
+
+type Activity = {
+  id: string;
+  action: string;
+  subject: string;
+  timestamp: {
+    seconds: number;
+    nanoseconds: number;
+  }
+};
 
 function RecentActivity() {
-  const activities = [
-    {
-      action: 'Generated',
-      subject: 'Rental Agreement',
-      time: '15 mins ago',
-    },
-    {
-      action: 'Searched for',
-      subject: '"intellectual property"',
-      time: '1 hour ago',
-    },
-    {
-      action: 'Viewed',
-      subject: 'Partnership Deed Template',
-      time: '3 hours ago',
-    },
-  ];
+  const { user } = useAuth();
+  
+  const activitiesQuery = useMemo(() => {
+    if (!user) return null;
+    const db = getFirestore(app);
+    return query(
+      collection(db, 'users', user.uid, 'activities'), 
+      orderBy('timestamp', 'desc'), 
+      limit(5)
+    );
+  }, [user]);
+
+  // @ts-ignore
+  const { data: activities, isLoading } = useCollection<Activity>(activitiesQuery);
+
+  const renderContent = () => {
+    if (isLoading) {
+      return (
+        <div className="space-y-4">
+          {[...Array(3)].map((_, i) => (
+            <div key={i} className="flex items-center justify-between">
+              <Skeleton className="h-4 w-3/4" />
+              <Skeleton className="h-4 w-1/6" />
+            </div>
+          ))}
+        </div>
+      );
+    }
+    
+    if (!activities || activities.length === 0) {
+      return <p className="text-sm text-muted-foreground text-center py-4">No recent activity found.</p>;
+    }
+    
+    return (
+      <div className="space-y-4">
+        {activities.map((activity) => (
+          <div key={activity.id} className="flex items-center justify-between text-sm">
+            <div>
+              <span className="font-medium">{activity.action}</span>
+              <span className="text-muted-foreground"> {activity.subject}</span>
+            </div>
+            <span className="text-xs text-muted-foreground">
+              {activity.timestamp ? formatDistanceToNow(new Date(activity.timestamp.seconds * 1000), { addSuffix: true }) : 'Just now'}
+            </span>
+          </div>
+        ))}
+      </div>
+    );
+  }
 
   return (
     <Card>
@@ -34,17 +85,7 @@ function RecentActivity() {
         <CardDescription>A log of your recent actions within the app.</CardDescription>
       </CardHeader>
       <CardContent>
-        <div className="space-y-4">
-          {activities.map((activity, index) => (
-            <div key={index} className="flex items-center justify-between text-sm">
-              <div>
-                <span className="font-medium">{activity.action}</span>
-                <span className="text-muted-foreground"> {activity.subject}</span>
-              </div>
-              <span className="text-xs text-muted-foreground">{activity.time}</span>
-            </div>
-          ))}
-        </div>
+        {renderContent()}
       </CardContent>
     </Card>
   );

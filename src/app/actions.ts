@@ -2,6 +2,9 @@
 
 import { generateLegalDraft } from '@/ai/flows/generate-legal-draft';
 import { answerLegalQuery, type LegalQueryOutput } from '@/ai/flows/answer-legal-query';
+import { getFirestore, collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { app } from '@/firebase/client';
+import { documentTemplates } from '@/lib/data';
 
 type DraftState = {
   draft?: string;
@@ -11,6 +14,7 @@ type DraftState = {
 export const generateDraft = async (prevState: DraftState, formData: FormData): Promise<DraftState> => {
   const docType = formData.get('documentType') as string;
   const rawData = Object.fromEntries(formData.entries());
+  const userId = formData.get('userId') as string;
 
   try {
     const result = await generateLegalDraft({
@@ -19,6 +23,26 @@ export const generateDraft = async (prevState: DraftState, formData: FormData): 
     });
     
     const draftContent = result.legalDraft;
+
+    // Log activity to Firestore
+    if (userId) {
+      try {
+        const db = getFirestore(app);
+        const activitiesRef = collection(db, 'users', userId, 'activities');
+        const docLabel = documentTemplates.find(t => t.value === docType)?.label ?? 'document';
+        
+        await addDoc(activitiesRef, {
+          action: 'Generated',
+          subject: docLabel,
+          timestamp: serverTimestamp(),
+          userId: userId,
+        });
+      } catch (dbError) {
+        console.error('Failed to log activity:', dbError);
+        // We don't block the user flow if logging fails
+      }
+    }
+
 
     return { draft: draftContent };
   } catch (error: any) {
