@@ -87,7 +87,7 @@ export function AuthForm({ mode }: AuthFormProps) {
             const lawyerRef = doc(db, 'lawyers', user.uid);
             const newLawyerProfile = {
                 id: user.uid,
-                email: user.email,
+                email: user.email!,
                 name: lawyerData.name,
                 enrollmentNumber: lawyerData.enrollmentNumber,
                 stateBarCouncil: lawyerData.stateBarCouncil,

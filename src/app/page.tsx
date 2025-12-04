@@ -122,11 +122,9 @@ export default function Page() {
     <div className="flex flex-col min-h-screen bg-background text-foreground">
       <Header />
       <HomeContent>
-      </HomeContent>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 lg:gap-8 p-4 lg:p-6">
         <GlossaryPreview />
         <RecentActivity />
-      </div>
+      </HomeContent>
     </div>
   );
 }
