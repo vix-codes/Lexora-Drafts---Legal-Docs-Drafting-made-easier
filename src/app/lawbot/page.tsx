@@ -21,7 +21,6 @@ export default function LawbotPage() {
   ]);
   const [input, setInput] = useState('');
   const [isPending, setIsPending] = useState(false);
-  const scrollAreaRef = useRef<HTMLDivElement>(null);
   const viewportRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
