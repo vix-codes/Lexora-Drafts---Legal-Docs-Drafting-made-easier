@@ -112,7 +112,7 @@ export function AuthForm({ mode }: AuthFormProps) {
                 description: "You've been successfully signed up!",
             });
         }
-        router.push('/');
+        // No redirect here, AuthProvider will handle it
       } else { // Login or Lawyer Login
         await signInWithEmailAndPassword(auth, email, password);
         
@@ -121,14 +121,13 @@ export function AuthForm({ mode }: AuthFormProps) {
             title: 'Lawyer Portal Access',
             description: "Welcome back, counselor.",
           });
-          router.push('/lawyer-panel');
         } else {
           toast({
             title: 'Signed In',
             description: "Welcome back!",
           });
-          router.push('/');
         }
+        // No redirect here, AuthProvider will handle it
       }
     } catch (error: any) {
       let description = 'An unexpected error occurred.';

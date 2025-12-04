@@ -11,7 +11,9 @@ import { Logo } from './icons';
 const AuthContext = createContext<{ user: User | null }>({ user: null });
 
 const authRequiredRoutes = ['/dashboard', '/lawyer-panel'];
-const publicRoutes = ['/login', '/signup', '/lawyer-signup', '/lawyer-login', '/draft', '/lawbot', '/find-lawyer', '/'];
+const lawyerOnlyRoutes = ['/lawyer-panel'];
+const publicOnlyRoutes = ['/login', '/signup', '/lawyer-login', '/lawyer-signup'];
+const LAWYER_EMAIL = 'lawyer@lexintel.com';
 
 function LoadingScreen() {
   return (
@@ -49,21 +51,38 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (isUserLoading) return;
 
+    const isLawyer = user?.email === LAWYER_EMAIL;
     const pathIsAuthRequired = authRequiredRoutes.some(route => pathname.startsWith(route));
-    const isLawyerRoute = pathname.startsWith('/lawyer-panel');
-    const isLawyer = user?.email === 'lawyer@lexintel.com';
+    const pathIsLawyerOnly = lawyerOnlyRoutes.some(route => pathname.startsWith(route));
+    const pathIsPublicOnly = publicOnlyRoutes.some(route => pathname.startsWith(route));
 
-    if (!user && pathIsAuthRequired) {
-      router.push('/login');
+    // Handle authenticated users
+    if (user) {
+      if (isLawyer) {
+        // If lawyer is not on their panel, redirect them there.
+        if (!pathIsLawyerOnly) {
+          router.push('/lawyer-panel');
+        }
+      } else {
+        // Redirect regular users away from lawyer-only pages.
+        if (pathIsLawyerOnly) {
+          router.push('/');
+        }
+        // If a regular user is on a public-only page (e.g. /login), redirect to homepage.
+        else if (pathIsPublicOnly) {
+            router.push('/');
+        }
+      }
     }
-
-    if (user && isLawyerRoute && !isLawyer) {
-        router.push('/'); // Redirect non-lawyers away from lawyer panel
+    // Handle unauthenticated users
+    else {
+      // If the user is not logged in and tries to access a protected route, redirect to login.
+      if (pathIsAuthRequired) {
+        router.push('/login');
+      }
     }
-    
   }, [user, isUserLoading, router, pathname]);
   
-  // Show loading screen while we determine auth state for required auth pages
   if (isUserLoading && authRequiredRoutes.some(route => pathname.startsWith(route))) {
     return <LoadingScreen />;
   }
