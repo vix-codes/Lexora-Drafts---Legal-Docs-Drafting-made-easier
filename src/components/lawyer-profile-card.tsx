@@ -16,8 +16,6 @@ import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Briefcase, Loader2 } from 'lucide-react';
-import Header from '@/components/header';
-import { useRouter } from 'next/navigation';
 
 const lawyerProfileSchema = z.object({
   name: z.string().min(2, 'Name is required.'),
@@ -129,7 +127,7 @@ function LawyerProfileForm({ lawyerData, lawyerId }: { lawyerData: any, lawyerId
 
 function LoadingSkeleton() {
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 p-6 pt-0">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="space-y-2"> <Skeleton className="h-4 w-1/4" /> <Skeleton className="h-10 w-full" /> </div>
           <div className="space-y-2"> <Skeleton className="h-4 w-1/4" /> <Skeleton className="h-10 w-full" /> </div>
@@ -147,9 +145,8 @@ function LoadingSkeleton() {
 }
 
 
-export default function LawyerProfilePage() {
+export function LawyerProfileCard() {
   const { user } = useAuth();
-  const router = useRouter();
   
   const lawyerDocRef = useMemo(() => {
     if (!user) return null;
@@ -159,30 +156,29 @@ export default function LawyerProfilePage() {
 
   const { data: lawyerData, isLoading } = useDoc(lawyerDocRef);
 
-  // If user is loaded and is not a lawyer, redirect them.
-  if (!isLoading && user && !lawyerData) {
-    router.push('/');
+  if (isLoading || !user) {
+    // You might want a skeleton loader here if it's the initial page load for a lawyer
+    return null;
+  }
+  
+  // If user is loaded and is not a lawyer, don't render anything
+  if (!lawyerData) {
     return null;
   }
   
   return (
-    <div className="flex flex-col min-h-screen bg-background text-foreground">
-      <Header />
-      <main className="flex-1 p-4 lg:p-6">
-        <Card>
-            <CardHeader>
-              <CardTitle className="font-headline flex items-center gap-2">
-                  <Briefcase className="h-6 w-6 text-primary" />
-                  Your Professional Profile
-              </CardTitle>
-              <CardDescription>This information is visible to potential clients on the platform. Keep it up-to-date.</CardDescription>
-            </CardHeader>
-            <CardContent>
-                {isLoading && <LoadingSkeleton />}
-                {lawyerData && user && <LawyerProfileForm lawyerData={lawyerData} lawyerId={user.uid} />}
-            </CardContent>
-        </Card>
-      </main>
-    </div>
+    <Card className="md:col-span-2">
+        <CardHeader>
+          <CardTitle className="font-headline flex items-center gap-2">
+              <Briefcase className="h-6 w-6 text-primary" />
+              Your Professional Profile
+          </CardTitle>
+          <CardDescription>This information is visible to potential clients on the platform. Keep it up-to-date.</CardDescription>
+        </CardHeader>
+        <CardContent>
+            {isLoading && <LoadingSkeleton />}
+            {lawyerData && user && <LawyerProfileForm lawyerData={lawyerData} lawyerId={user.uid} />}
+        </CardContent>
+    </Card>
   )
 }

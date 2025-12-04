@@ -3,7 +3,7 @@
 import Header from '@/components/header';
 import HomeContent from '@/app/home-content';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { BookText, History, Loader2 } from 'lucide-react';
+import { BookText, History } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 import { useAuth } from '@/components/auth-provider';
 import { useCollection } from '@/firebase/firestore/use-collection';
