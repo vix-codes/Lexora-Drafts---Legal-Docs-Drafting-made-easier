@@ -6,6 +6,7 @@ import { AuthForm } from '@/firebase/auth/auth-form';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Logo } from '@/components/icons';
 import type { ReactNode } from 'react';
+import { Separator } from '@/components/ui/separator';
 
 export default function LoginForm({ children }: { children: ReactNode }) {
   return (
@@ -41,11 +42,22 @@ export default function LoginForm({ children }: { children: ReactNode }) {
           <CardContent>
             <AuthForm mode="login" />
           </CardContent>
-          <CardFooter className="flex justify-center text-sm">
+          <CardFooter className="flex-col justify-center text-sm gap-4">
             <p>
               Don&apos;t have an account?{' '}
               <Link href="/signup" className="font-medium text-primary hover:underline">
                 Sign up
+              </Link>
+            </p>
+            <div className="w-full flex items-center gap-2">
+                <Separator className="flex-1" />
+                <span className="text-xs text-muted-foreground">OR</span>
+                <Separator className="flex-1" />
+            </div>
+             <p>
+              Are you a lawyer?{' '}
+              <Link href="/lawyer-signup" className="font-medium text-primary hover:underline">
+                Join here
               </Link>
             </p>
           </CardFooter>

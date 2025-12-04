@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useForm } from 'react-hook-form';
@@ -12,17 +13,26 @@ import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import { Button, type ButtonProps } from '@/components/ui/button';
 import { Loader2 } from 'lucide-react';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 
-const formSchema = z.object({
+const baseSchema = {
   email: z.string().email({ message: 'Please enter a valid email address.' }),
   password: z.string().min(6, { message: 'Password must be at least 6 characters long.' }),
+};
+
+const lawyerSchema = z.object({
+  ...baseSchema,
+  enrollmentNumber: z.string().min(1, { message: 'Enrollment number is required.' }),
+  stateBarCouncil: z.string().min(1, { message: 'Please select your bar council.' }),
 });
 
-type FormValues = z.infer<typeof formSchema>;
-
-interface AuthFormProps {
-  mode: 'login' | 'signup';
-}
+const userSchema = z.object(baseSchema);
 
 function FormSubmitButton({ children, isSubmitting, ...props }: ButtonProps & { isSubmitting: boolean }) {
   return (
@@ -36,42 +46,70 @@ function getUsernameFromEmail(email: string) {
     return email.split('@')[0];
 }
 
+type AuthFormProps = {
+  mode: 'login' | 'signup' | 'lawyer-signup';
+}
+
+const allStateBarCouncils = [
+    "Andhra Pradesh", "Assam, Nagaland, Mizoram, Arunachal Pradesh & Sikkim", "Bihar", "Chhattisgarh", "Delhi", "Gujarat", "Himachal Pradesh", "Jammu & Kashmir and Ladakh", "Jharkhand", "Karnataka", "Kerala", "Madhya Pradesh", "Maharashtra & Goa", "Manipur", "Meghalaya", "Odisha", "Patna", "Punjab & Haryana", "Rajasthan", "Tamil Nadu & Puducherry", "Telangana", "Tripura", "Uttar Pradesh", "Uttarakhand", "West Bengal"
+];
+
 export function AuthForm({ mode }: AuthFormProps) {
   const { toast } = useToast();
   const router = useRouter();
 
+  const isLawyerSignup = mode === 'lawyer-signup';
+  const schema = isLawyerSignup ? lawyerSchema : userSchema;
+
   const {
     register,
     handleSubmit,
+    control,
     formState: { errors, isSubmitting },
-  } = useForm<FormValues>({
-    resolver: zodResolver(formSchema),
+  } = useForm({
+    resolver: zodResolver(schema),
   });
 
-  const handleAuthAction = async (data: FormValues) => {
+  const handleAuthAction = async (data: z.infer<typeof schema>) => {
     const auth = getAuth(app);
     const { email, password } = data;
 
     try {
-      if (mode === 'signup') {
+      if (mode === 'signup' || mode === 'lawyer-signup') {
         const userCredential = await createUserWithEmailAndPassword(auth, email, password);
         const user = userCredential.user;
-        
-        // Add user profile to Firestore
         const db = getFirestore(app);
-        const userRef = doc(db, 'users', user.uid);
-        await setDoc(userRef, {
-          email: user.email,
-          username: getUsernameFromEmail(user.email!),
-          createdAt: serverTimestamp(),
-        });
-        
-        toast({
-          title: 'Account Created',
-          description: "You've been successfully signed up!",
-        });
+
+        if (mode === 'lawyer-signup') {
+            const lawyerData = data as z.infer<typeof lawyerSchema>;
+            const lawyerRef = doc(db, 'lawyers', user.uid);
+            await setDoc(lawyerRef, {
+                id: user.uid,
+                email: user.email,
+                name: getUsernameFromEmail(user.email!),
+                enrollmentNumber: lawyerData.enrollmentNumber,
+                stateBarCouncil: lawyerData.stateBarCouncil,
+                createdAt: serverTimestamp(),
+                isVerified: false, // Verification pending
+            });
+            toast({
+                title: 'Registration Submitted',
+                description: "Your profile is under review. We'll notify you upon verification.",
+            });
+        } else {
+            const userRef = doc(db, 'users', user.uid);
+            await setDoc(userRef, {
+                email: user.email,
+                username: getUsernameFromEmail(user.email!),
+                createdAt: serverTimestamp(),
+            });
+            toast({
+                title: 'Account Created',
+                description: "You've been successfully signed up!",
+            });
+        }
         router.push('/');
-      } else {
+      } else { // Login
         await signInWithEmailAndPassword(auth, email, password);
         toast({
           title: 'Signed In',
@@ -119,7 +157,7 @@ export function AuthForm({ mode }: AuthFormProps) {
           required
           autoComplete="email"
         />
-        {errors.email && <p className="text-destructive text-sm mt-1">{errors.email.message}</p>}
+        {errors.email && <p className="text-destructive text-sm mt-1">{(errors.email as any).message}</p>}
       </div>
       <div className="space-y-2">
         <Label htmlFor="password">Password</Label>
@@ -131,8 +169,47 @@ export function AuthForm({ mode }: AuthFormProps) {
           required
           autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
         />
-        {errors.password && <p className="text-destructive text-sm mt-1">{errors.password.message}</p>}
+        {errors.password && <p className="text-destructive text-sm mt-1">{(errors.password as any).message}</p>}
       </div>
+
+      {isLawyerSignup && (
+        <>
+            <div className="space-y-2">
+                <Label htmlFor="enrollmentNumber">Bar Council Enrollment Number</Label>
+                <Input
+                    id="enrollmentNumber"
+                    type="text"
+                    placeholder="e.g., MAH/1234/2010"
+                    {...register('enrollmentNumber')}
+                    required
+                />
+                {errors.enrollmentNumber && <p className="text-destructive text-sm mt-1">{(errors.enrollmentNumber as any).message}</p>}
+            </div>
+            <div className="space-y-2">
+                <Label htmlFor="stateBarCouncil">State Bar Council</Label>
+                 <Controller
+                    name="stateBarCouncil"
+                    control={control}
+                    render={({ field }) => (
+                        <Select onValueChange={field.onChange} defaultValue={field.value} required>
+                            <SelectTrigger id="stateBarCouncil">
+                                <SelectValue placeholder="Select your state bar council..." />
+                            </SelectTrigger>
+                            <SelectContent>
+                                {allStateBarCouncils.map(council => (
+                                <SelectItem key={council} value={council}>
+                                    {council}
+                                </SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                    )}
+                />
+                {errors.stateBarCouncil && <p className="text-destructive text-sm mt-1">{(errors.stateBarCouncil as any).message}</p>}
+            </div>
+        </>
+      )}
+
       <FormSubmitButton isSubmitting={isSubmitting}>
         {mode === 'login' ? 'Log In' : 'Sign Up'}
       </FormSubmitButton>

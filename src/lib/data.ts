@@ -284,3 +284,34 @@ export const lawyers: LawyerProfile[] = [
     source: 'internal'
   },
 ];
+
+export const legalPrecedents = [
+  {
+    caseName: 'Kesavananda Bharati vs. State of Kerala',
+    citation: 'AIR 1973 SC 1461',
+    year: 1973,
+    summary: 'This case established the "Basic Structure Doctrine" of the Indian Constitution, which rules that the Parliament of India has the power to amend the Constitution, but it cannot alter its "basic structure".',
+    impact: 'It is considered a cornerstone of Indian constitutional law, safeguarding the fundamental principles and integrity of the Constitution from legislative overreach.'
+  },
+  {
+    caseName: 'Maneka Gandhi vs. Union of India',
+    citation: 'AIR 1978 SC 597',
+    year: 1978,
+    summary: 'The Supreme Court held that the "procedure established by law" under Article 21 must be fair, just, and reasonable, not arbitrary, fanciful, or oppressive. It expanded the scope of personal liberty.',
+    impact: 'This judgment significantly widened the interpretation of Article 21 (Right to Life and Personal Liberty), introducing principles of natural justice and due process into Indian law.'
+  },
+  {
+    caseName: 'Vishaka and others vs. State of Rajasthan',
+    citation: 'AIR 1997 SC 3011',
+    year: 1997,
+    summary: 'In the absence of a law to address sexual harassment at the workplace, the Supreme Court laid down guidelines, known as the "Vishaka Guidelines," to be followed by employers.',
+    impact: 'This led to the enactment of the Sexual Harassment of Women at Workplace (Prevention, Prohibition and Redressal) Act, 2013, providing a legal framework to protect women from sexual harassment at their place of work.'
+  },
+  {
+    caseName: 'Justice K.S. Puttaswamy (Retd.) vs. Union of India',
+    citation: '(2017) 10 SCC 1',
+    year: 2017,
+    summary: 'A nine-judge bench of the Supreme Court unanimously held that the Right to Privacy is a fundamental right under Article 21 of the Constitution of India.',
+    impact: 'This landmark ruling has far-reaching implications for data protection, surveillance, and individual autonomy, forming the basis for the Personal Data Protection Bill.'
+  }
+];

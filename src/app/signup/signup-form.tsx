@@ -1,3 +1,4 @@
+
 'use client';
 
 import Link from 'next/link';
@@ -5,6 +6,7 @@ import { AuthForm } from '@/firebase/auth/auth-form';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Logo } from '@/components/icons';
 import type { ReactNode } from 'react';
+import { Separator } from '@/components/ui/separator';
 
 export default function SignupForm({ children }: { children: ReactNode }) {
   return (
@@ -40,13 +42,24 @@ export default function SignupForm({ children }: { children: ReactNode }) {
             <CardContent>
             <AuthForm mode="signup" />
             </CardContent>
-            <CardFooter className="flex justify-center text-sm">
-            <p>
-                Already have an account?{' '}
-                <Link href="/login" className="font-medium text-primary hover:underline">
-                Log in
-                </Link>
-            </p>
+            <CardFooter className="flex-col justify-center text-sm gap-4">
+                <p>
+                    Already have an account?{' '}
+                    <Link href="/login" className="font-medium text-primary hover:underline">
+                    Log in
+                    </Link>
+                </p>
+                <div className="w-full flex items-center gap-2">
+                    <Separator className="flex-1" />
+                    <span className="text-xs text-muted-foreground">OR</span>
+                    <Separator className="flex-1" />
+                </div>
+                <p>
+                    Are you a lawyer?{' '}
+                    <Link href="/lawyer-signup" className="font-medium text-primary hover:underline">
+                        Create a professional profile
+                    </Link>
+                </p>
             </CardFooter>
         </Card>
       </div>
