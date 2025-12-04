@@ -11,9 +11,11 @@
 
 import { ai } from '@/ai/genkit';
 import { z } from 'zod';
+import { generate, generateStream, streamToAsyncIterator } from 'genkit/generate';
 
 const LegalQueryInputSchema = z.object({
-  query: z.string().describe('The user\'s legal question.'),
+  query: z.string().describe("The user's legal question."),
+  history: z.array(z.any()).optional().describe("The conversation history."),
 });
 
 const LegalQueryOutputSchema = z.object({
@@ -23,58 +25,51 @@ const LegalQueryOutputSchema = z.object({
 export type LegalQueryInput = z.infer<typeof LegalQueryInputSchema>;
 export type LegalQueryOutput = z.infer<typeof LegalQueryOutputSchema>;
 
-export async function answerLegalQuery(input: LegalQueryInput): Promise<LegalQueryOutput> {
-  return answerLegalQueryFlow(input);
-}
-
-const legalQueryPrompt = ai.definePrompt({
-  name: 'legalQueryPrompt',
-  input: { schema: LegalQueryInputSchema },
-  output: { schema: LegalQueryOutputSchema },
-  prompt: `You answer legal questions with clear, structured, and concise informational guidance.
+export async function answerLegalQuery(input: LegalQueryInput): Promise<AsyncIterable<string>> {
+    const { stream } = await generateStream({
+      model: ai.model('gemini-2.5-flash'),
+      prompt: {
+        role: 'user',
+        content: `You answer legal questions with clear, structured, and concise informational guidance. 
 You are not a lawyer and you do not provide legal advice.
 
 Rules:
-1. If the user does not mention their jurisdiction (country or state), ask for it before giving any legal explanation.
-2. Use correct legal categories such as contract law, criminal law, property law, copyright, company law, and police powers.
-3. Provide answers in this structure:
+1. Identify the legal domain before answering: criminal law, property law, contract law, copyright, etc.
+2. If the user does not mention their jurisdiction (country or state), ask for it before giving any legal explanation. Remember the jurisdiction for the current session unless the user changes it.
+3. If the user gives conflicting jurisdiction details, ask which one to use.
+4. Provide answers in this structure:
    - Identify the legal issue.
    - Request missing context (especially jurisdiction).
    - Explain the general rule in simple language.
    - Provide practical steps or checklists.
-4. Do not guess or invent statutes, case names, numbers, fines, or deadlines.
-5. If information is missing, clearly state what is needed.
-6. Keep answers short unless the user asks for detailed explanation.
+5. Keep the default answer short unless the user asks for more detail. Use short paragraphs for readability.
+6. Do not guess or invent statutes, case names, numbers, fines, or deadlines. If information is missing, clearly state what is needed.
 7. Your responses are informational only and not legal advice.
+8. When a harmful or illegal question is asked, redirect into a legal explanation without judgment.
+
+Conversation History:
+${JSON.stringify(input.history ?? [])}
 
 User question:
-{{{query}}}
-  `,
-});
+${input.query}
+`,
+      },
+      config: {
+        safetySettings: [
+          { category: 'HARM_CATEGORY_DANGEROUS_CONTENT', threshold: 'BLOCK_NONE' },
+          { category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT', threshold: 'BLOCK_NONE' },
+        ],
+      },
+    });
 
-
-const answerLegalQueryFlow = ai.defineFlow(
-  {
-    name: 'answerLegalQueryFlow',
-    inputSchema: LegalQueryInputSchema,
-    outputSchema: LegalQueryOutputSchema,
-  },
-  async (input) => {
-    try {
-      const { output } = await legalQueryPrompt(input);
-      if (!output) {
-        throw new Error('AI response was empty.');
-      }
-      return output;
-    } catch (error: any) {
-      console.error('AI legal query failed with error:', error);
-      let errorMessage = "I am sorry, but I encountered an error while processing your request. The service may be temporarily unavailable. Please try again later.";
-      if (error.message.includes('overloaded')) {
-        errorMessage = "The AI service is currently experiencing high traffic. Please try your request again in a few moments.";
-      } else if (error.message.includes('blocked')) {
-        errorMessage = "Your query could not be processed due to the content policy. Please try rephrasing your question.";
-      }
-      return { answer: errorMessage };
+    // Transform the Genkit stream into a simple async iterator of strings.
+    async function* transformStream(): AsyncIterable<string> {
+        for await (const chunk of stream) {
+            if (chunk.text) {
+                yield chunk.text;
+            }
+        }
     }
-  }
-);
+
+    return transformStream();
+}

@@ -38,14 +38,40 @@ export default function LawbotPage() {
     if (input.trim() === '') return;
 
     const userMessage: Message = { id: Date.now(), sender: 'user', text: input };
+    const currentInput = input;
+    const currentHistory = messages.map(m => ({ role: m.sender, parts: [{ text: m.text }] }));
+    
     setMessages(prev => [...prev, userMessage]);
     setInput('');
     setIsPending(true);
+
+    const botMessageId = Date.now() + 1;
+    setMessages(prev => [...prev, { id: botMessageId, sender: 'bot', text: '' }]);
     
-    const botResponseText = await askLawbot(input);
-    const botMessage: Message = { id: Date.now() + 1, sender: 'bot', text: botResponseText };
-    setMessages(prev => [...prev, botMessage]);
-    setIsPending(false);
+    try {
+        const stream = await askLawbot(currentInput, currentHistory.slice(0, -1)); // Pass history without the new user message
+        
+        for await (const chunk of stream) {
+            setMessages(prev =>
+                prev.map(msg =>
+                    msg.id === botMessageId
+                        ? { ...msg, text: msg.text + chunk }
+                        : msg
+                )
+            );
+        }
+    } catch (error) {
+        console.error('Streaming error:', error);
+        setMessages(prev =>
+            prev.map(msg =>
+                msg.id === botMessageId
+                    ? { ...msg, text: "Sorry, I couldn't process that. Please try again." }
+                    : msg
+            )
+        );
+    } finally {
+        setIsPending(false);
+    }
   };
 
   return (
@@ -72,6 +98,9 @@ export default function LawbotPage() {
                     )}
                     <div className={`rounded-lg px-4 py-2 max-w-[80%] ${message.sender === 'user' ? 'bg-primary text-primary-foreground' : 'bg-muted'}`}>
                       <p className="text-sm whitespace-pre-wrap">{message.text}</p>
+                       {isPending && message.id === messages[messages.length - 1].id && (
+                         <Loader2 className="h-4 w-4 animate-spin inline-block ml-2" />
+                       )}
                     </div>
                     {message.sender === 'user' && (
                       <Avatar className="w-8 h-8">
@@ -80,16 +109,6 @@ export default function LawbotPage() {
                     )}
                   </div>
                 ))}
-                 {isPending && (
-                  <div className="flex items-start gap-3">
-                    <Avatar className="w-8 h-8">
-                      <AvatarFallback><Bot size={20} /></AvatarFallback>
-                    </Avatar>
-                    <div className="rounded-lg px-4 py-2 max-w-[80%] bg-muted flex items-center">
-                        <Loader2 className="h-5 w-5 animate-spin text-primary" />
-                    </div>
-                  </div>
-                )}
               </div>
             </ScrollArea>
           </CardContent>
@@ -102,7 +121,7 @@ export default function LawbotPage() {
                 placeholder="Ask a legal question..."
                 disabled={isPending}
               />
-              <Button onClick={handleSend} disabled={isPending}>
+              <Button onClick={handleSend} disabled={isPending || !input.trim()}>
                 {isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
               </Button>
             </div>
