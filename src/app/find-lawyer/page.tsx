@@ -27,6 +27,25 @@ export default function FindLawyerPage() {
     setSelectedCity(city);
     setExternalResults([]);
   };
+
+  const handleExternalSearch = async (location: string) => {
+    setIsExternalSearchLoading(true);
+    setExternalResults([]);
+    setSelectedCity(location);
+    try {
+      const results = await findLawyersExternally(location);
+      setExternalResults(results);
+    } catch (error) {
+      console.error("External search failed:", error);
+      toast({
+        variant: 'destructive',
+        title: 'Search Failed',
+        description: 'Could not fetch external results. Please try again later.'
+      });
+    } finally {
+      setIsExternalSearchLoading(false);
+    }
+  };
   
   const handleUseLocation = () => {
     setIsLocating(true);
@@ -34,15 +53,14 @@ export default function FindLawyerPage() {
     setSelectedCity(null);
     navigator.geolocation.getCurrentPosition(
       (position) => {
-        const { latitude, longitude } = position.coords;
-        // For this demo, we'll use a placeholder city name.
-        // In a real app, you'd use a reverse geocoding service.
-        setSelectedCity("Your Location (Simulated)"); 
         setIsLocating(false);
         toast({
           title: "Location Found",
-          description: "Showing lawyers near you. (Simulated)",
+          description: "Searching for lawyers near you...",
         });
+        // In a real app, you'd use reverse geocoding here.
+        // For now, we trigger the external search for the user's general area.
+        handleExternalSearch("your current area");
       },
       (error) => {
         console.error("Geolocation error:", error);
@@ -56,30 +74,8 @@ export default function FindLawyerPage() {
     );
   };
 
-  const handleExternalSearch = async () => {
-    setIsExternalSearchLoading(true);
-    try {
-      // Pass a generic location for the mock search
-      const results = await findLawyersExternally(selectedCity || "your area");
-      setExternalResults(results);
-    } catch (error) {
-      console.error("External search failed:", error);
-      toast({
-        variant: 'destructive',
-        title: 'Search Failed',
-        description: 'Could not fetch external results. Please try again later.'
-      });
-    } finally {
-      setIsExternalSearchLoading(false);
-    }
-  };
-
   const filteredLawyers = useMemo(() => {
-    if (!selectedCity) return [];
-    if (selectedCity === "Your Location (Simulated)") {
-      // Simulate finding no lawyers "near me" to trigger the external search option
-      return [];
-    }
+    if (!selectedCity || selectedCity === "your current area") return [];
     return lawyers.filter(lawyer => lawyer.location.city === selectedCity);
   }, [selectedCity]);
   
@@ -92,7 +88,7 @@ export default function FindLawyerPage() {
       return (
         <div className="flex flex-col items-center justify-center text-center gap-4 p-8">
           <Loader2 className="h-10 w-10 animate-spin text-primary" />
-          <p className="text-muted-foreground">{isExternalSearchLoading ? "Searching externally..." : "Getting your location..."}</p>
+          <p className="text-muted-foreground">{isExternalSearchLoading ? "Searching for lawyers..." : "Getting your location..."}</p>
         </div>
       );
     }
@@ -113,7 +109,7 @@ export default function FindLawyerPage() {
           <MapPin className="h-10 w-10 text-muted-foreground" />
           <h3 className="font-semibold">No Verified Lawyers Found</h3>
           <p className="text-muted-foreground">We don't have any verified lawyers in {selectedCity} yet.</p>
-          <Button onClick={handleExternalSearch}>
+          <Button onClick={() => handleExternalSearch(selectedCity)}>
             <Search className="mr-2 h-4 w-4" />
             Search Externally for Lawyers in {selectedCity}
           </Button>
