@@ -89,6 +89,34 @@
           "type": "string"
         }
       }
+    },
+    "Lawyer": {
+      "title": "Lawyer",
+      "type": "object",
+      "description": "Represents a lawyer's professional profile.",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "email": { "type": "string", "format": "email" },
+        "phone": { "type": "string" },
+        "location": {
+          "type": "object",
+          "properties": {
+            "city": { "type": "string" },
+            "state": { "type": "string" }
+          }
+        },
+        "specializations": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "experience": { "type": "number" },
+        "description": { "type": "string" },
+        "rating": { "type": "number" },
+        "isVerified": { "type": "boolean" },
+        "govIdUrl": { "type": "string", "format": "uri" }
+      },
+      "required": ["id", "name", "email", "location", "specializations", "isVerified"]
     }
   },
   "auth": {
@@ -103,6 +131,12 @@
         "$ref": "#/entities/UserProfile"
       },
       "description": "Stores user profiles, keyed by their Firebase Auth UID."
+    },
+    "/lawyers/{lawyerId}": {
+      "schema": {
+        "$ref": "#/entities/Lawyer"
+      },
+      "description": "Stores lawyer profiles, keyed by their unique ID."
     },
     "/templates/{templateId}": {
       "schema": {

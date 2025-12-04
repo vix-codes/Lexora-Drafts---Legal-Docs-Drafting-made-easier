@@ -1,4 +1,5 @@
 import type { LawUpdate } from '@/ai/flows/display-law-updates-with-summaries';
+import type { LawyerProfile } from '@/components/lawyer-card';
 
 export type TemplateField = {
   name: string;
@@ -135,42 +136,119 @@ export const glossaryTerms = [
   { term: 'Writ', definition: 'A form of written command in the name of a court or other legal authority to act, or abstain from acting, in a particular way.' },
 ];
 
-export const lawyers = [
-  { name: 'Adv. Rohan Sharma', expertise: 'Corporate Law', location: 'Delhi', image: '/lawyers/1.jpg' },
-  { name: 'Adv. Priya Patel', expertise: 'Intellectual Property', location: 'Mumbai', image: '/lawyers/2.jpg' },
-  { name: 'Adv. Vikram Singh', expertise: 'Criminal Law', location: 'Bangalore', image: '/lawyers/3.jpg' },
-  { name: 'Adv. Anjali Mehta', expertise: 'Family Law', location: 'Kolkata', image: '/lawyers/4.jpg' },
-  { name: 'Adv. Sameer Khan', expertise: 'Real Estate Law', location: 'Pune', image: '/lawyers/5.jpg' },
-  { name: 'Adv. Neha Gupta', expertise: 'Cyber Law', location: 'Hyderabad', image: '/lawyers/6.jpg' },
-];
+export const popularCitiesByState: Record<string, string[]> = {
+  "Maharashtra": ["Mumbai", "Pune", "Nagpur", "Nashik"],
+  "Delhi": ["New Delhi", "Noida", "Gurugram", "Faridabad"],
+  "Karnataka": ["Bengaluru", "Mysuru", "Mangaluru", "Hubballi"],
+  "Tamil Nadu": ["Chennai", "Coimbatore", "Madurai", "Tiruchirappalli"],
+  "West Bengal": ["Kolkata", "Howrah", "Asansol", "Siliguri"],
+  "Telangana": ["Hyderabad", "Warangal", "Nizamabad", "Karimnagar"],
+  "Gujarat": ["Ahmedabad", "Surat", "Vadodara", "Rajkot"],
+};
 
-export const legalPrecedents = [
+export const lawyers: LawyerProfile[] = [
   {
-    caseName: 'Kesavananda Bharati vs. State of Kerala',
-    citation: 'AIR 1973 SC 1461',
-    summary: 'This landmark case established the "Basic Structure Doctrine" of the Indian Constitution, which rules that the Parliament has the power to amend the Constitution but not its basic structure or fundamental features.',
-    year: 1973,
-    impact: 'It is considered one of the most important decisions in Indian constitutional law, safeguarding the democratic principles of the country against legislative overreach.'
+    id: '1',
+    name: 'Adv. Rohan Sharma',
+    email: 'rohan.sharma@example.com',
+    phone: '+91-9876543210',
+    location: { city: 'New Delhi', state: 'Delhi' },
+    specializations: ['Corporate Law', 'Mergers & Acquisitions'],
+    experience: 15,
+    description: 'Expert in corporate law with extensive experience in high-stakes M&A deals.',
+    rating: 4.9,
+    isVerified: true,
+    source: 'internal'
   },
   {
-    caseName: 'Maneka Gandhi vs. Union of India',
-    citation: 'AIR 1978 SC 597',
-    summary: 'The Supreme Court held that the "procedure established by law" under Article 21 must be fair, just, and reasonable, not arbitrary, fanciful, or oppressive. It expanded the scope of personal liberty.',
-    year: 1978,
-    impact: 'This case significantly broadened the interpretation of "right to life and personal liberty," making it a repository of various other fundamental rights.'
+    id: '2',
+    name: 'Adv. Priya Patel',
+    email: 'priya.patel@example.com',
+    phone: '+91-9876543211',
+    location: { city: 'Mumbai', state: 'Maharashtra' },
+    specializations: ['Intellectual Property', 'Patent Law'],
+    experience: 12,
+    description: 'Specializing in patent filing and IP litigation for tech startups.',
+    rating: 4.8,
+    isVerified: true,
+    source: 'internal'
   },
   {
-    caseName: 'Vishaka vs. State of Rajasthan',
-    citation: 'AIR 1997 SC 3011',
-    summary: 'In the absence of a law to address sexual harassment at the workplace, the Supreme Court laid down a set of guidelines, known as the Vishaka Guidelines, to be followed by employers.',
-    year: 1997,
-    impact: 'This was a pivotal moment for women\'s rights in India and led to the enactment of the Sexual Harassment of Women at Workplace (Prevention, Prohibition and Redressal) Act, 2013.'
+    id: '3',
+    name: 'Adv. Vikram Singh',
+    email: 'vikram.singh@example.com',
+    phone: '+91-9876543212',
+    location: { city: 'Bengaluru', state: 'Karnataka' },
+    specializations: ['Criminal Law', 'Bail Matters'],
+    experience: 20,
+    description: 'Highly experienced criminal defense lawyer with a high success rate.',
+    rating: 4.9,
+    isVerified: true,
+    source: 'internal'
   },
   {
-    caseName: 'Justice K.S. Puttaswamy (Retd.) vs. Union of India',
-    citation: '(2017) 10 SCC 1',
-    summary: 'The Supreme Court unanimously declared that the Right to Privacy is a fundamental right protected under Article 21 of the Constitution of India.',
-    year: 2017,
-    impact: 'This judgment has far-reaching implications for data protection, surveillance, and individual autonomy in the digital age, forming the basis for the data protection laws in India.'
+    id: '4',
+    name: 'Adv. Anjali Mehta',
+    email: 'anjali.mehta@example.com',
+    phone: '+91-9876543213',
+    location: { city: 'Kolkata', state: 'West Bengal' },
+    specializations: ['Family Law', 'Divorce', 'Child Custody'],
+    experience: 18,
+    description: 'Compassionate family law expert dedicated to amicable resolutions.',
+    rating: 4.7,
+    isVerified: true,
+    source: 'internal'
+  },
+  {
+    id: '5',
+    name: 'Adv. Sameer Khan',
+    email: 'sameer.khan@example.com',
+    phone: '+91-9876543214',
+    location: { city: 'Pune', state: 'Maharashtra' },
+    specializations: ['Real Estate Law', 'Property Disputes'],
+    experience: 14,
+    description: 'Handles all matters related to real estate, from registration to litigation.',
+    rating: 4.6,
+    isVerified: true,
+    source: 'internal'
+  },
+  {
+    id: '6',
+    name: 'Adv. Neha Gupta',
+    email: 'neha.gupta@example.com',
+    phone: '+91-9876543215',
+    location: { city: 'Hyderabad', state: 'Telangana' },
+    specializations: ['Cyber Law', 'Data Privacy'],
+    experience: 9,
+    description: 'Advising corporations on data protection compliance and cybercrime.',
+    rating: 4.8,
+    isVerified: true,
+    source: 'internal'
+  },
+  {
+    id: '7',
+    name: 'Adv. Arjun Reddy',
+    email: 'arjun.reddy@example.com',
+    phone: '+91-9876543216',
+    location: { city: 'Chennai', state: 'Tamil Nadu' },
+    specializations: ['Tax Law', 'GST'],
+    experience: 16,
+    description: 'Expert in direct and indirect taxation, representing clients at various tribunals.',
+    rating: 4.7,
+    isVerified: true,
+    source: 'internal'
+  },
+  {
+    id: '8',
+    name: 'Adv. Sneha Rao',
+    email: 'sneha.rao@example.com',
+    phone: '+91-9876543217',
+    location: { city: 'Bengaluru', state: 'Karnataka' },
+    specializations: ['Startup Law', 'Venture Capital'],
+    experience: 8,
+    description: 'Your go-to legal advisor for funding rounds and startup compliance.',
+    rating: 4.9,
+    isVerified: true,
+    source: 'internal'
   },
 ];

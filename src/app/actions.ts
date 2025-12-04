@@ -58,3 +58,40 @@ export const askLawbot = async (query: string, history: Message[]): Promise<Lega
     return { answer: errorMessage };
   }
 };
+
+export const findLawyersExternally = async (location: string) => {
+  // This is a mock function to simulate fetching data from Google Maps API.
+  // In a real application, you would use a library like @googlemaps/google-maps-services-js
+  // to call the Places API.
+  await new Promise(resolve => setTimeout(resolve, 1500)); // Simulate network delay
+
+  console.log(`Simulating external search for lawyers near: ${location}`);
+  
+  // Return mock data that mimics the Google Places API response structure.
+  return [
+    {
+      name: "Maheshwari & Co. | Top Law Firm",
+      vicinity: "B-5, Inner Ring Road, Sector 6, Noida",
+      rating: 4.8,
+      user_ratings_total: 150,
+      url: `https://www.google.com/maps/search/?api=1&query=lawyer+near+${encodeURIComponent(location)}`,
+      source: 'google'
+    },
+    {
+      name: "Singh & Associates, Founder - Manoj K. Singh",
+      vicinity: "69, Paschimi Marg, Block C, Vasant Vihar, New Delhi",
+      rating: 4.5,
+      user_ratings_total: 200,
+      url: `https://www.google.com/maps/search/?api=1&query=lawyer+near+${encodeURIComponent(location)}`,
+      source: 'google'
+    },
+    {
+      name: "Legacy Law Offices LLP",
+      vicinity: "D-2, Block D, Anand Niketan, New Delhi",
+      rating: 4.6,
+      user_ratings_total: 95,
+      url: `https://www.google.com/maps/search/?api=1&query=lawyer+near+${encodeURIComponent(location)}`,
+      source: 'google'
+    }
+  ];
+};
