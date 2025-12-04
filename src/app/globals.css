@@ -4,26 +4,50 @@
 
 @layer base {
   :root {
-    --background: 261 44% 11%;
-    --foreground: 0 0% 100%;
-    --card: 261 44% 14%;
-    --card-foreground: 0 0% 100%;
-    --popover: 261 44% 11%;
-    --popover-foreground: 0 0% 100%;
-    --primary: 262 80% 70%;
-    --primary-foreground: 261 44% 10%;
-    --secondary: 261 44% 22%;
+    /* Deep Indigo + Soft Gold Theme */
+    --background: 240 33% 98%; /* #F6F6FA */
+    --foreground: 0 0% 12%; /* #1E1E1E */
+    --card: 0 0% 100%; /* White for cards on light surfaces */
+    --card-foreground: 0 0% 12%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 0 0% 12%;
+    --primary: 238 41% 40%; /* #3C3F92 */
+    --primary-foreground: 0 0% 100%;
+    --secondary: 240 27% 95%; /* #ECECFA - Secondary Button Hover */
+    --secondary-foreground: 238 41% 40%;
+    --muted: 240 21% 95%; /* #E9E9F3 */
+    --muted-foreground: 0 0% 35%; /* #5A5A5A */
+    --accent: 240 27% 95%; /* Used for hovers, similar to secondary */
+    --accent-foreground: 238 41% 40%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 230 27% 85%; /* #D3D3E4 */
+    --input: 230 27% 85%;
+    --ring: 238 41% 40%;
+    --radius: 0.5rem;
+  }
+
+  .dark {
+    /* In case dark mode is used, we can provide a fallback or define a dark theme */
+    --background: 238 41% 10%;
+    --foreground: 0 0% 98%;
+    --card: 238 41% 12%;
+    --card-foreground: 0 0% 98%;
+    --popover: 238 41% 10%;
+    --popover-foreground: 0 0% 98%;
+    --primary: 238 41% 60%;
+    --primary-foreground: 238 41% 10%;
+    --secondary: 238 41% 20%;
     --secondary-foreground: 0 0% 98%;
-    --muted: 261 44% 17%;
-    --muted-foreground: 0 0% 63.9%;
-    --accent: 262 80% 80%;
-    --accent-foreground: 261 44% 10%;
+    --muted: 238 41% 15%;
+    --muted-foreground: 0 0% 63%;
+    --accent: 238 41% 20%;
+    --accent-foreground: 0 0% 98%;
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 0 0% 98%;
-    --border: 261 44% 22%;
-    --input: 261 44% 17%;
-    --ring: 262 80% 80%;
-    --radius: 0.5rem;
+    --border: 238 41% 20%;
+    --input: 238 41% 15%;
+    --ring: 238 41% 60%;
   }
 }
 
@@ -37,11 +61,9 @@
 }
 
 @layer components {
+  /* Remove the old SVG background for auth pages */
   .auth-bg {
-    background-color: hsl(var(--card));
-    background-image: url("data:image/svg+xml,%3Csvg width='160' height='160' viewBox='0 0 160 160' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%236C63FF' fill-opacity='0.1'%3E%3C!-- Gavel --%3E%3Cpath transform='translate(10 10) rotate(45 12 12)' d='M6 3h12v2H6zm3 3h6v12H9z M8 19h8v2H8z'/%3E%3C!-- Book --%3E%3Cpath transform='translate(80 10)' d='M4 2v18h16V2H4zm14 16H6v-2h12v2zm0-4H6v-2h12v2zm0-4H6V4h12v8z'/%3E%3C!-- Scale --%3E%3Cpath transform='translate(10 80)' d='M12 2a1 1 0 00-1 1v2H4a2 2 0 00-2 2v2a6 6 0 1012 0V7a2 2 0 00-2-2h-7V3a1 1 0 00-1-1zm-6 9a4 4 0 118 0H6zm13-1a1 1 0 00-1 1v2h-7V7a2 2 0 00-2-2H4v2h7v7a1 1 0 001 1h8a2 2 0 002-2V11a1 1 0 00-1-1z'/%3E%3C!-- Pillar --%3E%3Cpath transform='translate(80 80)' d='M5 2h14v2H5zm1 4h12v12H6zm-2 14h16v2H4z'/%3E%3C/g%3E%3C/svg%3E");
-    background-size: 160px 160px;
-    position: relative;
+    background-color: hsl(var(--primary));
   }
   .auth-content {
     position: relative;

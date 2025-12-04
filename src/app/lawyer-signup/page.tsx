@@ -1,4 +1,3 @@
-
 'use client';
 
 import Link from 'next/link';
@@ -8,8 +7,8 @@ import { Logo } from '@/components/icons';
 
 export default function LawyerSignupPage() {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background p-4">
-      <Card className="w-full max-w-md">
+    <div className="flex min-h-screen items-center justify-center bg-muted p-4">
+      <Card className="w-full max-w-md bg-card">
         <CardHeader className="text-center">
           <div className="flex justify-center items-center gap-3 mb-4">
             <Logo className="h-8 w-8 text-primary" />

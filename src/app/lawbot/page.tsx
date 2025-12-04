@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
@@ -60,13 +59,13 @@ export default function LawbotPage() {
   };
 
   return (
-    <div className="flex flex-col h-screen bg-background text-foreground">
+    <div className="flex flex-col h-screen bg-muted text-foreground">
       <Header />
       <main className="flex-1 p-4 lg:p-6 flex justify-center items-start">
-        <Card className="w-full max-w-4xl h-full flex flex-col">
+        <Card className="w-full max-w-4xl h-full flex flex-col bg-card">
           <CardHeader>
             <CardTitle className="font-headline flex items-center gap-2">
-              <Bot className="h-6 w-6" />
+              <Bot className="h-6 w-6 text-primary" />
               Ask Lawbot
             </CardTitle>
             <CardDescription>
@@ -79,7 +78,7 @@ export default function LawbotPage() {
                 {messages.map((message, index) => (
                   <div key={message.id} className={`flex items-start gap-3 ${message.sender === 'user' ? 'justify-end' : ''}`}>
                     {message.sender === 'bot' && (
-                      <Avatar className="w-8 h-8">
+                      <Avatar className="w-8 h-8 bg-primary text-primary-foreground">
                         <AvatarFallback><Bot size={20} /></AvatarFallback>
                       </Avatar>
                     )}
@@ -101,7 +100,7 @@ export default function LawbotPage() {
                 ))}
                 {isPending && (
                   <div className="flex items-start gap-3">
-                    <Avatar className="w-8 h-8">
+                    <Avatar className="w-8 h-8 bg-primary text-primary-foreground">
                       <AvatarFallback><Bot size={20} /></AvatarFallback>
                     </Avatar>
                     <div className="rounded-lg px-4 py-2 max-w-[80%] bg-muted flex items-center space-x-2">
@@ -113,7 +112,7 @@ export default function LawbotPage() {
                 )}
               </div>
             </ScrollArea>
-            <div className="p-6 pt-4">
+            <div className="p-6 pt-4 border-t">
               <div className="flex w-full items-center space-x-2">
                 <Input
                   value={input}
@@ -121,6 +120,7 @@ export default function LawbotPage() {
                   onKeyPress={e => e.key === 'Enter' && !isPending && handleSend()}
                   placeholder="Ask a legal question..."
                   disabled={isPending}
+                  className="bg-background"
                 />
                 <Button onClick={handleSend} disabled={isPending || !input.trim()}>
                   {isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}

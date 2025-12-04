@@ -28,23 +28,23 @@ export default function Header() {
   };
 
   return (
-    <header className="sticky top-0 z-10 flex h-16 items-center justify-between border-b bg-background/80 px-4 backdrop-blur-sm md:px-6">
+    <header className="sticky top-0 z-10 flex h-16 items-center justify-between border-b bg-primary px-4 text-primary-foreground backdrop-blur-sm md:px-6">
       <div className="flex items-center gap-3">
         <Link href="/" className="flex items-center gap-3">
-          <Logo className="h-7 w-7 text-primary" />
+          <Logo className="h-7 w-7 text-white" />
           <h1 className="font-headline text-xl font-semibold tracking-tight">lexintel</h1>
         </Link>
       </div>
       <div className="flex items-center gap-4">
-        {user && <span className="text-sm font-medium text-muted-foreground">Hi, {getUsername(user.email)}</span>}
+        {user && <span className="text-sm font-medium text-white/80">Hi, {getUsername(user.email)}</span>}
         <div className="flex items-center gap-2">
             <Glossary>
-              <Button variant="ghost" size="icon">
+              <Button variant="ghost" size="icon" className="text-white hover:bg-white/10 hover:text-white">
                   <BookText className="h-5 w-5" />
                   <span className="sr-only">Open Glossary</span>
               </Button>
             </Glossary>
-            <Button variant="ghost" size="icon" onClick={handleSignOut}>
+            <Button variant="ghost" size="icon" onClick={handleSignOut} className="text-white hover:bg-white/10 hover:text-white">
                 <LogOut className="h-5 w-5" />
                 <span className="sr-only">Sign Out</span>
             </Button>
