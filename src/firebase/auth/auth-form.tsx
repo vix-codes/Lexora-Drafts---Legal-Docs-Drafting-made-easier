@@ -20,6 +20,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { lawyers } from '@/lib/data';
 
 const baseSchema = {
   email: z.string().email({ message: 'Please enter a valid email address.' }),
@@ -28,6 +29,7 @@ const baseSchema = {
 
 const lawyerSchema = z.object({
   ...baseSchema,
+  name: z.string().min(2, { message: 'Full name is required.' }),
   enrollmentNumber: z.string().min(1, { message: 'Enrollment number is required.' }),
   stateBarCouncil: z.string().min(1, { message: 'Please select your bar council.' }),
 });
@@ -83,15 +85,32 @@ export function AuthForm({ mode }: AuthFormProps) {
         if (mode === 'lawyer-signup') {
             const lawyerData = data as z.infer<typeof lawyerSchema>;
             const lawyerRef = doc(db, 'lawyers', user.uid);
-            await setDoc(lawyerRef, {
+            const newLawyerProfile = {
                 id: user.uid,
                 email: user.email,
-                name: getUsernameFromEmail(user.email!),
+                name: lawyerData.name,
                 enrollmentNumber: lawyerData.enrollmentNumber,
                 stateBarCouncil: lawyerData.stateBarCouncil,
                 createdAt: serverTimestamp(),
                 isVerified: false, // Verification pending
+                phone: 'N/A',
+                location: { city: 'N/A', state: 'N/A' },
+                specializations: ['Awaiting Verification'],
+                experience: 0,
+                description: 'Profile pending verification.',
+                rating: 0,
+                source: 'internal' as const,
+            };
+            await setDoc(lawyerRef, newLawyerProfile);
+
+            // Add to mock data to show in UI immediately
+            lawyers.unshift({
+                ...newLawyerProfile,
+                // @ts-ignore
+                createdAt: new Date(),
             });
+
+
             toast({
                 title: 'Registration Submitted',
                 description: "Your profile is under review. We'll notify you upon verification.",
@@ -147,6 +166,19 @@ export function AuthForm({ mode }: AuthFormProps) {
 
   return (
     <form onSubmit={handleSubmit(handleAuthAction)} className="space-y-6">
+      {isLawyerSignup && (
+        <div className="space-y-2">
+            <Label htmlFor="name">Full Name</Label>
+            <Input
+                id="name"
+                type="text"
+                placeholder="e.g. Jane Doe"
+                {...register('name')}
+                required
+            />
+            {errors.name && <p className="text-destructive text-sm mt-1">{(errors.name as any).message}</p>}
+        </div>
+      )}
       <div className="space-y-2">
         <Label htmlFor="email">Email</Label>
         <Input

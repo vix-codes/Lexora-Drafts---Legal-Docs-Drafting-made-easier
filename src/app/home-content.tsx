@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Search } from 'lucide-react';
 import type { ReactNode } from 'react';
 import Link from 'next/link';
+import LegalPrecedents from '@/components/legal-precedents';
 
 const FIND_LAWYER_URL = '/find-lawyer';
 
@@ -32,6 +33,7 @@ export default function HomeContent({ children }: { children: ReactNode }) {
           </Button>
         </CardContent>
       </Card>
+      <LegalPrecedents />
       {children}
     </main>
   );

@@ -1,7 +1,6 @@
 'use client';
 
 import Header from '@/components/header';
-import LegalPrecedents from '@/components/legal-precedents';
 import HomeContent from '@/app/home-content';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { BookText, History, Loader2 } from 'lucide-react';
@@ -37,7 +36,6 @@ function RecentActivity() {
     );
   }, [user]);
 
-  // @ts-ignore
   const { data: activities, isLoading } = useCollection<Activity>(activitiesQuery);
 
   const renderContent = () => {
@@ -124,7 +122,6 @@ export default function Page() {
     <div className="flex flex-col min-h-screen bg-background text-foreground">
       <Header />
       <HomeContent>
-        <LegalPrecedents />
       </HomeContent>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 lg:gap-8 p-4 lg:p-6">
         <GlossaryPreview />
