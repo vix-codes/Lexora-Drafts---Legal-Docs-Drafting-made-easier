@@ -33,7 +33,8 @@ export function VerificationButton({
           description: result.message,
         });
       } else {
-        throw new Error(result.message);
+        // This will now catch the specific error message from the server action
+        throw new Error(result.message || 'An unknown error occurred.');
       }
     } catch (error: any) {
       toast({

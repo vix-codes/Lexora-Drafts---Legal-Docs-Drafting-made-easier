@@ -101,14 +101,14 @@ export async function requestVerification(
   formInputs: Record<string, any>
 ) {
   if (!userId || !draftContent) {
-    throw new Error('User ID and draft content are required.');
+    return { success: false, message: 'User ID and draft content are required to send a request.' };
   }
 
-  const app = getFirebaseApp();
-  const db = getFirestore(app);
-  const requestsRef = collection(db, 'verificationRequests');
-
   try {
+    const app = getFirebaseApp();
+    const db = getFirestore(app);
+    const requestsRef = collection(db, 'verificationRequests');
+
     await addDoc(requestsRef, {
       userId,
       documentType,
