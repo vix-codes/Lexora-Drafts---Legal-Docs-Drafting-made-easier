@@ -41,7 +41,7 @@ function LawyerDashboardLinkCard() {
 
 export default function HomeContent({ children }: { children: ReactNode }) {
   return (
-    <main className="grid grid-cols-1 md:grid-cols-2 gap-6 lg:gap-8 p-4 lg:p-6">
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 lg:gap-8 p-4 lg:p-6">
       <MainContent />
       <Lawbot />
       <Card>
@@ -63,6 +63,6 @@ export default function HomeContent({ children }: { children: ReactNode }) {
       </Card>
       <LawyerDashboardLinkCard />
       {children}
-    </main>
+    </div>
   );
 }

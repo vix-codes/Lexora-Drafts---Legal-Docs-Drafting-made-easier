@@ -49,13 +49,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (isUserLoading) return;
 
-    const pathIsPublic = publicRoutes.some(route => pathname === route || (route !== '/' && pathname.startsWith(route)));
     const pathIsAuthRequired = authRequiredRoutes.some(route => pathname.startsWith(route));
-    const isAuthPage = pathname.startsWith('/login') || pathname.startsWith('/signup');
 
-    if (user && isAuthPage) {
-      router.push('/dashboard');
-    } else if (!user && pathIsAuthRequired) {
+    if (!user && pathIsAuthRequired) {
       router.push('/login');
     }
   }, [user, isUserLoading, router, pathname]);

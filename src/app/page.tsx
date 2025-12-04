@@ -1,10 +1,11 @@
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { CheckCircle, FileText, Bot, Search, BookOpen, Scale } from 'lucide-react';
+import { Bot, FileText, Search, BookOpen, Scale } from 'lucide-react';
 import Link from 'next/link';
 import Header from '@/components/header';
 import Footer from '@/components/footer';
+import HomeContent from './home-content';
 
 const features = [
   {
@@ -29,13 +30,7 @@ const features = [
     icon: <BookOpen className="h-8 w-8 text-primary" />,
     title: 'Legal Glossary',
     description: 'Understand complex legal jargon with a searchable library of simple definitions.',
-    link: '/', // The glossary is in a sheet, can be opened from header
-  },
-  {
-    icon: <Scale className="h-8 w-8 text-primary" />,
-    title: 'Recent Updates',
-    description: 'Stay informed with a feed of the latest legal news, rulings, and precedents.',
-    link: '/login', // Law feed is on login page
+    link: '/', // The glossary is in a sheet, can be opened from header in other pages
   },
 ];
 
@@ -63,32 +58,34 @@ export default function LandingPage() {
           </div>
         </section>
 
-        {/* Features Section */}
-        <section id="features" className="py-20 lg:py-24 px-4 bg-card/50">
-          <div className="max-w-6xl mx-auto">
-            <div className="text-center">
-              <h2 className="font-headline text-3xl md:text-4xl font-bold">Everything You Need</h2>
-              <p className="mt-3 max-w-xl mx-auto text-muted-foreground">
-                A comprehensive suite of tools designed for clarity and efficiency.
-              </p>
+        <HomeContent>
+             {/* Features Section */}
+            <section id="features" className="py-20 lg:py-24 px-4 bg-card/50 col-span-full">
+            <div className="max-w-6xl mx-auto">
+                <div className="text-center">
+                <h2 className="font-headline text-3xl md:text-4xl font-bold">Everything You Need</h2>
+                <p className="mt-3 max-w-xl mx-auto text-muted-foreground">
+                    A comprehensive suite of tools designed for clarity and efficiency.
+                </p>
+                </div>
+                <div className="mt-12 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                {features.map((feature) => (
+                    <Link href={feature.link} key={feature.title} className="block group">
+                        <Card className="h-full hover:border-primary transition-colors hover:shadow-lg">
+                            <CardHeader className="flex flex-row items-center gap-4">
+                                {feature.icon}
+                                <CardTitle className="font-headline text-xl">{feature.title}</CardTitle>
+                            </CardHeader>
+                            <CardContent>
+                                <p className="text-muted-foreground">{feature.description}</p>
+                            </CardContent>
+                        </Card>
+                    </Link>
+                ))}
+                </div>
             </div>
-            <div className="mt-12 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-              {features.map((feature) => (
-                <Link href={feature.link} key={feature.title} className="block group">
-                    <Card className="h-full hover:border-primary transition-colors hover:shadow-lg">
-                        <CardHeader className="flex flex-row items-center gap-4">
-                            {feature.icon}
-                            <CardTitle className="font-headline text-xl">{feature.title}</CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                            <p className="text-muted-foreground">{feature.description}</p>
-                        </CardContent>
-                    </Card>
-                </Link>
-              ))}
-            </div>
-          </div>
-        </section>
+            </section>
+        </HomeContent>
 
         {/* About Section */}
         <section id="about" className="py-20 lg:py-24 px-4">

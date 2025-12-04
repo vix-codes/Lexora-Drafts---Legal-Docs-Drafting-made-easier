@@ -1,3 +1,4 @@
+
 'use client';
 
 import Header from '@/components/header';
@@ -7,8 +8,9 @@ import { useAuth } from '@/components/auth-provider';
 export default function DashboardPage() {
     const { user } = useAuth();
     
+    // Although AuthProvider handles redirection, this is a good safeguard
     if (!user) {
-        return null;
+        return null; // Or a loading/error state
     }
 
   return (

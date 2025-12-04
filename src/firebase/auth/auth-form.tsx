@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useForm, Controller } from 'react-hook-form';
@@ -92,14 +93,12 @@ export function AuthForm({ mode }: AuthFormProps) {
                 enrollmentNumber: lawyerData.enrollmentNumber,
                 stateBarCouncil: lawyerData.stateBarCouncil,
                 createdAt: serverTimestamp(),
-                isVerified: false,
+                isVerified: false, // Default to not verified
             });
-
-            toast({
+             toast({
                 title: 'Account Created',
-                description: "Welcome! Please complete your profile on the dashboard.",
+                description: "Welcome! You can now create your lawyer profile from the dashboard.",
             });
-            router.push('/dashboard');
         } else {
             const userRef = doc(db, 'users', user.uid);
             await setDoc(userRef, {
@@ -111,8 +110,8 @@ export function AuthForm({ mode }: AuthFormProps) {
                 title: 'Account Created',
                 description: "You've been successfully signed up!",
             });
-            router.push('/');
         }
+        router.push('/');
       } else { // Login
         await signInWithEmailAndPassword(auth, email, password);
         toast({
