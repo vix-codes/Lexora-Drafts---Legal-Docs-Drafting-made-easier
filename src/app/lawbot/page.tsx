@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useRef, useEffect, useOptimistic } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';

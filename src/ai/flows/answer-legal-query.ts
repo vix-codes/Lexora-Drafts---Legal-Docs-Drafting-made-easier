@@ -50,19 +50,6 @@ Rules:
 User question:
 {{{query}}}
   `,
-  config: {
-    model: 'googleai/gemini-2.5-flash',
-    safetySettings: [
-      {
-        category: 'HARM_CATEGORY_DANGEROUS_CONTENT',
-        threshold: 'BLOCK_NONE',
-      },
-      {
-        category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT',
-        threshold: 'BLOCK_NONE',
-      },
-    ],
-  },
 });
 
 

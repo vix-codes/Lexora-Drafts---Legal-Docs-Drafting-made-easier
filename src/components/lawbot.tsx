@@ -13,7 +13,7 @@ export function Lawbot() {
       <CardHeader>
         <CardTitle className="font-headline flex items-center gap-2">
           <Bot className="h-5 w-5 text-primary" />
-          Ask Query to Lawbot
+          Ask Lawbot
         </CardTitle>
         <CardDescription>Get instant answers to your legal questions from our AI assistant.</CardDescription>
       </CardHeader>
