@@ -94,10 +94,11 @@ function PublicLandingPage() {
         <div className="max-w-4xl mx-auto text-center">
           <h2 className="font-headline text-3xl md:text-4xl font-bold">About Lexintel</h2>
            <div className="mt-4 text-lg text-muted-foreground space-y-4">
-            <p>
-              Lexintel was created by three MCA students with a simple mission: make legal understanding in India easier, clearer, and accessible to everyone. What began as a student project has grown into an ambitious AI-driven platform that empowers users with instant clarity and practical legal tools.
-            </p>
-            {isAboutExpanded && (
+            {!isAboutExpanded ? (
+                <p>
+                Lexintel was created by three MCA students with a simple mission: make legal understanding in India easier, clearer, and accessible to everyone. What began as a student project has grown into an ambitious AI-driven platform that empowers users with instant clarity and practical legal tools.
+                </p>
+            ) : (
               <div className="space-y-4 text-left animate-in fade-in-50">
                 <p>
                   Lexintel began as a shared frustration among three MCA students — Mithra N, Yashwanth RT, and Vignesh M. We saw how friends, families, and everyday people struggled to understand their rights, draft essential documents, or find trustworthy legal help. The law felt distant, complicated, and wrapped in unnecessary barriers.
