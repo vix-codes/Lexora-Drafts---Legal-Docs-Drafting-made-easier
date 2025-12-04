@@ -11,7 +11,7 @@
 
 import { ai } from '@/ai/genkit';
 import { z } from 'zod';
-import { generate, generateStream, streamToAsyncIterator } from 'genkit/generate';
+import { generateStream } from 'genkit';
 
 const LegalQueryInputSchema = z.object({
   query: z.string().describe("The user's legal question."),
