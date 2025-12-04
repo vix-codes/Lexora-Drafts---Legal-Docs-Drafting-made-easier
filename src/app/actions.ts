@@ -1,7 +1,7 @@
 'use server';
 
 import { generateLegalDraft } from '@/ai/flows/generate-legal-draft';
-import { answerLegalQuery } from '@/ai/flows/answer-legal-query';
+import { answerLegalQuery, type LegalQueryOutput } from '@/ai/flows/answer-legal-query';
 
 type DraftState = {
   draft?: string;
@@ -35,28 +35,26 @@ interface Message {
   text: string;
 }
 
-export const askLawbot = async (query: string, history: Message[]): Promise<AsyncIterable<string>> => {
+export const askLawbot = async (query: string, history: Message[]): Promise<LegalQueryOutput> => {
   if (!query) {
-    async function* emptyGenerator() {
-      yield "Please provide a query.";
-    }
-    return emptyGenerator();
+    return { answer: "Please provide a query." };
   }
 
   try {
-    const resultStream = await answerLegalQuery({ query, history });
-    return resultStream;
+    const result = await answerLegalQuery({ query, history });
+    return result;
   } catch (error: any) {
     console.error('Error in askLawbot action:', error);
-    async function* errorGenerator() {
+    let errorMessage = "I'm sorry, I encountered an issue and can't respond right now. Please try again later.";
+    
+    if (error.message) {
       if (error.message.includes('overloaded')) {
-          yield "The AI service is currently experiencing high traffic. Please try again in a few moments.";
+          errorMessage = "The AI service is currently experiencing high traffic. Please try again in a few moments.";
       } else if (error.message.includes('blocked')) {
-          yield "Your query could not be processed due to the content policy. Please try rephrasing your question.";
-      } else {
-          yield "I'm sorry, I encountered an issue and can't respond right now. Please try again later.";
+          errorMessage = "Your query could not be processed due to the content policy. Please try rephrasing your question.";
       }
     }
-    return errorGenerator();
+    
+    return { answer: errorMessage };
   }
 };

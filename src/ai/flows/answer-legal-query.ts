@@ -11,7 +11,6 @@
 
 import { ai } from '@/ai/genkit';
 import { z } from 'zod';
-import { generateStream } from 'genkit';
 
 const LegalQueryInputSchema = z.object({
   query: z.string().describe("The user's legal question."),
@@ -25,12 +24,16 @@ const LegalQueryOutputSchema = z.object({
 export type LegalQueryInput = z.infer<typeof LegalQueryInputSchema>;
 export type LegalQueryOutput = z.infer<typeof LegalQueryOutputSchema>;
 
-export async function answerLegalQuery(input: LegalQueryInput): Promise<AsyncIterable<string>> {
-    const { stream } = await generateStream({
-      model: ai.model('gemini-2.5-flash'),
-      prompt: {
-        role: 'user',
-        content: `You answer legal questions with clear, structured, and concise informational guidance. 
+const legalQueryPrompt = ai.definePrompt({
+  name: 'legalQueryPrompt',
+  input: {
+    schema: z.object({
+      query: z.string(),
+      history: z.array(z.any()).optional(),
+    }),
+  },
+  output: { schema: LegalQueryOutputSchema },
+  prompt: `You answer legal questions with clear, structured, and concise informational guidance. 
 You are not a lawyer and you do not provide legal advice.
 
 Rules:
@@ -48,28 +51,34 @@ Rules:
 8. When a harmful or illegal question is asked, redirect into a legal explanation without judgment.
 
 Conversation History:
-${JSON.stringify(input.history ?? [])}
+{{{json history}}}
 
 User question:
-${input.query}
+{{{query}}}
 `,
-      },
-      config: {
-        safetySettings: [
-          { category: 'HARM_CATEGORY_DANGEROUS_CONTENT', threshold: 'BLOCK_NONE' },
-          { category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT', threshold: 'BLOCK_NONE' },
-        ],
-      },
+  config: {
+    safetySettings: [
+      { category: 'HARM_CATEGORY_DANGEROUS_CONTENT', threshold: 'BLOCK_NONE' },
+      { category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT', threshold: 'BLOCK_NONE' },
+    ],
+  },
+});
+
+const answerLegalQueryFlow = ai.defineFlow(
+  {
+    name: 'answerLegalQueryFlow',
+    inputSchema: LegalQueryInputSchema,
+    outputSchema: LegalQueryOutputSchema,
+  },
+  async ({ query, history }) => {
+    const { output } = await legalQueryPrompt({
+      query,
+      history: history ?? [],
     });
+    return output!;
+  }
+);
 
-    // Transform the Genkit stream into a simple async iterator of strings.
-    async function* transformStream(): AsyncIterable<string> {
-        for await (const chunk of stream) {
-            if (chunk.text) {
-                yield chunk.text;
-            }
-        }
-    }
-
-    return transformStream();
+export async function answerLegalQuery(input: LegalQueryInput): Promise<LegalQueryOutput> {
+  return answerLegalQueryFlow(input);
 }

@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
@@ -39,36 +38,20 @@ export default function LawbotPage() {
 
     const userMessage: Message = { id: Date.now(), sender: 'user', text: input };
     const currentInput = input;
-    const currentHistory = messages.map(m => ({ role: m.sender, parts: [{ text: m.text }] }));
+    const currentHistory = messages.map(m => ({ sender: m.sender, text: m.text }));
     
     setMessages(prev => [...prev, userMessage]);
     setInput('');
     setIsPending(true);
 
-    const botMessageId = Date.now() + 1;
-    setMessages(prev => [...prev, { id: botMessageId, sender: 'bot', text: '' }]);
-    
     try {
-        const stream = await askLawbot(currentInput, currentHistory.slice(0, -1)); // Pass history without the new user message
-        
-        for await (const chunk of stream) {
-            setMessages(prev =>
-                prev.map(msg =>
-                    msg.id === botMessageId
-                        ? { ...msg, text: msg.text + chunk }
-                        : msg
-                )
-            );
-        }
+        const result = await askLawbot(currentInput, currentHistory);
+        const botMessage: Message = { id: Date.now() + 1, sender: 'bot', text: result.answer };
+        setMessages(prev => [...prev, botMessage]);
     } catch (error) {
-        console.error('Streaming error:', error);
-        setMessages(prev =>
-            prev.map(msg =>
-                msg.id === botMessageId
-                    ? { ...msg, text: "Sorry, I couldn't process that. Please try again." }
-                    : msg
-            )
-        );
+        console.error('Error fetching bot response:', error);
+        const errorMessage: Message = { id: Date.now() + 1, sender: 'bot', text: "Sorry, I couldn't process that. Please try again." };
+        setMessages(prev => [...prev, errorMessage]);
     } finally {
         setIsPending(false);
     }
