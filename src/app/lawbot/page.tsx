@@ -1,46 +1,58 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef, useEffect, useOptimistic } from 'react';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Bot, Send, User } from 'lucide-react';
+import { Bot, Send, User, Loader2 } from 'lucide-react';
 import Header from '@/components/header';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { askLawbot } from '@/app/actions';
 
 interface Message {
+  id: number;
   sender: 'user' | 'bot';
   text: string;
 }
 
 export default function LawbotPage() {
   const [messages, setMessages] = useState<Message[]>([
-    { sender: 'bot', text: "Hello! I am Lawbot, your AI legal assistant. How can I help you today? Please note, I am not a real lawyer and this is not legal advice." }
+    { id: 1, sender: 'bot', text: "Hello! I am Lawbot, your AI legal assistant. How can I help you today? Please note, I am not a real lawyer and this is not legal advice." }
   ]);
   const [input, setInput] = useState('');
+  const [isPending, setIsPending] = useState(false);
+  const scrollAreaRef = useRef<HTMLDivElement>(null);
 
-  const handleSend = () => {
+  useEffect(() => {
+    if (scrollAreaRef.current) {
+        scrollAreaRef.current.scrollTo({
+            top: scrollAreaRef.current.scrollHeight,
+            behavior: 'smooth',
+        });
+    }
+  }, [messages]);
+
+  const handleSend = async () => {
     if (input.trim() === '') return;
 
-    const userMessage: Message = { sender: 'user', text: input };
+    const userMessage: Message = { id: Date.now(), sender: 'user', text: input };
     setMessages(prev => [...prev, userMessage]);
-
-    // Mock bot response
-    setTimeout(() => {
-      const botResponse: Message = { sender: 'bot', text: `I am processing your query about: "${input}". As a demo, I cannot provide a real answer.` };
-      setMessages(prev => [...prev, botResponse]);
-    }, 1000);
-
     setInput('');
+    setIsPending(true);
+    
+    const botResponseText = await askLawbot(input);
+    const botMessage: Message = { id: Date.now() + 1, sender: 'bot', text: botResponseText };
+    setMessages(prev => [...prev, botMessage]);
+    setIsPending(false);
   };
 
   return (
     <div className="flex flex-col h-screen bg-background text-foreground">
       <Header />
       <main className="flex-1 flex items-center justify-center p-4">
-        <Card className="w-full max-w-2xl h-[70vh] flex flex-col">
+        <Card className="w-full max-w-2xl h-[80vh] flex flex-col">
           <CardHeader>
             <CardTitle className="font-headline flex items-center gap-2">
               <Bot className="h-6 w-6 text-primary" />
@@ -49,25 +61,35 @@ export default function LawbotPage() {
             <CardDescription>Your AI-powered legal assistant.</CardDescription>
           </CardHeader>
           <CardContent className="flex-1 overflow-hidden">
-            <ScrollArea className="h-full pr-4">
+            <ScrollArea className="h-full pr-4" ref={scrollAreaRef}>
               <div className="space-y-4">
-                {messages.map((message, index) => (
-                  <div key={index} className={`flex items-start gap-3 ${message.sender === 'user' ? 'justify-end' : ''}`}>
+                {messages.map((message) => (
+                  <div key={message.id} className={`flex items-start gap-3 ${message.sender === 'user' ? 'justify-end' : ''}`}>
                     {message.sender === 'bot' && (
-                      <Avatar>
-                        <AvatarFallback><Bot /></AvatarFallback>
+                      <Avatar className="w-8 h-8">
+                        <AvatarFallback><Bot size={20} /></AvatarFallback>
                       </Avatar>
                     )}
                     <div className={`rounded-lg px-4 py-2 max-w-[80%] ${message.sender === 'user' ? 'bg-primary text-primary-foreground' : 'bg-muted'}`}>
-                      <p className="text-sm">{message.text}</p>
+                      <p className="text-sm whitespace-pre-wrap">{message.text}</p>
                     </div>
                     {message.sender === 'user' && (
-                      <Avatar>
-                        <AvatarFallback><User /></AvatarFallback>
+                      <Avatar className="w-8 h-8">
+                        <AvatarFallback><User size={20} /></AvatarFallback>
                       </Avatar>
                     )}
                   </div>
                 ))}
+                 {isPending && (
+                  <div className="flex items-start gap-3">
+                    <Avatar className="w-8 h-8">
+                      <AvatarFallback><Bot size={20} /></AvatarFallback>
+                    </Avatar>
+                    <div className="rounded-lg px-4 py-2 max-w-[80%] bg-muted flex items-center">
+                        <Loader2 className="h-5 w-5 animate-spin text-primary" />
+                    </div>
+                  </div>
+                )}
               </div>
             </ScrollArea>
           </CardContent>
@@ -76,11 +98,12 @@ export default function LawbotPage() {
               <Input
                 value={input}
                 onChange={e => setInput(e.target.value)}
-                onKeyPress={e => e.key === 'Enter' && handleSend()}
+                onKeyPress={e => e.key === 'Enter' && !isPending && handleSend()}
                 placeholder="Ask a legal question..."
+                disabled={isPending}
               />
-              <Button onClick={handleSend}>
-                <Send className="h-4 w-4" />
+              <Button onClick={handleSend} disabled={isPending}>
+                {isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
               </Button>
             </div>
           </CardFooter>

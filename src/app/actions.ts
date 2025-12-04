@@ -1,6 +1,7 @@
 'use server';
 
 import { generateLegalDraft } from '@/ai/flows/generate-legal-draft';
+import { answerLegalQuery } from '@/ai/flows/answer-legal-query';
 
 type DraftState = {
   draft?: string;
@@ -12,7 +13,6 @@ export const generateDraft = async (prevState: DraftState, formData: FormData): 
   const rawData = Object.fromEntries(formData.entries());
 
   try {
-    // 1. Generate the legal draft using the AI flow
     const result = await generateLegalDraft({
       documentType: docType,
       formData: rawData,
@@ -20,14 +20,27 @@ export const generateDraft = async (prevState: DraftState, formData: FormData): 
     
     const draftContent = result.legalDraft;
 
-    // 2. Return the generated draft to the client
     return { draft: draftContent };
   } catch (error: any) {
     console.error('Error generating draft:', error);
-    // Distinguish between AI errors and other errors if possible
     if (error.message.includes('overloaded')) {
         return { error: 'The AI service is currently busy. Please try again in a moment.' };
     }
     return { error: 'Failed to generate draft. Please try again.' };
+  }
+};
+
+
+export const askLawbot = async (query: string): Promise<string> => {
+  if (!query) {
+    return "Please provide a query.";
+  }
+
+  try {
+    const result = await answerLegalQuery({ query });
+    return result.answer;
+  } catch (error) {
+    console.error('Error in askLawbot action:', error);
+    return "I'm sorry, I encountered an issue and can't respond right now. Please try again later.";
   }
 };
