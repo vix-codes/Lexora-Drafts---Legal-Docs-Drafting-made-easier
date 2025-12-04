@@ -44,18 +44,3 @@
     @apply bg-background text-foreground;
   }
 }
-
-.auth-bg {
-    background-color: hsl(var(--background));
-    padding: 3rem;
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-}
-
-.auth-content {
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-    flex-grow: 1;
-}
