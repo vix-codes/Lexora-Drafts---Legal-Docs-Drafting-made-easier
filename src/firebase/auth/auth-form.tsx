@@ -114,7 +114,7 @@ export function AuthForm({ mode }: AuthFormProps) {
                 title: 'Account Created',
                 description: "Welcome! Please complete your profile.",
             });
-            router.push('/'); // Redirect to dashboard to see the profile card
+            router.push('/profile'); // Redirect to profile page to complete profile
         } else {
             const userRef = doc(db, 'users', user.uid);
             await setDoc(userRef, {

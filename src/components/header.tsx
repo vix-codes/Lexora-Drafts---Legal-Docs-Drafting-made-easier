@@ -2,12 +2,15 @@
 
 import { getAuth, signOut as firebaseSignOut } from 'firebase/auth';
 import { app } from '@/firebase/client';
-import { BookText, LogOut } from 'lucide-react';
+import { BookText, LogOut, User as UserIcon, Briefcase } from 'lucide-react';
 import { Logo } from './icons';
 import { Glossary } from './glossary';
 import { Button } from './ui/button';
 import { useAuth } from './auth-provider';
 import Link from 'next/link';
+import { useMemo } from 'react';
+import { getFirestore, doc } from 'firebase/firestore';
+import { useDoc } from '@/firebase/firestore/use-doc';
 
 function getUsername(email: string | null | undefined): string {
     if (!email) return 'Guest';
@@ -17,6 +20,14 @@ function getUsername(email: string | null | undefined): string {
 
 export default function Header() {
   const { user } = useAuth();
+
+  const lawyerDocRef = useMemo(() => {
+    if (!user) return null;
+    const db = getFirestore(app);
+    return doc(db, 'lawyers', user.uid);
+  }, [user]);
+
+  const { data: lawyerData } = useDoc(lawyerDocRef);
 
   const handleSignOut = async () => {
     const auth = getAuth(app);
@@ -38,6 +49,14 @@ export default function Header() {
       <div className="flex items-center gap-4">
         {user && <span className="text-sm font-medium text-muted-foreground">Hi, {getUsername(user.email)}</span>}
         <div className="flex items-center gap-2">
+            {lawyerData && (
+              <Button variant="ghost" size="sm" asChild>
+                <Link href="/profile">
+                  <Briefcase className="h-4 w-4 mr-2" />
+                  Dashboard
+                </Link>
+              </Button>
+            )}
             <Glossary>
               <Button variant="ghost" size="icon" className="text-foreground hover:bg-muted hover:text-foreground">
                   <BookText className="h-5 w-5" />

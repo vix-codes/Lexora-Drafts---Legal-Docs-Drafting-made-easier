@@ -156,18 +156,17 @@ export function LawyerProfileCard() {
 
   const { data: lawyerData, isLoading } = useDoc(lawyerDocRef);
 
-  if (isLoading || !user) {
-    // You might want a skeleton loader here if it's the initial page load for a lawyer
+  if (!user) {
     return null;
   }
   
   // If user is loaded and is not a lawyer, don't render anything
-  if (!lawyerData) {
-    return null;
+  if (!lawyerData && !isLoading) {
+    return <p className="text-muted-foreground">You do not have a lawyer profile yet. Sign up as a lawyer to create one.</p>;
   }
   
   return (
-    <Card className="md:col-span-2">
+    <Card className="col-span-1 lg:col-span-2">
         <CardHeader>
           <CardTitle className="font-headline flex items-center gap-2">
               <Briefcase className="h-6 w-6 text-primary" />
