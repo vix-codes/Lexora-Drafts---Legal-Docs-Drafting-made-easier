@@ -4,7 +4,7 @@ import { useMemo } from 'react';
 import { useAuth } from '@/components/auth-provider';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useDoc } from '@/firebase/firestore/use-doc';
-import { doc, getFirestore, updateDoc } from 'firebase/firestore';
+import { doc, getFirestore, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { app } from '@/firebase/client';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -15,7 +15,9 @@ import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Briefcase } from 'lucide-react';
+import { Briefcase, Loader2 } from 'lucide-react';
+import Header from '@/components/header';
+import { useRouter } from 'next/navigation';
 
 const lawyerProfileSchema = z.object({
   name: z.string().min(2, 'Name is required.'),
@@ -29,9 +31,8 @@ const lawyerProfileSchema = z.object({
 
 type LawyerFormData = z.infer<typeof lawyerProfileSchema>;
 
-function LawyerProfileForm({ lawyerData }: { lawyerData: any }) {
+function LawyerProfileForm({ lawyerData, lawyerId }: { lawyerData: any, lawyerId: string }) {
   const { toast } = useToast();
-  const { user } = useAuth();
   
   const { register, handleSubmit, formState: { errors, isSubmitting, isDirty } } = useForm<LawyerFormData>({
     resolver: zodResolver(lawyerProfileSchema),
@@ -47,9 +48,8 @@ function LawyerProfileForm({ lawyerData }: { lawyerData: any }) {
   });
 
   const onSubmit = async (data: LawyerFormData) => {
-    if (!user) return;
     const db = getFirestore(app);
-    const lawyerRef = doc(db, 'lawyers', user.uid);
+    const lawyerRef = doc(db, 'lawyers', lawyerId);
     try {
       const updateData = {
         name: data.name,
@@ -61,6 +61,7 @@ function LawyerProfileForm({ lawyerData }: { lawyerData: any }) {
         specializations: data.specializations.split(',').map(s => s.trim()),
         experience: data.experience,
         description: data.description,
+        lastUpdated: serverTimestamp(),
       };
       await updateDoc(lawyerRef, updateData);
       toast({
@@ -119,16 +120,36 @@ function LawyerProfileForm({ lawyerData }: { lawyerData: any }) {
       
       <div className="flex justify-end">
         <Button type="submit" disabled={isSubmitting || !isDirty}>
-          {isSubmitting ? 'Saving...' : 'Save Changes'}
+          {isSubmitting ? <Loader2 className="animate-spin" /> : 'Save Changes'}
         </Button>
       </div>
     </form>
   )
 }
 
+function LoadingSkeleton() {
+  return (
+    <div className="space-y-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="space-y-2"> <Skeleton className="h-4 w-1/4" /> <Skeleton className="h-10 w-full" /> </div>
+          <div className="space-y-2"> <Skeleton className="h-4 w-1/4" /> <Skeleton className="h-10 w-full" /> </div>
+          <div className="space-y-2"> <Skeleton className="h-4 w-1/4" /> <Skeleton className="h-10 w-full" /> </div>
+          <div className="space-y-2"> <Skeleton className="h-4 w-1/4" /> <Skeleton className="h-10 w-full" /> </div>
+          <div className="space-y-2"> <Skeleton className="h-4 w-1/4" /> <Skeleton className="h-10 w-full" /> </div>
+          <div className="space-y-2"> <Skeleton className="h-4 w-1/4" /> <Skeleton className="h-10 w-full" /> </div>
+          <div className="md:col-span-2 space-y-2"> <Skeleton className="h-4 w-1/4" /> <Skeleton className="h-24 w-full" /> </div>
+        </div>
+        <div className="flex justify-end">
+            <Skeleton className="h-10 w-32" />
+        </div>
+    </div>
+  );
+}
 
-export function LawyerProfileCard() {
+
+export default function LawyerProfilePage() {
   const { user } = useAuth();
+  const router = useRouter();
   
   const lawyerDocRef = useMemo(() => {
     if (!user) return null;
@@ -136,42 +157,32 @@ export function LawyerProfileCard() {
     return doc(db, 'lawyers', user.uid);
   }, [user]);
 
-  const { data: lawyerData, isLoading: isLawyerLoading } = useDoc(lawyerDocRef);
+  const { data: lawyerData, isLoading } = useDoc(lawyerDocRef);
 
-  const renderLoading = () => (
-    <div className="space-y-6">
-        <div className="space-y-2">
-            <Skeleton className="h-4 w-1/4" />
-            <Skeleton className="h-10 w-full" />
-        </div>
-        <div className="space-y-2">
-            <Skeleton className="h-4 w-1/4" />
-            <Skeleton className="h-10 w-full" />
-        </div>
-        <div className="space-y-2 md:col-span-2">
-            <Skeleton className="h-4 w-1/4" />
-            <Skeleton className="h-24 w-full" />
-        </div>
-    </div>
-  );
-  
-  // Don't render the card if the user is loading or is not a lawyer
-  if (isLawyerLoading || !lawyerData) {
+  // If user is loaded and is not a lawyer, redirect them.
+  if (!isLoading && user && !lawyerData) {
+    router.push('/');
     return null;
   }
-
+  
   return (
-    <Card className="md:col-span-2">
-        <CardHeader>
-        <CardTitle className="font-headline flex items-center gap-2">
-            <Briefcase className="h-5 w-5 text-primary" />
-            Lawyer Profile
-        </CardTitle>
-        <CardDescription>Manage your professional details that appear to clients.</CardDescription>
-        </CardHeader>
-        <CardContent>
-            <LawyerProfileForm lawyerData={lawyerData} />
-        </CardContent>
-    </Card>
+    <div className="flex flex-col min-h-screen bg-background text-foreground">
+      <Header />
+      <main className="flex-1 p-4 lg:p-6">
+        <Card>
+            <CardHeader>
+              <CardTitle className="font-headline flex items-center gap-2">
+                  <Briefcase className="h-6 w-6 text-primary" />
+                  Your Professional Profile
+              </CardTitle>
+              <CardDescription>This information is visible to potential clients on the platform. Keep it up-to-date.</CardDescription>
+            </CardHeader>
+            <CardContent>
+                {isLoading && <LoadingSkeleton />}
+                {lawyerData && user && <LawyerProfileForm lawyerData={lawyerData} lawyerId={user.uid} />}
+            </CardContent>
+        </Card>
+      </main>
+    </div>
   )
 }
