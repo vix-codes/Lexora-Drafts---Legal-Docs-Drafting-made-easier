@@ -8,6 +8,7 @@ import Header from '@/components/header';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { askLawbot } from '@/app/actions';
+import { cn } from '@/lib/utils';
 
 interface Message {
   id: number;
@@ -62,18 +63,21 @@ export default function LawbotPage() {
       <div className="flex-1 flex flex-col max-w-4xl w-full mx-auto p-4 overflow-hidden">
         <ScrollArea className="flex-1 pr-4" viewportRef={viewportRef}>
           <div className="space-y-4 py-4">
-            {messages.map((message) => (
+            {messages.map((message, index) => (
               <div key={message.id} className={`flex items-start gap-3 ${message.sender === 'user' ? 'justify-end' : ''}`}>
                 {message.sender === 'bot' && (
                   <Avatar className="w-8 h-8">
                     <AvatarFallback><Bot size={20} /></AvatarFallback>
                   </Avatar>
                 )}
-                <div className={`rounded-lg px-4 py-2 max-w-[80%] ${message.sender === 'user' ? 'bg-primary text-primary-foreground' : 'bg-muted'}`}>
+                <div 
+                  className={cn(
+                    "rounded-lg px-4 py-2 max-w-[80%]",
+                    message.sender === 'user' ? 'bg-primary text-primary-foreground' : 'bg-muted',
+                    isPending && message.sender === 'user' && index === messages.length - 1 && 'animate-pulse'
+                  )}
+                >
                   <p className="text-sm whitespace-pre-wrap">{message.text}</p>
-                   {isPending && message.id === messages[messages.length - 1].id && (
-                     <Loader2 className="h-4 w-4 animate-spin inline-block ml-2" />
-                   )}
                 </div>
                 {message.sender === 'user' && (
                   <Avatar className="w-8 h-8">
