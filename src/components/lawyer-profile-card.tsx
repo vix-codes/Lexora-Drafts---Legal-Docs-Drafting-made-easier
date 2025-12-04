@@ -1,14 +1,12 @@
-
 'use client';
 
 import { useMemo } from 'react';
 import { useAuth } from '@/components/auth-provider';
-import Header from '@/components/header';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useDoc } from '@/firebase/firestore/use-doc';
 import { doc, getFirestore, updateDoc } from 'firebase/firestore';
 import { app } from '@/firebase/client';
-import { useForm, Controller } from 'react-hook-form';
+import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Input } from '@/components/ui/input';
@@ -17,7 +15,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { Skeleton } from '@/components/ui/skeleton';
-import { User, Briefcase } from 'lucide-react';
+import { Briefcase } from 'lucide-react';
 
 const lawyerProfileSchema = z.object({
   name: z.string().min(2, 'Name is required.'),
@@ -128,40 +126,9 @@ function LawyerProfileForm({ lawyerData }: { lawyerData: any }) {
   )
 }
 
-function UserProfileCard({ userData }: { userData: any }) {
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2"><User className="h-5 w-5 text-primary"/> User Profile</CardTitle>
-        <CardDescription>Your account details.</CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-4 text-sm">
-        <div>
-          <p className="font-semibold text-muted-foreground">Username</p>
-          <p>{userData.username}</p>
-        </div>
-        <div>
-          <p className="font-semibold text-muted-foreground">Email</p>
-          <p>{userData.email}</p>
-        </div>
-        <div>
-          <p className="font-semibold text-muted-foreground">Account Created</p>
-          <p>{userData.createdAt ? new Date(userData.createdAt.seconds * 1000).toLocaleDateString() : 'N/A'}</p>
-        </div>
-      </CardContent>
-    </Card>
-  )
-}
 
-
-export default function ProfilePage() {
+export function LawyerProfileCard() {
   const { user } = useAuth();
-  
-  const userDocRef = useMemo(() => {
-    if (!user) return null;
-    const db = getFirestore(app);
-    return doc(db, 'users', user.uid);
-  }, [user]);
   
   const lawyerDocRef = useMemo(() => {
     if (!user) return null;
@@ -169,7 +136,6 @@ export default function ProfilePage() {
     return doc(db, 'lawyers', user.uid);
   }, [user]);
 
-  const { data: userData, isLoading: isUserLoading } = useDoc(userDocRef);
   const { data: lawyerData, isLoading: isLawyerLoading } = useDoc(lawyerDocRef);
 
   const renderLoading = () => (
@@ -188,49 +154,24 @@ export default function ProfilePage() {
         </div>
     </div>
   );
+  
+  // Don't render the card if the user is loading or is not a lawyer
+  if (isLawyerLoading || !lawyerData) {
+    return null;
+  }
 
   return (
-    <div className="flex flex-col min-h-screen bg-background text-foreground">
-      <Header />
-      <main className="flex-1 p-4 lg:p-6">
-        <div className="w-full max-w-4xl mx-auto space-y-8">
-          {isUserLoading || isLawyerLoading ? (
-            <Card>
-              <CardHeader>
-                <Skeleton className="h-6 w-1/2"/>
-                <Skeleton className="h-4 w-3/4"/>
-              </CardHeader>
-              <CardContent>
-                {renderLoading()}
-              </CardContent>
-            </Card>
-          ) : lawyerData ? (
-             <Card>
-              <CardHeader>
-                <CardTitle className="font-headline flex items-center gap-2">
-                  <Briefcase className="h-5 w-5 text-primary" />
-                  Lawyer Profile
-                </CardTitle>
-                <CardDescription>Manage your professional details that appear to clients.</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <LawyerProfileForm lawyerData={lawyerData} />
-              </CardContent>
-            </Card>
-          ) : userData ? (
-            <UserProfileCard userData={userData} />
-          ) : (
-             <Card>
-              <CardHeader>
-                <CardTitle>Profile Not Found</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p>We couldn't find a profile associated with your account.</p>
-              </CardContent>
-            </Card>
-          )}
-        </div>
-      </main>
-    </div>
+    <Card className="md:col-span-2">
+        <CardHeader>
+        <CardTitle className="font-headline flex items-center gap-2">
+            <Briefcase className="h-5 w-5 text-primary" />
+            Lawyer Profile
+        </CardTitle>
+        <CardDescription>Manage your professional details that appear to clients.</CardDescription>
+        </CardHeader>
+        <CardContent>
+            <LawyerProfileForm lawyerData={lawyerData} />
+        </CardContent>
+    </Card>
   )
 }

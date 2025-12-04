@@ -2,7 +2,7 @@
 
 import { getAuth, signOut as firebaseSignOut } from 'firebase/auth';
 import { app } from '@/firebase/client';
-import { BookText, LogOut, User } from 'lucide-react';
+import { BookText, LogOut } from 'lucide-react';
 import { Logo } from './icons';
 import { Glossary } from './glossary';
 import { Button } from './ui/button';
@@ -44,12 +44,6 @@ export default function Header() {
                   <span className="sr-only">Open Glossary</span>
               </Button>
             </Glossary>
-            <Button asChild variant="ghost" size="icon" className="text-foreground hover:bg-muted hover:text-foreground">
-              <Link href="/profile">
-                <User className="h-5 w-5" />
-                <span className="sr-only">Profile</span>
-              </Link>
-            </Button>
             <Button variant="ghost" size="icon" onClick={handleSignOut} className="text-foreground hover:bg-muted hover:text-foreground">
                 <LogOut className="h-5 w-5" />
                 <span className="sr-only">Sign Out</span>
