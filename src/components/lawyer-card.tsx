@@ -61,7 +61,7 @@ export function LawyerCard({ lawyer }: LawyerCardProps) {
           <div className="flex-1">
             <h3 className="font-semibold text-lg flex items-center gap-2">
               {lawyer.name}
-              {lawyer.isVerified && <ShieldCheck className="h-5 w-5 text-yellow-500 fill-yellow-500" title='Verified Professional' />}
+              {lawyer.isVerified && <ShieldCheck className="h-5 w-5 text-green-500 fill-current" title='Verified Professional' />}
             </h3>
             <p className="text-primary text-sm font-medium">{lawyer.specializations[0]}</p>
             <p className="text-muted-foreground text-sm">{lawyer.location.city}, {lawyer.location.state}</p>

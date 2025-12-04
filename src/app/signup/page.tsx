@@ -31,7 +31,7 @@ async function LawFeed() {
     <div className="space-y-6">
       {updates.slice(0, 3).map((update, index) => (
         <div key={index} className="space-y-1">
-          <h3 className="font-semibold text-yellow-300">{update.title}</h3>
+          <h3 className="font-semibold text-white">{update.title}</h3>
           <p className="text-sm text-white/80 leading-relaxed">{update.summary}</p>
           <div className="flex items-center justify-between text-xs text-white/60 pt-1">
             <span>{formatDistanceToNow(new Date(update.timestamp * 1000), { addSuffix: true })}</span>
@@ -39,7 +39,7 @@ async function LawFeed() {
               href={update.link}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-1 hover:text-yellow-300 transition-colors"
+              className="inline-flex items-center gap-1 hover:text-white transition-colors"
             >
               Read More <ExternalLink className="h-3 w-3" />
             </a>
