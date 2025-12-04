@@ -1,3 +1,4 @@
+
 'use server';
 
 /**
@@ -36,7 +37,7 @@ const generateLegalDraftPrompt = ai.definePrompt({
     formDataString: z.string(),
   })},
   output: {schema: GenerateLegalDraftOutputSchema},
-  prompt: `Generate a well-structured legal document of type {{{documentType}}} under Indian law using these details: {{{formDataString}}}. Include subject line, clauses, parties involved, and signature sections. After each major clause or section, add a brief, simple one-sentence explanation in parentheses, like this: (This clause explains...). Format the entire output as a single block of plain text, with clean formatting for legal readability.`,
+  prompt: `Generate a well-structured legal document of type {{{documentType}}} under Indian law using these details: {{{formDataString}}}. Include subject line, clauses, parties involved, and signature sections. After each major clause or section, add a brief, simple one-sentence explanation in parentheses, like this: (This clause explains...). Format the entire output as a single block of plain text, with clean formatting for legal readability. Do not use any markdown formatting like **, ##, or *.`,
   config: {
     safetySettings: [
         {
