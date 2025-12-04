@@ -10,7 +10,7 @@ import Link from 'next/link';
 
 const AuthContext = createContext<{ user: User | null }>({ user: null });
 
-const publicRoutes = ['/login', '/signup'];
+const publicRoutes = ['/login', '/signup', '/lawyer-signup'];
 
 function LoadingScreen() {
   return (

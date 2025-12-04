@@ -11,9 +11,9 @@ function LawFeedLoading() {
         <div className="space-y-6">
             {[...Array(3)].map((_, i) => (
                 <div key={i}>
-                    <Skeleton className="h-5 w-3/4 mb-2 bg-white/20" />
-                    <Skeleton className="h-4 w-full mb-1 bg-white/20" />
-                    <Skeleton className="h-4 w-5/6 bg-white/20" />
+                    <Skeleton className="h-5 w-3/4 mb-2 bg-muted" />
+                    <Skeleton className="h-4 w-full mb-1 bg-muted" />
+                    <Skeleton className="h-4 w-5/6 bg-muted" />
                 </div>
             ))}
         </div>
@@ -24,22 +24,22 @@ async function LawFeed() {
   const updates: LawUpdate[] = await displayLawUpdatesWithSummaries();
 
   if (!updates || updates.length === 0) {
-    return <p className="text-white/70">No recent updates available.</p>;
+    return <p className="text-muted-foreground">No recent updates available.</p>;
   }
 
   return (
     <div className="space-y-6">
       {updates.slice(0, 3).map((update, index) => (
         <div key={index} className="space-y-1">
-          <h3 className="font-semibold text-white">{update.title}</h3>
-          <p className="text-sm text-white/80 leading-relaxed">{update.summary}</p>
-          <div className="flex items-center justify-between text-xs text-white/60 pt-1">
+          <h3 className="font-semibold text-foreground">{update.title}</h3>
+          <p className="text-sm text-muted-foreground leading-relaxed">{update.summary}</p>
+          <div className="flex items-center justify-between text-xs text-muted-foreground/80 pt-1">
             <span>{formatDistanceToNow(new Date(update.timestamp * 1000), { addSuffix: true })}</span>
             <a
               href={update.link}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-1 hover:text-white transition-colors"
+              className="inline-flex items-center gap-1 hover:text-primary transition-colors"
             >
               Read More <ExternalLink className="h-3 w-3" />
             </a>

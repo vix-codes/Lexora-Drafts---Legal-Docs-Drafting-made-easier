@@ -59,7 +59,7 @@ export default function LawbotPage() {
   };
 
   return (
-    <div className="flex flex-col h-screen bg-surface-muted text-foreground">
+    <div className="flex flex-col h-screen bg-background text-foreground">
       <Header />
       <main className="flex-1 p-4 lg:p-6 flex justify-center items-start">
         <Card className="w-full max-w-4xl h-full flex flex-col">
@@ -73,7 +73,7 @@ export default function LawbotPage() {
             </CardDescription>
           </CardHeader>
           <CardContent className="flex-1 flex flex-col overflow-hidden p-0">
-            <ScrollArea className="flex-1 px-6 bg-surface" viewportRef={viewportRef}>
+            <ScrollArea className="flex-1 px-6" viewportRef={viewportRef}>
               <div className="space-y-4 py-4">
                 {messages.map((message, index) => (
                   <div key={message.id} className={`flex items-start gap-3 ${message.sender === 'user' ? 'justify-end' : ''}`}>
@@ -85,7 +85,7 @@ export default function LawbotPage() {
                     <div 
                       className={cn(
                         "rounded-lg px-4 py-2 max-w-[80%]",
-                        message.sender === 'user' ? 'bg-primary text-primary-foreground' : 'bg-surface-muted',
+                        message.sender === 'user' ? 'bg-primary text-primary-foreground' : 'bg-muted text-foreground',
                         isPending && index === messages.length - (messages.some(m => m.sender === 'bot' && m.text.includes('Sorry')) ? 2 : 1) && message.sender === 'user' && 'animate-pulse'
                       )}
                     >
@@ -103,7 +103,7 @@ export default function LawbotPage() {
                     <Avatar className="w-8 h-8 bg-primary text-primary-foreground">
                       <AvatarFallback><Bot size={20} /></AvatarFallback>
                     </Avatar>
-                    <div className="rounded-lg px-4 py-2 max-w-[80%] bg-surface-muted flex items-center space-x-2">
+                    <div className="rounded-lg px-4 py-2 max-w-[80%] bg-muted flex items-center space-x-2">
                         <span className="h-2 w-2 bg-foreground rounded-full animate-pulse [animation-delay:-0.3s]"></span>
                         <span className="h-2 w-2 bg-foreground rounded-full animate-pulse [animation-delay:-0.15s]"></span>
                         <span className="h-2 w-2 bg-foreground rounded-full animate-pulse"></span>

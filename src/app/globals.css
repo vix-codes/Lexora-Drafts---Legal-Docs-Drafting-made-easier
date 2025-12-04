@@ -4,38 +4,6 @@
 
 @layer base {
   :root {
-    --background: 228 100% 98.8%; /* #F4F7FF */
-    --foreground: 0 0% 11%; /* #1C1C1C */
-
-    --card: 228 100% 98.8%; /* #F4F7FF */
-    --card-foreground: 0 0% 11%; /* #1C1C1C */
-
-    --popover: 228 100% 98.8%; /* #F4F7FF */
-    --popover-foreground: 0 0% 11%; /* #1C1C1C */
-
-    --primary: 221 100% 59%; /* #2E6BFF */
-    --primary-foreground: 0 0% 100%; /* white */
-
-    --secondary: 228 100% 95.7%; /* #E6EBFF */
-    --secondary-foreground: 221 100% 59%; /* #2E6BFF */
-
-    --muted: 228 100% 95.7%; /* #E6EBFF */
-    --muted-foreground: 0 0% 29%; /* #4A4A4A */
-
-    --accent: 22 100% 62%; /* #FF8A3D */
-    --accent-foreground: 0 0% 100%;
-
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
-
-    --border: 228 100% 92%; /* #D5DBFF */
-    --input: 228 100% 92%; /* #D5DBFF */
-    --ring: 221 100% 59%; /* #2E6BFF */
-
-    --radius: 0.5rem;
-  }
-
-  .dark {
     --background: 244 31% 12%; /* #171626 */
     --foreground: 240 22% 90%; /* #E0DFF0 */
 
@@ -63,6 +31,8 @@
     --border: 244 31% 25%; /* #33314F */
     --input: 244 31% 25%; /* #33314F */
     --ring: 258 100% 70%; /* #8A7EFF */
+
+    --radius: 0.5rem;
   }
 }
 
@@ -76,7 +46,7 @@
 }
 
 .auth-bg {
-    background-color: hsl(var(--primary));
+    background-color: hsl(var(--background));
     padding: 3rem;
     display: flex;
     flex-direction: column;
