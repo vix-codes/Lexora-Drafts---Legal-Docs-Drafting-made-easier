@@ -1,3 +1,4 @@
+
 'use client';
 
 import MainContent from '@/app/main-content';
@@ -20,27 +21,25 @@ function LawyerDashboardLinkCard() {
 
   return (
     <Card>
-      <CardHeader>
-        <CardTitle className="font-headline flex items-center gap-2">
-          <Briefcase className="h-5 w-5 text-primary" />
-          Are you a lawyer?
-        </CardTitle>
-        <CardDescription>Join here to create your professional profile.</CardDescription>
-      </CardHeader>
-      <CardContent>
-        <Button asChild className="w-full">
-          <Link href="/dashboard">
-            Create Profile
-          </Link>
-        </Button>
-      </CardContent>
-    </Card>
+        <CardHeader>
+          <CardTitle className="font-headline flex items-center gap-2">
+            Are you a lawyer?
+          </CardTitle>
+          <CardDescription>Join here to create your professional profile.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Button asChild className="w-full">
+            <Link href="/dashboard">
+                Create Profile
+            </Link>
+          </Button>
+        </CardContent>
+      </Card>
   );
 }
 
 
 export default function HomeContent({ children }: { children: ReactNode }) {
-  const { user } = useAuth();
   return (
     <main className="grid grid-cols-1 md:grid-cols-2 gap-6 lg:gap-8 p-4 lg:p-6">
       <MainContent />
@@ -62,7 +61,7 @@ export default function HomeContent({ children }: { children: ReactNode }) {
           </Button>
         </CardContent>
       </Card>
-      {user && <LawyerDashboardLinkCard />}
+      <LawyerDashboardLinkCard />
       {children}
     </main>
   );

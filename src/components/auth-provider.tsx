@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useRouter, usePathname } from 'next/navigation';
@@ -6,11 +7,11 @@ import { getAuth, onAuthStateChanged, type User } from 'firebase/auth';
 import { app } from '@/firebase/client';
 import { Skeleton } from './ui/skeleton';
 import { Logo } from './icons';
-import Link from 'next/link';
 
 const AuthContext = createContext<{ user: User | null }>({ user: null });
 
-const publicRoutes = ['/login', '/signup', '/lawyer-signup'];
+const authRequiredRoutes = ['/dashboard'];
+const publicRoutes = ['/login', '/signup', '/lawyer-signup', '/draft', '/lawbot', '/find-lawyer', '/'];
 
 function LoadingScreen() {
   return (
@@ -48,30 +49,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (isUserLoading) return;
 
-    const isPublicRoute = publicRoutes.some(route => pathname.startsWith(route));
+    const pathIsPublic = publicRoutes.some(route => pathname === route || (route !== '/' && pathname.startsWith(route)));
+    const pathIsAuthRequired = authRequiredRoutes.some(route => pathname.startsWith(route));
+    const isAuthPage = pathname.startsWith('/login') || pathname.startsWith('/signup');
 
-    if (user && isPublicRoute) {
-      router.push('/');
-    } else if (!user && !isPublicRoute) {
+    if (user && isAuthPage) {
+      router.push('/dashboard');
+    } else if (!user && pathIsAuthRequired) {
       router.push('/login');
     }
   }, [user, isUserLoading, router, pathname]);
   
-  // Show loading screen while we determine auth state
-  if (isUserLoading) {
+  // Show loading screen while we determine auth state for required auth pages
+  if (isUserLoading && authRequiredRoutes.some(route => pathname.startsWith(route))) {
     return <LoadingScreen />;
   }
 
-  const isPublicRoute = publicRoutes.some(route => pathname.startsWith(route));
-
-  // If it's a public route, render it.
-  // If it's a private route and the user exists, render it.
-  if (isPublicRoute || user) {
-    return <AuthContext.Provider value={{ user }}>{children}</AuthContext.Provider>;
-  }
-  
-  // Otherwise, the effect hook will redirect, so we show a loading screen.
-  return <LoadingScreen />;
+  return <AuthContext.Provider value={{ user }}>{children}</AuthContext.Provider>;
 }
 
 export const useAuth = () => useContext(AuthContext);
