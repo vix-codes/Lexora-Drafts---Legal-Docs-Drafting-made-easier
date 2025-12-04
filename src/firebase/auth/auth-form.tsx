@@ -83,38 +83,23 @@ export function AuthForm({ mode }: AuthFormProps) {
 
         if (mode === 'lawyer-signup') {
             const lawyerData = data as z.infer<typeof lawyerSchema>;
+            // Create a placeholder lawyer doc, user will fill it on /dashboard
             const lawyerRef = doc(db, 'lawyers', user.uid);
-            const newLawyerProfile = {
+            await setDoc(lawyerRef, {
                 id: user.uid,
                 email: user.email!,
                 name: lawyerData.name,
                 enrollmentNumber: lawyerData.enrollmentNumber,
                 stateBarCouncil: lawyerData.stateBarCouncil,
                 createdAt: serverTimestamp(),
-                isVerified: true, // Auto-verified for mock purposes
-                phone: '',
-                location: { city: '', state: '' },
-                specializations: ['General Practice'],
-                experience: 1,
-                description: 'Newly registered lawyer. Please complete your profile.',
-                rating: 4.0,
-                source: 'internal' as const,
-            };
-            await setDoc(lawyerRef, newLawyerProfile);
-
-            // Add to mock data to show in UI immediately
-            lawyers.unshift({
-                ...newLawyerProfile,
-                // @ts-ignore
-                createdAt: new Date(),
+                isVerified: false,
             });
-
 
             toast({
                 title: 'Account Created',
-                description: "Welcome! Please complete your profile.",
+                description: "Welcome! Please complete your profile on the dashboard.",
             });
-            router.push('/profile'); // Redirect to profile page to complete profile
+            router.push('/dashboard');
         } else {
             const userRef = doc(db, 'users', user.uid);
             await setDoc(userRef, {

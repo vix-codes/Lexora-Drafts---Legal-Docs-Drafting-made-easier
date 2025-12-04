@@ -15,19 +15,11 @@ import { useMemo } from 'react';
 
 const FIND_LAWYER_URL = '/find-lawyer';
 
-function LawyerProfileLinkCard() {
+function LawyerDashboardLinkCard() {
   const { user } = useAuth();
 
-  const lawyerDocRef = useMemo(() => {
-    if (!user) return null;
-    const db = getFirestore(app);
-    return doc(db, 'lawyers', user.uid);
-  }, [user]);
-
-  const { data: lawyerData } = useDoc(lawyerDocRef);
-
-  if (!lawyerData) {
-    return null; // Don't render if the user is not a lawyer
+  if (!user) {
+    return null;
   }
 
   return (
@@ -37,11 +29,11 @@ function LawyerProfileLinkCard() {
           <Briefcase className="h-5 w-5 text-primary" />
           Lawyer Dashboard
         </CardTitle>
-        <CardDescription>Manage your professional profile and client interactions.</CardDescription>
+        <CardDescription>Create or manage your professional profile.</CardDescription>
       </CardHeader>
       <CardContent>
         <Button asChild className="w-full">
-          <Link href="/profile">
+          <Link href="/dashboard">
             Go to Your Dashboard
           </Link>
         </Button>
@@ -52,6 +44,7 @@ function LawyerProfileLinkCard() {
 
 
 export default function HomeContent({ children }: { children: ReactNode }) {
+  const { user } = useAuth();
   return (
     <main className="grid grid-cols-1 md:grid-cols-2 gap-6 lg:gap-8 p-4 lg:p-6">
       <MainContent />
@@ -73,7 +66,7 @@ export default function HomeContent({ children }: { children: ReactNode }) {
           </Button>
         </CardContent>
       </Card>
-      <LawyerProfileLinkCard />
+      {user && <LawyerDashboardLinkCard />}
       {children}
     </main>
   );

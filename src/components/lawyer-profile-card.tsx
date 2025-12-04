@@ -4,7 +4,7 @@ import { useMemo } from 'react';
 import { useAuth } from '@/components/auth-provider';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useDoc } from '@/firebase/firestore/use-doc';
-import { doc, getFirestore, updateDoc, serverTimestamp } from 'firebase/firestore';
+import { doc, getFirestore, updateDoc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { app } from '@/firebase/client';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -15,7 +15,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Briefcase, Loader2 } from 'lucide-react';
+import { Briefcase, Loader2, FilePlus } from 'lucide-react';
 
 const lawyerProfileSchema = z.object({
   name: z.string().min(2, 'Name is required.'),
@@ -29,19 +29,19 @@ const lawyerProfileSchema = z.object({
 
 type LawyerFormData = z.infer<typeof lawyerProfileSchema>;
 
-function LawyerProfileForm({ lawyerData, lawyerId }: { lawyerData: any, lawyerId: string }) {
+function LawyerProfileForm({ lawyerData, lawyerId, isNewProfile }: { lawyerData: any, lawyerId: string, isNewProfile: boolean }) {
   const { toast } = useToast();
   
   const { register, handleSubmit, formState: { errors, isSubmitting, isDirty } } = useForm<LawyerFormData>({
     resolver: zodResolver(lawyerProfileSchema),
     defaultValues: {
-      name: lawyerData.name || '',
-      phone: lawyerData.phone || '',
-      'location.city': lawyerData.location?.city || '',
-      'location.state': lawyerData.location?.state || '',
-      specializations: lawyerData.specializations?.join(', ') || '',
-      experience: lawyerData.experience || 0,
-      description: lawyerData.description || '',
+      name: lawyerData?.name || '',
+      phone: lawyerData?.phone || '',
+      'location.city': lawyerData?.location?.city || '',
+      'location.state': lawyerData?.location?.state || '',
+      specializations: lawyerData?.specializations?.join(', ') || '',
+      experience: lawyerData?.experience || 0,
+      description: lawyerData?.description || '',
     },
   });
 
@@ -61,11 +61,30 @@ function LawyerProfileForm({ lawyerData, lawyerId }: { lawyerData: any, lawyerId
         description: data.description,
         lastUpdated: serverTimestamp(),
       };
-      await updateDoc(lawyerRef, updateData);
-      toast({
-        title: 'Profile Updated',
-        description: 'Your professional profile has been saved.',
-      });
+      
+      if (isNewProfile) {
+          const newLawyerData = {
+            ...updateData,
+            id: lawyerId,
+            email: lawyerData.email, // This should come from auth user, passed in
+            isVerified: true, // Auto-verified
+            rating: 4.0,
+            createdAt: serverTimestamp(),
+            source: 'internal'
+          };
+          await setDoc(lawyerRef, newLawyerData);
+          toast({
+            title: 'Profile Created',
+            description: 'Your professional profile has been created.',
+          });
+      } else {
+        await updateDoc(lawyerRef, updateData);
+        toast({
+          title: 'Profile Updated',
+          description: 'Your professional profile has been saved.',
+        });
+      }
+
     } catch (error) {
       console.error('Error updating profile:', error);
       toast({
@@ -118,7 +137,7 @@ function LawyerProfileForm({ lawyerData, lawyerId }: { lawyerData: any, lawyerId
       
       <div className="flex justify-end">
         <Button type="submit" disabled={isSubmitting || !isDirty}>
-          {isSubmitting ? <Loader2 className="animate-spin" /> : 'Save Changes'}
+          {isSubmitting ? <Loader2 className="animate-spin" /> : (isNewProfile ? 'Create Profile' : 'Save Changes')}
         </Button>
       </div>
     </form>
@@ -157,26 +176,28 @@ export function LawyerProfileCard() {
   const { data: lawyerData, isLoading } = useDoc(lawyerDocRef);
 
   if (!user) {
-    return null;
+    return <p className="text-muted-foreground">Please log in to manage your profile.</p>;
   }
-  
-  // If user is loaded and is not a lawyer, don't render anything
-  if (!lawyerData && !isLoading) {
-    return <p className="text-muted-foreground">You do not have a lawyer profile yet. Sign up as a lawyer to create one.</p>;
-  }
+
+  const isNewProfile = !isLoading && !lawyerData;
+  const cardTitle = isNewProfile ? "Create Your Professional Profile" : "Your Professional Profile";
+  const cardDescription = isNewProfile
+    ? "Fill out the form below to create your public lawyer profile."
+    : "This information is visible to potential clients. Keep it up-to-date.";
+  const cardIcon = isNewProfile ? <FilePlus className="h-6 w-6 text-primary" /> : <Briefcase className="h-6 w-6 text-primary" />;
   
   return (
-    <Card className="col-span-1 lg:col-span-2">
+    <Card className="col-span-1">
         <CardHeader>
           <CardTitle className="font-headline flex items-center gap-2">
-              <Briefcase className="h-6 w-6 text-primary" />
-              Your Professional Profile
+              {cardIcon}
+              {cardTitle}
           </CardTitle>
-          <CardDescription>This information is visible to potential clients on the platform. Keep it up-to-date.</CardDescription>
+          <CardDescription>{cardDescription}</CardDescription>
         </CardHeader>
         <CardContent>
             {isLoading && <LoadingSkeleton />}
-            {lawyerData && user && <LawyerProfileForm lawyerData={lawyerData} lawyerId={user.uid} />}
+            {!isLoading && user && <LawyerProfileForm lawyerData={lawyerData || { email: user.email }} lawyerId={user.uid} isNewProfile={isNewProfile} />}
         </CardContent>
     </Card>
   )
