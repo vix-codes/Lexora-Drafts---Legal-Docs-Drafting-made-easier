@@ -3,7 +3,7 @@
 
 import { useRouter, usePathname } from 'next/navigation';
 import { useEffect, useState, createContext, useContext, type ReactNode } from 'react';
-import { getAuth, onAuthStateChanged, type User } from 'firebase/auth';
+import { getAuth, onAuthStateChanged, signOut, type User } from 'firebase/auth';
 import { app } from '@/firebase/client';
 import { Skeleton } from './ui/skeleton';
 import { Logo } from './icons';
@@ -59,14 +59,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // Handle authenticated users
     if (user) {
       if (isLawyer) {
-        // If lawyer is not on their panel, redirect them there.
-        if (!pathIsLawyerOnly) {
+        // If lawyer is logged in, and tries to access a public only page, redirect to panel
+        if (pathIsPublicOnly) {
           router.push('/lawyer-panel');
         }
-      } else {
-        // Redirect regular users away from lawyer-only pages.
+        // If lawyer is anywhere else, redirect to panel.
+        else if (!pathIsLawyerOnly) {
+          router.push('/lawyer-panel');
+        }
+      } else { // Regular user
+        // If a regular user tries to access a lawyer-only page, sign them out and redirect.
         if (pathIsLawyerOnly) {
-          router.push('/');
+          signOut(auth).then(() => {
+            router.push('/lawyer-login');
+          });
         }
         // If a regular user is on a public-only page (e.g. /login), redirect to homepage.
         else if (pathIsPublicOnly) {
@@ -78,10 +84,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     else {
       // If the user is not logged in and tries to access a protected route, redirect to login.
       if (pathIsAuthRequired) {
-        router.push('/login');
+        if(pathIsLawyerOnly) {
+            router.push('/lawyer-login');
+        } else {
+            router.push('/login');
+        }
       }
     }
-  }, [user, isUserLoading, router, pathname]);
+  }, [user, isUserLoading, router, pathname, auth]);
   
   if (isUserLoading && authRequiredRoutes.some(route => pathname.startsWith(route))) {
     return <LoadingScreen />;
