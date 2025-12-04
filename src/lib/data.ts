@@ -1,5 +1,21 @@
 import type { LawUpdate } from '@/ai/flows/display-law-updates-with-summaries';
-import type { LawyerProfile } from '@/components/lawyer-card';
+
+export type LawyerProfile = {
+  id: string;
+  name: string;
+  email: string;
+  phone: string;
+  location: { city: string; state: string };
+  specializations: string[];
+  experience: number;
+  description: string;
+  rating: number;
+  isVerified: boolean;
+  enrollmentNumber: string;
+  stateBarCouncil: string;
+  source: 'internal';
+};
+
 
 export type TemplateField = {
   name: string;
@@ -158,6 +174,8 @@ export const lawyers: LawyerProfile[] = [
     description: 'Expert in corporate law with extensive experience in high-stakes M&A deals.',
     rating: 4.9,
     isVerified: true,
+    enrollmentNumber: 'D/1234/2008',
+    stateBarCouncil: 'Delhi',
     source: 'internal'
   },
   {
@@ -171,6 +189,8 @@ export const lawyers: LawyerProfile[] = [
     description: 'Specializing in patent filing and IP litigation for tech startups.',
     rating: 4.8,
     isVerified: true,
+    enrollmentNumber: 'MAH/5678/2011',
+    stateBarCouncil: 'Maharashtra & Goa',
     source: 'internal'
   },
   {
@@ -184,6 +204,8 @@ export const lawyers: LawyerProfile[] = [
     description: 'Highly experienced criminal defense lawyer with a high success rate.',
     rating: 4.9,
     isVerified: true,
+    enrollmentNumber: 'KAR/9012/2003',
+    stateBarCouncil: 'Karnataka',
     source: 'internal'
   },
   {
@@ -197,6 +219,8 @@ export const lawyers: LawyerProfile[] = [
     description: 'Compassionate family law expert dedicated to amicable resolutions.',
     rating: 4.7,
     isVerified: true,
+    enrollmentNumber: 'WB/3456/2005',
+    stateBarCouncil: 'West Bengal',
     source: 'internal'
   },
   {
@@ -210,6 +234,8 @@ export const lawyers: LawyerProfile[] = [
     description: 'Handles all matters related to real estate, from registration to litigation.',
     rating: 4.6,
     isVerified: true,
+    enrollmentNumber: 'MAH/7890/2009',
+    stateBarCouncil: 'Maharashtra & Goa',
     source: 'internal'
   },
   {
@@ -223,6 +249,8 @@ export const lawyers: LawyerProfile[] = [
     description: 'Advising corporations on data protection compliance and cybercrime.',
     rating: 4.8,
     isVerified: true,
+    enrollmentNumber: 'TS/1234/2014',
+    stateBarCouncil: 'Telangana',
     source: 'internal'
   },
   {
@@ -236,6 +264,8 @@ export const lawyers: LawyerProfile[] = [
     description: 'Expert in direct and indirect taxation, representing clients at various tribunals.',
     rating: 4.7,
     isVerified: true,
+    enrollmentNumber: 'TN/5678/2007',
+    stateBarCouncil: 'Tamil Nadu',
     source: 'internal'
   },
   {
@@ -249,6 +279,8 @@ export const lawyers: LawyerProfile[] = [
     description: 'Your go-to legal advisor for funding rounds and startup compliance.',
     rating: 4.9,
     isVerified: true,
+    enrollmentNumber: 'KAR/9013/2015',
+    stateBarCouncil: 'Karnataka',
     source: 'internal'
   },
 ];
