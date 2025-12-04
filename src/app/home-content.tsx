@@ -8,10 +8,6 @@ import { Briefcase, Search } from 'lucide-react';
 import type { ReactNode } from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/components/auth-provider';
-import { useDoc } from '@/firebase/firestore/use-doc';
-import { doc, getFirestore } from 'firebase/firestore';
-import { app } from '@/firebase/client';
-import { useMemo } from 'react';
 
 const FIND_LAWYER_URL = '/find-lawyer';
 
@@ -27,14 +23,14 @@ function LawyerDashboardLinkCard() {
       <CardHeader>
         <CardTitle className="font-headline flex items-center gap-2">
           <Briefcase className="h-5 w-5 text-primary" />
-          Lawyer Dashboard
+          Are you a lawyer?
         </CardTitle>
-        <CardDescription>Create or manage your professional profile.</CardDescription>
+        <CardDescription>Join here to create your professional profile.</CardDescription>
       </CardHeader>
       <CardContent>
         <Button asChild className="w-full">
           <Link href="/dashboard">
-            Go to Your Dashboard
+            Create Profile
           </Link>
         </Button>
       </CardContent>

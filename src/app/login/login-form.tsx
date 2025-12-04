@@ -48,17 +48,6 @@ export default function LoginForm({ children }: { children: ReactNode }) {
                 Sign up
               </Link>
             </p>
-            <div className="w-full flex items-center gap-2">
-                <Separator className="flex-1" />
-                <span className="text-xs text-muted-foreground">OR</span>
-                <Separator className="flex-1" />
-            </div>
-             <p>
-              Are you a lawyer?{' '}
-              <Link href="/lawyer-signup" className="font-medium text-primary hover:underline">
-                Join here
-              </Link>
-            </p>
           </CardFooter>
         </Card>
       </div>
