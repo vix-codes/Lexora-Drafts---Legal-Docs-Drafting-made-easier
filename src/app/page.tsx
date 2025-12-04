@@ -9,6 +9,7 @@ import Header from '@/components/header';
 import Footer from '@/components/footer';
 import HomeContent from './home-content';
 import { useAuth } from '@/components/auth-provider';
+import { useState } from 'react';
 
 const features = [
   {
@@ -39,6 +40,8 @@ const features = [
 
 
 function PublicLandingPage() {
+  const [isAboutExpanded, setIsAboutExpanded] = useState(false);
+
   return (
     <>
       {/* Hero Section */}
@@ -90,9 +93,32 @@ function PublicLandingPage() {
       <section id="about" className="py-20 lg:py-24 px-4">
         <div className="max-w-4xl mx-auto text-center">
           <h2 className="font-headline text-3xl md:text-4xl font-bold">About Lexintel</h2>
-          <p className="mt-4 text-lg text-muted-foreground">
-            Our mission is to demystify the legal landscape in India. We believe that access to legal tools and knowledge should be straightforward and accessible to everyone. By leveraging cutting-edge AI, we provide solutions that save time, reduce complexity, and empower our users—whether you are a business professional, a law student, or an individual seeking legal clarity.
-          </p>
+           <div className="mt-4 text-lg text-muted-foreground space-y-4">
+            <p>
+              Lexintel was created by three MCA students with a simple mission: make legal understanding in India easier, clearer, and accessible to everyone. What began as a student project has grown into an ambitious AI-driven platform that empowers users with instant clarity and practical legal tools.
+            </p>
+            {isAboutExpanded && (
+              <div className="space-y-4 text-left animate-in fade-in-50">
+                <p>
+                  Lexintel began as a shared frustration among three MCA students — Mithra N, Yashwanth RT, and Vignesh M. We saw how friends, families, and everyday people struggled to understand their rights, draft essential documents, or find trustworthy legal help. The law felt distant, complicated, and wrapped in unnecessary barriers.
+                </p>
+                <p>So we set out to change that.</p>
+                <p>Lexintel is our attempt to rethink how India interacts with the legal system. A place where anyone can:</p>
+                <ul className="list-disc list-inside space-y-2">
+                  <li>Ask a legal question and get instant, simplified clarity</li>
+                  <li>Draft essential documents in minutes</li>
+                  <li>Discover trusted legal professionals without confusion</li>
+                  <li>Understand their rights with transparency and confidence</li>
+                </ul>
+                <p>
+                  Built with the ambition to democratize legal access in India, Lexintel combines AI intelligence with intuitive design to bridge the gap between people and the law. This platform is more than a project — it’s our commitment to empower individuals, students, professionals, and families with tools that make legal navigation simple and accessible.
+                </p>
+              </div>
+            )}
+             <Button variant="link" onClick={() => setIsAboutExpanded(!isAboutExpanded)}>
+              {isAboutExpanded ? 'Show Less' : 'Read More'}
+            </Button>
+          </div>
         </div>
       </section>
     </>
