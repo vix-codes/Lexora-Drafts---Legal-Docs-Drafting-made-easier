@@ -17,7 +17,7 @@ import { approveRequest, addLawyerComment } from '@/app/actions';
 import { type WithId } from '@/firebase/firestore/use-collection';
 import { ScrollArea } from './ui/scroll-area';
 import { Loader2 } from 'lucide-react';
-import { Badge } from './ui/badge';
+import { format, formatDistanceToNow } from 'date-fns';
 
 type VerificationRequest = {
   userId: string;
@@ -26,7 +26,7 @@ type VerificationRequest = {
   createdAt: { seconds: number; nanoseconds: number };
   draftContent: string;
   formInputs: Record<string, any>;
-  lawyerComments: any[];
+  lawyerComments: { text: string; timestamp: { seconds: number, nanoseconds: number } }[];
 };
 
 interface LawyerRequestDetailsProps {
@@ -122,10 +122,17 @@ export function LawyerRequestDetails({ request, isOpen, onOpenChange }: LawyerRe
             
             <h3 className="font-semibold">Comments History</h3>
             <ScrollArea className="rounded-md border p-4 flex-1 bg-muted/50">
-                {request.lawyerComments.length > 0 ? (
+                {request.lawyerComments && request.lawyerComments.length > 0 ? (
                     <div className="space-y-3">
                         {request.lawyerComments.map((c, i) => (
-                            <div key={i} className="text-sm">{c.text}</div>
+                           <div key={i} className="p-3 rounded-md bg-muted/50 border">
+                              <p className="text-sm">{c.text}</p>
+                              {c.timestamp && (
+                                <p className="text-xs text-muted-foreground mt-1">
+                                  {formatDistanceToNow(new Date(c.timestamp.seconds * 1000), { addSuffix: true })}
+                                </p>
+                              )}
+                           </div>
                         ))}
                     </div>
                 ) : (

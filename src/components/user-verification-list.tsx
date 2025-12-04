@@ -16,7 +16,7 @@ type VerificationRequest = {
   status: 'pending' | 'reviewed' | 'approved';
   createdAt: { seconds: number; nanoseconds: number };
   updatedAt: { seconds: number; nanoseconds: number };
-  lawyerComments: { text: string; timestamp: { seconds: number } }[];
+  lawyerComments: { text: string; timestamp: { seconds: number; nanoseconds: number } }[];
   draftContent: string;
 };
 
@@ -58,16 +58,24 @@ function VerificationRequestItem({ request }: { request: WithId<VerificationRequ
             <h4 className="font-semibold mb-2">Lawyer's Comments:</h4>
             <div className="space-y-3">
               {request.lawyerComments.map((comment, index) => (
-                <div key={index} className="p-3 rounded-md bg-muted/50">
+                <div key={index} className="p-3 rounded-md bg-muted/50 border">
                   <p className="text-sm">{comment.text}</p>
-                   <p className="text-xs text-muted-foreground mt-1">
-                    {comment.timestamp ? formatDistanceToNow(new Date(comment.timestamp.seconds * 1000), { addSuffix: true }) : ''}
-                   </p>
+                   {comment.timestamp && (
+                    <p className="text-xs text-muted-foreground mt-1">
+                      {formatDistanceToNow(new Date(comment.timestamp.seconds * 1000), { addSuffix: true })}
+                    </p>
+                   )}
                 </div>
               ))}
             </div>
           </div>
         )}
+         {!request.lawyerComments || request.lawyerComments.length === 0 && (
+            <div>
+                 <h4 className="font-semibold mb-2">Lawyer's Comments:</h4>
+                 <p className="text-sm text-muted-foreground">No comments yet. Your request is being reviewed.</p>
+            </div>
+         )}
       </AccordionContent>
     </AccordionItem>
   );

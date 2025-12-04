@@ -2,7 +2,7 @@
 
 import { generateLegalDraft } from '@/ai/flows/generate-legal-draft';
 import { answerLegalQuery, type LegalQueryOutput } from '@/ai/flows/answer-legal-query';
-import { getFirestore, collection, addDoc, serverTimestamp, doc, updateDoc } from 'firebase/firestore';
+import { getFirestore, collection, addDoc, serverTimestamp, doc, updateDoc, arrayUnion } from 'firebase/firestore';
 import { app } from '@/firebase/client';
 import { documentTemplates } from '@/lib/data';
 
@@ -114,8 +114,8 @@ export async function requestVerification(
   }
 }
 
-export async function addLawyerComment(requestId: string, comment: string) {
-  if (!requestId || !comment) {
+export async function addLawyerComment(requestId: string, commentText: string) {
+  if (!requestId || !commentText) {
     throw new Error('Request ID and comment are required.');
   }
   const db = getFirestore(app);
@@ -123,12 +123,13 @@ export async function addLawyerComment(requestId: string, comment: string) {
 
   try {
     const newComment = {
-      text: comment,
-      timestamp: serverTimestamp(),
+      text: commentText,
+      timestamp: new Date(), // Using client-side date for simplicity, serverTimestamp is better
     };
+
     await updateDoc(requestRef, {
       status: 'reviewed',
-      lawyerComments: [...(doc(requestRef) as any).lawyerComments, newComment],
+      lawyerComments: arrayUnion(newComment),
       updatedAt: serverTimestamp(),
       lawyerNotification: 'Your draft has been reviewed. Please see lawyer comments.',
     });
