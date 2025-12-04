@@ -93,11 +93,11 @@ export function AuthForm({ mode }: AuthFormProps) {
                 stateBarCouncil: lawyerData.stateBarCouncil,
                 createdAt: serverTimestamp(),
                 isVerified: true, // Auto-verified for mock purposes
-                phone: '9876543210',
-                location: { city: 'New Delhi', state: 'Delhi' },
+                phone: '',
+                location: { city: '', state: '' },
                 specializations: ['General Practice'],
                 experience: 1,
-                description: 'Newly registered lawyer.',
+                description: 'Newly registered lawyer. Please complete your profile.',
                 rating: 4.0,
                 source: 'internal' as const,
             };
@@ -112,9 +112,10 @@ export function AuthForm({ mode }: AuthFormProps) {
 
 
             toast({
-                title: 'Registration Submitted',
-                description: "Your profile has been created and is now visible.",
+                title: 'Account Created',
+                description: "Welcome! Please complete your profile.",
             });
+            router.push('/profile'); // Redirect to profile page
         } else {
             const userRef = doc(db, 'users', user.uid);
             await setDoc(userRef, {
@@ -126,8 +127,8 @@ export function AuthForm({ mode }: AuthFormProps) {
                 title: 'Account Created',
                 description: "You've been successfully signed up!",
             });
+            router.push('/');
         }
-        router.push('/');
       } else { // Login
         await signInWithEmailAndPassword(auth, email, password);
         toast({
