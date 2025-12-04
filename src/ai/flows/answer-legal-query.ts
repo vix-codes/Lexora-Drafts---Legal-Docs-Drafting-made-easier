@@ -83,11 +83,15 @@ const answerLegalQueryFlow = ai.defineFlow(
         throw new Error('AI response was empty.');
       }
       return output;
-    } catch (error) {
+    } catch (error: any) {
       console.error('AI legal query failed with error:', error);
-      return { 
-        answer: "I am sorry, but I encountered an error while processing your request. The AI service may be temporarily unavailable or the query could not be processed. Please try rephrasing your question or try again later." 
-      };
+      let errorMessage = "I am sorry, but I encountered an error while processing your request. The service may be temporarily unavailable. Please try again later.";
+      if (error.message.includes('overloaded')) {
+        errorMessage = "The AI service is currently experiencing high traffic. Please try your request again in a few moments.";
+      } else if (error.message.includes('blocked')) {
+        errorMessage = "Your query could not be processed due to the content policy. Please try rephrasing your question.";
+      }
+      return { answer: errorMessage };
     }
   }
 );
