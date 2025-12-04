@@ -3,7 +3,7 @@
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from './ui/button';
-import { Download, FileText, Loader2, X } from 'lucide-react';
+import { Download, FileText, X } from 'lucide-react';
 import { Skeleton } from './ui/skeleton';
 
 interface DocumentPreviewProps {
@@ -42,7 +42,7 @@ export function DocumentPreview({ draft, isLoading, documentTypeLabel, onClose }
   };
 
   return (
-    <Card className="flex-1 flex flex-col">
+    <>
       <CardHeader className="flex flex-row items-center justify-between">
         <div className="space-y-1.5">
           <CardTitle className="font-headline flex items-center gap-2">
@@ -89,6 +89,6 @@ export function DocumentPreview({ draft, isLoading, documentTypeLabel, onClose }
           </div>
         )}
       </CardContent>
-    </Card>
+    </>
   );
 }

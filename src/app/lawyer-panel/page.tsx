@@ -1,0 +1,113 @@
+'use client';
+
+import { useMemo, useState } from 'react';
+import { collection, query, orderBy, getFirestore } from 'firebase/firestore';
+import { app } from '@/firebase/client';
+import { useCollection, type WithId } from '@/firebase/firestore/use-collection';
+import Header from '@/components/header';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Badge } from '@/components/ui/badge';
+import { formatDistanceToNow } from 'date-fns';
+import { LawyerRequestDetails } from '@/components/lawyer-request-details';
+import { Button } from '@/components/ui/button';
+import { Briefcase, CheckCircle, Clock, MessageSquare } from 'lucide-react';
+
+type VerificationRequest = {
+  userId: string;
+  documentType: string;
+  status: 'pending' | 'reviewed' | 'approved';
+  createdAt: { seconds: number; nanoseconds: number };
+  draftContent: string;
+  formInputs: Record<string, any>;
+  lawyerComments: { text: string; timestamp: { seconds: number } }[];
+};
+
+const statusConfig = {
+  pending: { label: 'Pending', icon: Clock, className: 'bg-yellow-500 hover:bg-yellow-600' },
+  reviewed: { label: 'Reviewed', icon: MessageSquare, className: 'bg-blue-500 hover:bg-blue-600' },
+  approved: { label: 'Approved', icon: CheckCircle, className: 'bg-green-500 hover:bg-green-600' },
+};
+
+
+function VerificationRequestCard({ request }: { request: WithId<VerificationRequest> }) {
+    const [isDetailsOpen, setIsDetailsOpen] = useState(false);
+    const statusInfo = statusConfig[request.status];
+
+    return (
+        <>
+            <Card>
+                <CardHeader>
+                    <div className="flex justify-between items-start">
+                        <div>
+                            <CardTitle>{request.documentType}</CardTitle>
+                            <CardDescription>User ID: {request.userId}</CardDescription>
+                        </div>
+                        <Badge className={statusInfo.className}>{statusInfo.label}</Badge>
+                    </div>
+                </CardHeader>
+                <CardContent>
+                    <p className="text-sm text-muted-foreground">
+                        Submitted {formatDistanceToNow(new Date(request.createdAt.seconds * 1000), { addSuffix: true })}
+                    </p>
+                    <div className="mt-4 flex justify-end">
+                        <Button onClick={() => setIsDetailsOpen(true)}>View Details</Button>
+                    </div>
+                </CardContent>
+            </Card>
+            <LawyerRequestDetails 
+                request={request}
+                isOpen={isDetailsOpen}
+                onOpenChange={setIsDetailsOpen}
+            />
+        </>
+    );
+}
+
+
+export default function LawyerPanelPage() {
+  const db = getFirestore(app);
+  const requestsQuery = useMemo(() => {
+    return query(collection(db, 'verificationRequests'), orderBy('createdAt', 'desc'));
+  }, [db]);
+
+  const { data: requests, isLoading } = useCollection<VerificationRequest>(requestsQuery);
+
+  return (
+    <div className="flex flex-col min-h-screen bg-background text-foreground">
+      <Header />
+      <main className="flex-1 p-4 lg:p-6">
+        <Card>
+            <CardHeader>
+                <CardTitle className="font-headline flex items-center gap-2">
+                    <Briefcase className="h-6 w-6 text-primary" />
+                    Lawyer Verification Panel
+                </CardTitle>
+                <CardDescription>Review and manage all user-submitted draft verification requests.</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+                 {isLoading && (
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        <Skeleton className="h-48 w-full" />
+                        <Skeleton className="h-48 w-full" />
+                        <Skeleton className="h-48 w-full" />
+                    </div>
+                 )}
+                 {requests && requests.length > 0 && (
+                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        {requests.map(request => (
+                            <VerificationRequestCard key={request.id} request={request} />
+                        ))}
+                     </div>
+                 )}
+                 {!isLoading && (!requests || requests.length === 0) && (
+                    <div className="text-center py-12 text-muted-foreground">
+                        <p>No verification requests found.</p>
+                    </div>
+                 )}
+            </CardContent>
+        </Card>
+      </main>
+    </div>
+  );
+}

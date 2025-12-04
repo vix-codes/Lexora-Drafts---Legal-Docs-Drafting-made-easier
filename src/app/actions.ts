@@ -2,7 +2,7 @@
 
 import { generateLegalDraft } from '@/ai/flows/generate-legal-draft';
 import { answerLegalQuery, type LegalQueryOutput } from '@/ai/flows/answer-legal-query';
-import { getFirestore, collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { getFirestore, collection, addDoc, serverTimestamp, doc, updateDoc } from 'firebase/firestore';
 import { app } from '@/firebase/client';
 import { documentTemplates } from '@/lib/data';
 
@@ -82,3 +82,79 @@ export const askLawbot = async (query: string, history: Message[]): Promise<Lega
     return { answer: errorMessage };
   }
 };
+
+export async function requestVerification(
+  userId: string,
+  documentType: string,
+  draftContent: string,
+  formInputs: Record<string, any>
+) {
+  if (!userId || !draftContent) {
+    throw new Error('User ID and draft content are required.');
+  }
+
+  const db = getFirestore(app);
+  const requestsRef = collection(db, 'verificationRequests');
+
+  try {
+    await addDoc(requestsRef, {
+      userId,
+      documentType,
+      draftContent,
+      formInputs,
+      status: 'pending',
+      lawyerComments: [],
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp(),
+    });
+    return { success: true, message: 'Your request has been sent to the lawyer.' };
+  } catch (error) {
+    console.error('Error creating verification request:', error);
+    return { success: false, message: 'Failed to send verification request.' };
+  }
+}
+
+export async function addLawyerComment(requestId: string, comment: string) {
+  if (!requestId || !comment) {
+    throw new Error('Request ID and comment are required.');
+  }
+  const db = getFirestore(app);
+  const requestRef = doc(db, 'verificationRequests', requestId);
+
+  try {
+    const newComment = {
+      text: comment,
+      timestamp: serverTimestamp(),
+    };
+    await updateDoc(requestRef, {
+      status: 'reviewed',
+      lawyerComments: [...(doc(requestRef) as any).lawyerComments, newComment],
+      updatedAt: serverTimestamp(),
+      lawyerNotification: 'Your draft has been reviewed. Please see lawyer comments.',
+    });
+    return { success: true, message: 'Comment added and user notified.' };
+  } catch (error) {
+    console.error('Error adding lawyer comment:', error);
+    return { success: false, message: 'Failed to add comment.' };
+  }
+}
+
+export async function approveRequest(requestId: string) {
+  if (!requestId) {
+    throw new Error('Request ID is required.');
+  }
+  const db = getFirestore(app);
+  const requestRef = doc(db, 'verificationRequests', requestId);
+
+  try {
+    await updateDoc(requestRef, {
+      status: 'approved',
+      updatedAt: serverTimestamp(),
+      lawyerNotification: 'Your draft has been approved.',
+    });
+    return { success: true, message: 'Draft approved and user notified.' };
+  } catch (error) {
+    console.error('Error approving request:', error);
+    return { success: false, message: 'Failed to approve request.' };
+  }
+}

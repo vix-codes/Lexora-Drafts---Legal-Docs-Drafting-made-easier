@@ -20,7 +20,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { lawyers } from '@/lib/data';
 
 const baseSchema = {
   email: z.string().email({ message: 'Please enter a valid email address.' }),
@@ -49,12 +48,14 @@ function getUsernameFromEmail(email: string) {
 }
 
 type AuthFormProps = {
-  mode: 'login' | 'signup' | 'lawyer-signup';
+  mode: 'login' | 'signup' | 'lawyer-signup' | 'lawyer-login';
 }
 
 const allStateBarCouncils = [
     "Andhra Pradesh", "Assam, Nagaland, Mizoram, Arunachal Pradesh & Sikkim", "Bihar", "Chhattisgarh", "Delhi", "Gujarat", "Himachal Pradesh", "Jammu & Kashmir and Ladakh", "Jharkhand", "Karnataka", "Kerala", "Madhya Pradesh", "Maharashtra & Goa", "Manipur", "Meghalaya", "Odisha", "Patna", "Punjab & Haryana", "Rajasthan", "Tamil Nadu & Puducherry", "Telangana", "Tripura", "Uttar Pradesh", "Uttarakhand", "West Bengal"
 ];
+
+const LAWYER_EMAIL = 'lawyer@lexintel.com';
 
 export function AuthForm({ mode }: AuthFormProps) {
   const { toast } = useToast();
@@ -112,20 +113,30 @@ export function AuthForm({ mode }: AuthFormProps) {
             });
         }
         router.push('/');
-      } else { // Login
+      } else { // Login or Lawyer Login
         await signInWithEmailAndPassword(auth, email, password);
-        toast({
-          title: 'Signed In',
-          description: "Welcome back!",
-        });
-        router.push('/');
+        
+        if (email === LAWYER_EMAIL) {
+          toast({
+            title: 'Lawyer Portal Access',
+            description: "Welcome back, counselor.",
+          });
+          router.push('/lawyer-panel');
+        } else {
+          toast({
+            title: 'Signed In',
+            description: "Welcome back!",
+          });
+          router.push('/');
+        }
       }
     } catch (error: any) {
       let description = 'An unexpected error occurred.';
       if (error.code) {
         switch (error.code) {
             case 'auth/user-not-found':
-                description = 'No account found with this email. Please sign up.';
+            case 'auth/invalid-credential':
+                description = 'Incorrect email or password. Please try again.';
                 break;
             case 'auth/wrong-password':
                 description = 'Incorrect password. Please try again.';
@@ -183,7 +194,7 @@ export function AuthForm({ mode }: AuthFormProps) {
           placeholder="••••••••"
           {...register('password')}
           required
-          autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
+          autoComplete={mode === 'login' || mode === 'lawyer-login' ? 'current-password' : 'new-password'}
         />
         {errors.password && <p className="text-destructive text-sm mt-1">{(errors.password as any).message}</p>}
       </div>
@@ -227,7 +238,7 @@ export function AuthForm({ mode }: AuthFormProps) {
       )}
 
       <FormSubmitButton isSubmitting={isSubmitting}>
-        {mode === 'login' ? 'Log In' : 'Sign Up'}
+        {mode === 'login' || mode === 'lawyer-login' ? 'Log In' : 'Sign Up'}
       </FormSubmitButton>
     </form>
   );

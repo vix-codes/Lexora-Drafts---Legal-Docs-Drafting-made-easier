@@ -29,6 +29,8 @@ import { useToast } from '@/hooks/use-toast';
 import { DocumentPreview } from '@/components/document-preview';
 import { SubmitButton } from '@/components/submit-button';
 import { useAuth } from '@/components/auth-provider';
+import { VerificationButton } from '@/components/verification-button';
+import { UserVerificationList } from '@/components/user-verification-list';
 
 type DraftState = {
   draft?: string;
@@ -40,6 +42,7 @@ export default function DraftPage() {
   const { user } = useAuth();
   const [selectedTemplateValue, setSelectedTemplateValue] = useState<string | null>(null);
   const [isDraftVisible, setIsDraftVisible] = useState(false);
+  const [formValues, setFormValues] = useState<Record<string, any>>({});
 
   const [state, formAction, pending] = useActionState(generateDraft, { draft: undefined, error: undefined });
 
@@ -59,6 +62,11 @@ export default function DraftPage() {
   const handleTemplateChange = (value: string) => {
     setSelectedTemplateValue(value);
     setIsDraftVisible(false);
+    setFormValues({});
+  };
+
+  const handleFormChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    setFormValues(prev => ({ ...prev, [e.target.name]: e.target.value }));
   };
 
   const handleReset = () => {
@@ -66,6 +74,7 @@ export default function DraftPage() {
     form?.reset();
     setSelectedTemplateValue(null);
     setIsDraftVisible(false);
+    setFormValues({});
   };
 
   const handleClosePreview = () => {
@@ -121,6 +130,7 @@ export default function DraftPage() {
                         placeholder={field.placeholder}
                         required
                         className="col-span-full"
+                        onChange={handleFormChange}
                       />
                     ) : (
                       <Input
@@ -129,6 +139,7 @@ export default function DraftPage() {
                         type={field.type}
                         placeholder={field.placeholder}
                         required
+                        onChange={handleFormChange}
                       />
                     )}
                   </div>
@@ -145,13 +156,27 @@ export default function DraftPage() {
         </Card>
       </form>
       {(pending || (isDraftVisible && state?.draft)) && (
-        <DocumentPreview 
-          draft={state?.draft} 
-          isLoading={pending} 
-          documentTypeLabel={selectedTemplateLabel}
-          onClose={handleClosePreview}
-        />
+        <Card className="flex-1 flex flex-col">
+            <DocumentPreview 
+              draft={state?.draft} 
+              isLoading={pending} 
+              documentTypeLabel={selectedTemplateLabel}
+              onClose={handleClosePreview}
+            />
+            {user && state?.draft && !pending && (
+                <CardFooter>
+                    <VerificationButton 
+                        userId={user.uid}
+                        documentType={selectedTemplateValue!}
+                        draftContent={state.draft}
+                        formInputs={formValues}
+                    />
+                </CardFooter>
+            )}
+        </Card>
       )}
+
+      {user && <UserVerificationList userId={user.uid} />}
     </div>
   );
 }

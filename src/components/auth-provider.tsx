@@ -10,8 +10,8 @@ import { Logo } from './icons';
 
 const AuthContext = createContext<{ user: User | null }>({ user: null });
 
-const authRequiredRoutes = ['/dashboard'];
-const publicRoutes = ['/login', '/signup', '/lawyer-signup', '/draft', '/lawbot', '/find-lawyer', '/'];
+const authRequiredRoutes = ['/dashboard', '/lawyer-panel'];
+const publicRoutes = ['/login', '/signup', '/lawyer-signup', '/lawyer-login', '/draft', '/lawbot', '/find-lawyer', '/'];
 
 function LoadingScreen() {
   return (
@@ -50,10 +50,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (isUserLoading) return;
 
     const pathIsAuthRequired = authRequiredRoutes.some(route => pathname.startsWith(route));
+    const isLawyerRoute = pathname.startsWith('/lawyer-panel');
+    const isLawyer = user?.email === 'lawyer@lexintel.com';
 
     if (!user && pathIsAuthRequired) {
       router.push('/login');
     }
+
+    if (user && isLawyerRoute && !isLawyer) {
+        router.push('/'); // Redirect non-lawyers away from lawyer panel
+    }
+    
   }, [user, isUserLoading, router, pathname]);
   
   // Show loading screen while we determine auth state for required auth pages

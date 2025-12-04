@@ -12,14 +12,15 @@
  * - /templates/{templateId}: Stores legal templates, publicly readable.
  * - /lawFeed/{updateId}: Stores law feed updates, publicly readable.
  * - /glossary/{termId}: Stores legal terms and definitions, publicly readable.
- *
- * Key Security Decisions:
- * - Strict user-ownership model for user profiles and their activities.
- * - Public read access for /templates, /lawFeed, and /glossary.
+ * - /verificationRequests/{requestId}: Stores draft verification requests.
  */
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
+    
+    function isLawyer() {
+      return request.auth.token.email == 'lawyer@lexintel.com';
+    }
 
     /**
      * @description Controls access to user profiles and their subcollections.
@@ -44,30 +45,35 @@ service cloud.firestore {
     }
 
     /**
-     * @description Allows public read access to legal templates.
-     * @path /templates/{templateId}
+     * @description Public read access for templates, law feed, and glossary.
      */
     match /templates/{templateId} {
       allow get, list: if true;
       allow create, update, delete: if false;
     }
-
-    /**
-     * @description Allows public read access to law feed updates.
-     * @path /lawFeed/{updateId}
-     */
     match /lawFeed/{updateId} {
       allow get, list: if true;
       allow create, update, delete: if false;
     }
-
-    /**
-     * @description Allows public read access to glossary terms.
-     * @path /glossary/{termId}
-     */
     match /glossary/{termId} {
       allow get, list: if true;
       allow create, update, delete: if false;
+    }
+    
+    /**
+     * @description Controls access to draft verification requests.
+     * @path /verificationRequests/{requestId}
+     */
+    match /verificationRequests/{requestId} {
+      // Users can create requests and read their own requests.
+      allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
+      allow list, get: if request.auth != null && resource.data.userId == request.auth.uid;
+      
+      // The designated lawyer can read and update all requests.
+      allow list, get, update: if isLawyer();
+      
+      // No one can delete requests.
+      allow delete: if false;
     }
   }
 }
