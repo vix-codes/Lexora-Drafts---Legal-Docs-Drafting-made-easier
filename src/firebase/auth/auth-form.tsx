@@ -92,13 +92,13 @@ export function AuthForm({ mode }: AuthFormProps) {
                 enrollmentNumber: lawyerData.enrollmentNumber,
                 stateBarCouncil: lawyerData.stateBarCouncil,
                 createdAt: serverTimestamp(),
-                isVerified: false, // Verification pending
-                phone: 'N/A',
-                location: { city: 'N/A', state: 'N/A' },
-                specializations: ['Awaiting Verification'],
-                experience: 0,
-                description: 'Profile pending verification.',
-                rating: 0,
+                isVerified: true, // Auto-verified for mock purposes
+                phone: '9876543210',
+                location: { city: 'New Delhi', state: 'Delhi' },
+                specializations: ['General Practice'],
+                experience: 1,
+                description: 'Newly registered lawyer.',
+                rating: 4.0,
                 source: 'internal' as const,
             };
             await setDoc(lawyerRef, newLawyerProfile);
@@ -113,7 +113,7 @@ export function AuthForm({ mode }: AuthFormProps) {
 
             toast({
                 title: 'Registration Submitted',
-                description: "Your profile is under review. We'll notify you upon verification.",
+                description: "Your profile has been created and is now visible.",
             });
         } else {
             const userRef = doc(db, 'users', user.uid);
