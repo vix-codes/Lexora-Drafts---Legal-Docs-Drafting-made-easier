@@ -55,17 +55,18 @@ const legalQueryPrompt = ai.definePrompt({
     "{{{query}}}"
   `,
   config: {
+    model: 'googleai/gemini-2.5-flash',
     safetySettings: [
-        {
-          category: 'HARM_CATEGORY_DANGEROUS_CONTENT',
-          threshold: 'BLOCK_NONE',
-        },
-        {
-          category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT',
-          threshold: 'BLOCK_NONE',
-        },
-    ]
-  }
+      {
+        category: 'HARM_CATEGORY_DANGEROUS_CONTENT',
+        threshold: 'BLOCK_NONE',
+      },
+      {
+        category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT',
+        threshold: 'BLOCK_NONE',
+      },
+    ],
+  },
 });
 
 
@@ -78,11 +79,14 @@ const answerLegalQueryFlow = ai.defineFlow(
   async (input) => {
     try {
       const { output } = await legalQueryPrompt(input);
-      return output!;
+      if (!output) {
+        throw new Error('AI response was empty.');
+      }
+      return output;
     } catch (error) {
       console.error('AI legal query failed with error:', error);
       return { 
-        answer: "I am sorry, but I encountered an error while processing your request. The service may be temporarily unavailable. Please try again later." 
+        answer: "I am sorry, but I encountered an error while processing your request. The AI service may be temporarily unavailable or the query could not be processed. Please try rephrasing your question or try again later." 
       };
     }
   }
