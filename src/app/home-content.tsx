@@ -1,4 +1,3 @@
-
 'use client';
 
 import MainContent from '@/app/main-content';
@@ -9,7 +8,7 @@ import { Search } from 'lucide-react';
 import type { ReactNode } from 'react';
 import Link from 'next/link';
 
-const FIND_LAWYER_BASE_URL = 'https://intelgpt.vercel.app/find-lawyer';
+const FIND_LAWYER_URL = '/find-lawyer';
 
 export default function HomeContent({ children }: { children: ReactNode }) {
   return (
@@ -26,7 +25,7 @@ export default function HomeContent({ children }: { children: ReactNode }) {
         </CardHeader>
         <CardContent>
           <Button asChild className="w-full">
-            <Link href={FIND_LAWYER_BASE_URL}>
+            <Link href={FIND_LAWYER_URL}>
               <Search className="mr-2 h-4 w-4" />
               Search Lawyers
             </Link>

@@ -134,3 +134,43 @@ export const glossaryTerms = [
   { term: 'Power of Attorney', definition: 'A written authorization to represent or act on another\'s behalf in private affairs, business, or some other legal matter.' },
   { term: 'Writ', definition: 'A form of written command in the name of a court or other legal authority to act, or abstain from acting, in a particular way.' },
 ];
+
+export const lawyers = [
+  { name: 'Adv. Rohan Sharma', expertise: 'Corporate Law', location: 'Delhi', image: '/lawyers/1.jpg' },
+  { name: 'Adv. Priya Patel', expertise: 'Intellectual Property', location: 'Mumbai', image: '/lawyers/2.jpg' },
+  { name: 'Adv. Vikram Singh', expertise: 'Criminal Law', location: 'Bangalore', image: '/lawyers/3.jpg' },
+  { name: 'Adv. Anjali Mehta', expertise: 'Family Law', location: 'Kolkata', image: '/lawyers/4.jpg' },
+  { name: 'Adv. Sameer Khan', expertise: 'Real Estate Law', location: 'Pune', image: '/lawyers/5.jpg' },
+  { name: 'Adv. Neha Gupta', expertise: 'Cyber Law', location: 'Hyderabad', image: '/lawyers/6.jpg' },
+];
+
+export const legalPrecedents = [
+  {
+    caseName: 'Kesavananda Bharati vs. State of Kerala',
+    citation: 'AIR 1973 SC 1461',
+    summary: 'This landmark case established the "Basic Structure Doctrine" of the Indian Constitution, which rules that the Parliament has the power to amend the Constitution but not its basic structure or fundamental features.',
+    year: 1973,
+    impact: 'It is considered one of the most important decisions in Indian constitutional law, safeguarding the democratic principles of the country against legislative overreach.'
+  },
+  {
+    caseName: 'Maneka Gandhi vs. Union of India',
+    citation: 'AIR 1978 SC 597',
+    summary: 'The Supreme Court held that the "procedure established by law" under Article 21 must be fair, just, and reasonable, not arbitrary, fanciful, or oppressive. It expanded the scope of personal liberty.',
+    year: 1978,
+    impact: 'This case significantly broadened the interpretation of "right to life and personal liberty," making it a repository of various other fundamental rights.'
+  },
+  {
+    caseName: 'Vishaka vs. State of Rajasthan',
+    citation: 'AIR 1997 SC 3011',
+    summary: 'In the absence of a law to address sexual harassment at the workplace, the Supreme Court laid down a set of guidelines, known as the Vishaka Guidelines, to be followed by employers.',
+    year: 1997,
+    impact: 'This was a pivotal moment for women\'s rights in India and led to the enactment of the Sexual Harassment of Women at Workplace (Prevention, Prohibition and Redressal) Act, 2013.'
+  },
+  {
+    caseName: 'Justice K.S. Puttaswamy (Retd.) vs. Union of India',
+    citation: '(2017) 10 SCC 1',
+    summary: 'The Supreme Court unanimously declared that the Right to Privacy is a fundamental right protected under Article 21 of the Constitution of India.',
+    year: 2017,
+    impact: 'This judgment has far-reaching implications for data protection, surveillance, and individual autonomy in the digital age, forming the basis for the data protection laws in India.'
+  },
+];

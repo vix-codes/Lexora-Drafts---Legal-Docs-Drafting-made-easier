@@ -1,4 +1,3 @@
-
 'use client';
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -6,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { BookMarked, ExternalLink } from 'lucide-react';
 import Link from 'next/link';
 
-const PRECEDENTS_BASE_URL = 'https://intelgpt.vercel.app/precedents';
+const PRECEDENTS_URL = '/precedents';
 
 export default function LegalPrecedents() {
   return (
@@ -22,7 +21,7 @@ export default function LegalPrecedents() {
       </CardHeader>
       <CardContent>
         <Button asChild className="w-full">
-          <Link href={PRECEDENTS_BASE_URL}>
+          <Link href={PRECEDENTS_URL}>
             <ExternalLink className="mr-2 h-4 w-4" />
             Explore Cases
           </Link>
