@@ -41,8 +41,8 @@ const renderStars = (rating: number) => {
   const emptyStars = 5 - fullStars - (halfStar ? 1 : 0);
   return (
     <div className="flex items-center">
-      {[...Array(fullStars)].map((_, i) => <Star key={`full-${i}`} className="h-4 w-4 fill-yellow-400 text-yellow-400" />)}
-      {halfStar && <Star key="half" className="h-4 w-4 fill-yellow-400 text-yellow-400" style={{ clipPath: 'polygon(0 0, 50% 0, 50% 100%, 0 100%)' }} />}
+      {[...Array(fullStars)].map((_, i) => <Star key={`full-${i}`} className="h-4 w-4 fill-accent text-accent" />)}
+      {halfStar && <Star key="half" className="h-4 w-4 fill-accent text-accent" style={{ clipPath: 'polygon(0 0, 50% 0, 50% 100%, 0 100%)' }} />}
       {[...Array(emptyStars)].map((_ , i) => <Star key={`empty-${i}`} className="h-4 w-4 fill-muted text-muted-foreground" />)}
     </div>
   );
@@ -61,7 +61,7 @@ export function LawyerCard({ lawyer }: LawyerCardProps) {
           <div className="flex-1">
             <h3 className="font-semibold text-lg flex items-center gap-2">
               {lawyer.name}
-              {lawyer.isVerified && <ShieldCheck className="h-5 w-5 text-green-500 fill-current" title='Verified Professional' />}
+              {lawyer.isVerified && <ShieldCheck className="h-5 w-5 text-accent fill-current" title='Verified Professional' />}
             </h3>
             <p className="text-primary text-sm font-medium">{lawyer.specializations[0]}</p>
             <p className="text-muted-foreground text-sm">{lawyer.location.city}, {lawyer.location.state}</p>

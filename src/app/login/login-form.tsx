@@ -9,7 +9,7 @@ import { Separator } from '@/components/ui/separator';
 
 export default function LoginForm({ children }: { children: ReactNode }) {
   return (
-    <div className="flex min-h-screen items-stretch bg-muted">
+    <div className="flex min-h-screen items-stretch bg-surface-muted">
       <div className="hidden lg:flex lg:w-1/2 auth-bg">
         <div className="auth-content text-white">
             <div className="flex items-center gap-3">
