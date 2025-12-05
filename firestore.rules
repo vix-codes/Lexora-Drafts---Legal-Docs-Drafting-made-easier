@@ -1,3 +1,4 @@
+
 /**
  * @file Firestore Security Rules for Lexora Drafts application.
  *
@@ -20,7 +21,7 @@ service cloud.firestore {
   match /databases/{database}/documents {
     
     function isLawyer() {
-      return request.auth.token.email == 'official.lawyer@mail.com';
+      return request.auth.token.email == 'lawyer@lexintel.com';
     }
 
     /**
