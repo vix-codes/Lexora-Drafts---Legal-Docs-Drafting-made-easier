@@ -1,3 +1,4 @@
+
 'use client';
 
 import { Button } from './ui/button';
@@ -26,17 +27,25 @@ export function VerificationButton({
   const handleClick = async () => {
     setIsSubmitting(true);
     try {
-      // The action now might not throw directly but will use the emitter.
-      // The client-side toast is now for optimistic UI feedback.
-      await requestVerification(userId, documentType, draftContent, formInputs);
+      const result = await requestVerification(userId, documentType, draftContent, formInputs);
       
-      toast({
-        title: 'Request Sent',
-        description: 'Your request has been sent to the lawyer for verification.',
-      });
+      if (result.success) {
+        toast({
+          title: 'Request Sent',
+          description: 'Your request has been sent to the lawyer for verification.',
+        });
+      } else {
+         // This else block might not be reached if the action always throws on error,
+         // but it's good practice to have it.
+         toast({
+          variant: 'destructive',
+          title: 'Submission Failed',
+          description: result.error || 'An unknown error occurred.',
+        });
+      }
 
     } catch (error: any) {
-      // This catch block might still be useful for network errors or other non-permission issues.
+      // This will catch the error thrown from the server action.
       toast({
         variant: 'destructive',
         title: 'Submission Error',

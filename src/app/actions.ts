@@ -102,36 +102,36 @@ export async function requestVerification(
   documentType: string,
   draftContent: string,
   formInputs: Record<string, any>
-): Promise<void> {
+): Promise<{ success: boolean; error?: string }> {
   if (!userId || !draftContent) {
     throw new Error('User ID and draft content are required.');
   }
 
-  const app = getFirebaseApp();
-  const db = getFirestore(app);
-  const requestsRef = collection(db, 'verificationRequests');
+  try {
+    const app = getFirebaseApp();
+    const db = getFirestore(app);
+    const requestsRef = collection(db, 'verificationRequests');
 
-  const requestData = {
-    userId,
-    documentType,
-    draftContent,
-    formInputs,
-    status: 'pending',
-    lawyerComments: [],
-    createdAt: serverTimestamp(),
-    updatedAt: serverTimestamp(),
-  };
+    const requestData = {
+      userId,
+      documentType,
+      draftContent,
+      formInputs,
+      status: 'pending',
+      lawyerComments: [],
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp(),
+    };
+    
+    await addDoc(requestsRef, requestData);
 
-  // No try/catch. Use .catch() to handle and emit specific errors.
-  addDoc(requestsRef, requestData).catch((error) => {
-      const permissionError = new FirestorePermissionError({
-        path: requestsRef.path,
-        operation: 'create',
-        requestResourceData: requestData,
-      });
-      // This will be caught by the client-side listener.
-      errorEmitter.emit('permission-error', permissionError);
-  });
+    return { success: true };
+
+  } catch (error) {
+      console.error("SERVER VERIFICATION ERROR:", error);
+      // Re-throw a generic error to the client, but the detailed error is logged on the server.
+      throw new Error("Failed to save verification request on the server.");
+  }
 }
 
 export async function addLawyerComment(requestId: string, commentText: string): Promise<void> {

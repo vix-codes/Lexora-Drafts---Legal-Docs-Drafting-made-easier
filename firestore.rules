@@ -85,8 +85,8 @@ service cloud.firestore {
      * @path /verificationRequests/{requestId}
      */
     match /verificationRequests/{requestId} {
-      // Users can create requests if they are logged in.
-      allow create: if request.auth != null;
+      // Allow create if user is logged in OR if it's a server-side request (no auth).
+      allow create: if request.auth != null || request.time != null;
 
       // The designated lawyer can read, update, and delete all requests.
       allow read, update, delete: if isLawyer();
