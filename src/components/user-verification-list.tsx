@@ -10,6 +10,7 @@ import { Badge } from './ui/badge';
 import { formatDistanceToNow } from 'date-fns';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from './ui/accordion';
 import { MessageSquare, CheckCircle, Clock } from 'lucide-react';
+import { useAuth } from './auth-provider';
 
 type VerificationRequest = {
   documentType: string;
@@ -82,14 +83,19 @@ function VerificationRequestItem({ request }: { request: WithId<VerificationRequ
 }
 
 export function UserVerificationList({ userId }: { userId: string }) {
+  const { user } = useAuth();
   const db = getFirestore(app);
+  
   const requestsQuery = useMemo(() => {
+    // Only fetch requests if the user is logged in.
+    if (!user) return null;
+    
     return query(
       collection(db, 'verificationRequests'),
-      where('userId', '==', userId),
+      where('userId', '==', user.uid),
       orderBy('createdAt', 'desc')
     );
-  }, [db, userId]);
+  }, [db, user]);
 
   const { data: requests, isLoading } = useCollection<VerificationRequest>(requestsQuery);
 
@@ -108,6 +114,7 @@ export function UserVerificationList({ userId }: { userId: string }) {
     );
   }
 
+  // Do not render the card if there are no requests to show.
   if (!requests || requests.length === 0) {
     return null;
   }

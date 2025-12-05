@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useMemo, useState } from 'react';
@@ -12,6 +13,7 @@ import { formatDistanceToNow } from 'date-fns';
 import { LawyerRequestDetails } from '@/components/lawyer-request-details';
 import { Button } from '@/components/ui/button';
 import { Briefcase, CheckCircle, Clock, MessageSquare } from 'lucide-react';
+import { useAuth } from '@/components/auth-provider';
 
 type VerificationRequest = {
   userId: string;
@@ -66,12 +68,32 @@ function VerificationRequestCard({ request }: { request: WithId<VerificationRequ
 
 
 export default function LawyerPanelPage() {
+  const { user } = useAuth();
   const db = getFirestore(app);
+
   const requestsQuery = useMemo(() => {
-    return query(collection(db, 'verificationRequests'), orderBy('createdAt', 'desc'));
-  }, [db]);
+    // Only allow the designated lawyer to query the entire collection.
+    if (user?.email === 'lawyer@lexintel.com') {
+        return query(collection(db, 'verificationRequests'), orderBy('createdAt', 'desc'));
+    }
+    return null;
+  }, [db, user]);
 
   const { data: requests, isLoading } = useCollection<VerificationRequest>(requestsQuery);
+  
+  // This check is redundant due to AuthProvider, but it's a good safeguard.
+  if (!user || user.email !== 'lawyer@lexintel.com') {
+      return (
+          <div className="flex flex-col min-h-screen bg-background text-foreground">
+            <Header />
+            <main className="flex-1 p-4 lg:p-6">
+                <div className="text-center py-12 text-destructive">
+                    <p>Access Denied. You do not have permission to view this page.</p>
+                </div>
+            </main>
+          </div>
+      );
+  }
 
   return (
     <div className="flex flex-col min-h-screen bg-background text-foreground">
