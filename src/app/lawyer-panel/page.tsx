@@ -50,7 +50,7 @@ function VerificationRequestCard({ request }: { request: WithId<VerificationRequ
                 </CardHeader>
                 <CardContent>
                     <p className="text-sm text-muted-foreground">
-                        Submitted {formatDistanceToNow(new Date(request.createdAt.seconds * 1000), { addSuffix: true })}
+                        {request.createdAt ? formatDistanceToNow(new Date(request.createdAt.seconds * 1000), { addSuffix: true }) : 'Just now'}
                     </p>
                     <div className="mt-4 flex justify-end">
                         <Button onClick={() => setIsDetailsOpen(true)}>View Details</Button>
@@ -73,21 +73,18 @@ export default function LawyerPanelPage() {
 
   const requestsQuery = useMemo(() => {
     // Wait until auth state is resolved and we know if the user is the lawyer
-    if (isUserLoading) {
-        return null;
+    if (isUserLoading || !user || user.email !== 'lawyer@lexintel.com') {
+      return null;
     }
     // Only allow the designated lawyer to query the entire collection.
-    if (user?.email === 'lawyer@lexintel.com') {
-        return query(collection(db, 'verificationRequests'), orderBy('createdAt', 'desc'));
-    }
-    // For any other user (or no user), return null to prevent the query
-    return null;
+    return query(collection(db, 'verificationRequests'), orderBy('createdAt', 'desc'));
   }, [db, user, isUserLoading]);
 
   const { data: requests, isLoading } = useCollection<VerificationRequest>(requestsQuery);
   
-  // This check is redundant due to AuthProvider, but it's a good safeguard.
-  if (!isUserLoading && (!user || user.email !== 'lawyer@lexintel.com')) {
+  const isLawyer = !isUserLoading && user?.email === 'lawyer@lexintel.com';
+  
+  if (!isUserLoading && !isLawyer) {
       return (
           <div className="flex flex-col min-h-screen bg-background text-foreground">
             <Header />
@@ -123,7 +120,7 @@ export default function LawyerPanelPage() {
                         <Skeleton className="h-48 w-full" />
                     </div>
                  )}
-                 {requests && requests.length > 0 && (
+                 {!effectiveIsLoading && requests && requests.length > 0 && (
                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                         {requests.map(request => (
                             <VerificationRequestCard key={request.id} request={request} />

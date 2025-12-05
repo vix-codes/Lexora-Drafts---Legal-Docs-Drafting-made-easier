@@ -41,7 +41,7 @@ function VerificationRequestItem({ request }: { request: WithId<VerificationRequ
             <div className="text-left">
               <p className="font-semibold">{request.documentType}</p>
               <p className="text-sm text-muted-foreground">
-                Submitted {formatDistanceToNow(new Date(request.createdAt.seconds * 1000), { addSuffix: true })}
+                {request.createdAt ? formatDistanceToNow(new Date(request.createdAt.seconds * 1000), { addSuffix: true }) : 'Just now'}
               </p>
             </div>
           </div>

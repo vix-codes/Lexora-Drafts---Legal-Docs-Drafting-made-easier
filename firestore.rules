@@ -87,6 +87,7 @@ service cloud.firestore {
       
       // A user can read their own requests, but not list all of them.
       allow get: if request.auth != null && resource.data.userId == request.auth.uid;
+      allow list: if false;
     }
   }
 }
