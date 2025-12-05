@@ -13,6 +13,7 @@
  * - /lawFeed/{updateId}: Stores law feed updates, publicly readable.
  * - /glossary/{termId}: Stores legal terms and definitions, publicly readable.
  * - /verificationRequests/{requestId}: Stores draft verification requests.
+ * - /lawyers/{lawyerId}: Stores public lawyer profiles.
  */
 rules_version = '2';
 service cloud.firestore {
@@ -42,6 +43,25 @@ service cloud.firestore {
         // Only the owner can read or write their own activity.
         allow read, write: if isOwner();
       }
+    }
+    
+    /**
+     * @description Controls access to lawyer profiles.
+     * @path /lawyers/{lawyerId}
+     */
+    match /lawyers/{lawyerId} {
+      function isOwner() {
+        return request.auth.uid == lawyerId;
+      }
+      
+      // Any authenticated user can read public lawyer profiles.
+      allow get, list: if request.auth != null;
+      
+      // Only the owner can create or update their own profile.
+      allow create, update: if isOwner();
+      
+      // Nobody can delete lawyer profiles.
+      allow delete: if false;
     }
 
     /**
