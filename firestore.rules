@@ -3,18 +3,11 @@
  * @file Firestore Security Rules for Lexora Drafts application.
  *
  * Core Philosophy:
- * This ruleset prioritizes user authentication and data access control for user profiles,
- * while allowing public read access to legal templates,
- * law feed updates, and the legal glossary.
- *
- * Data Structure:
- * - /users/{userId}: Stores user profiles, accessible only to the authenticated user.
- * - /users/{userId}/activities/{activityId}: Stores activity logs, accessible only to the owner.
- * - /templates/{templateId}: Stores legal templates, publicly readable.
- * - /lawFeed/{updateId}: Stores law feed updates, publicly readable.
- * - /glossary/{termId}: Stores legal terms and definitions, publicly readable.
- * - /verificationRequests/{requestId}: Stores draft verification requests.
- * - /lawyers/{lawyerId}: Stores public lawyer profiles.
+ * This ruleset prioritizes user authentication and data access control.
+ * - Server actions (like creating a verification request) are permitted.
+ * - Authenticated users can only read their own data.
+ * - A designated lawyer has special privileges to review all verification requests.
+ * - Public collections (templates, feed, glossary) are read-only for everyone.
  */
 rules_version = '2';
 service cloud.firestore {
@@ -70,15 +63,15 @@ service cloud.firestore {
      */
     match /templates/{templateId} {
       allow get, list: if true;
-      allow create, update, delete: if false;
+      allow write: if false;
     }
     match /lawFeed/{updateId} {
       allow get, list: if true;
-      allow create, update, delete: if false;
+      allow write: if false;
     }
     match /glossary/{termId} {
       allow get, list: if true;
-      allow create, update, delete: if false;
+      allow write: if false;
     }
     
     /**
@@ -86,14 +79,14 @@ service cloud.firestore {
      * @path /verificationRequests/{requestId}
      */
     match /verificationRequests/{requestId} {
-      // Allow create if user is logged in OR if it's a server-side request (no auth).
+      // Allow create if user is logged in OR if it's a server-side request.
       allow create: if request.auth != null || request.time != null;
 
-      // The designated lawyer can read, update, and delete all requests.
+      // The designated lawyer can read/update all requests.
       allow read, update, delete: if isLawyer();
       
-      // A user can read their own requests.
-      allow read: if request.auth != null && resource.data.userId == request.auth.uid;
+      // A user can read their own requests, but not list all of them.
+      allow get: if request.auth != null && resource.data.userId == request.auth.uid;
     }
   }
 }

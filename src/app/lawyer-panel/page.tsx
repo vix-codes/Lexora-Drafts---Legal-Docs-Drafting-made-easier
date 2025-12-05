@@ -72,7 +72,7 @@ export default function LawyerPanelPage() {
   const db = getFirestore(app);
 
   const requestsQuery = useMemo(() => {
-    // Wait until auth state is resolved
+    // Wait until auth state is resolved and we know if the user is the lawyer
     if (isUserLoading) {
         return null;
     }
@@ -80,6 +80,7 @@ export default function LawyerPanelPage() {
     if (user?.email === 'lawyer@lexintel.com') {
         return query(collection(db, 'verificationRequests'), orderBy('createdAt', 'desc'));
     }
+    // For any other user (or no user), return null to prevent the query
     return null;
   }, [db, user, isUserLoading]);
 
@@ -99,7 +100,8 @@ export default function LawyerPanelPage() {
       );
   }
 
-  const effectiveIsLoading = isUserLoading || isLoading;
+  // Combine auth loading and data loading states
+  const effectiveIsLoading = isUserLoading || (requestsQuery !== null && isLoading);
 
   return (
     <div className="flex flex-col min-h-screen bg-background text-foreground">

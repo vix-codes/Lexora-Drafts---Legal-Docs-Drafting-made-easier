@@ -55,11 +55,11 @@ function VerificationRequestItem({ request }: { request: WithId<VerificationRequ
               {request.draftContent}
             </pre>
         </div>
-        {request.lawyerComments && request.lawyerComments.length > 0 && (
+        {request.lawyerComments && request.lawyerComments.length > 0 ? (
           <div>
             <h4 className="font-semibold mb-2">Lawyer's Comments:</h4>
             <div className="space-y-3">
-              {request.lawyerComments.map((comment, index) => (
+              {request.lawyerComments.slice().reverse().map((comment, index) => (
                 <div key={index} className="p-3 rounded-md bg-muted/50 border">
                   <p className="text-sm">{comment.text}</p>
                    {comment.timestamp && (
@@ -71,8 +71,7 @@ function VerificationRequestItem({ request }: { request: WithId<VerificationRequ
               ))}
             </div>
           </div>
-        )}
-         {!request.lawyerComments || request.lawyerComments.length === 0 && (
+        ) : (
             <div>
                  <h4 className="font-semibold mb-2">Lawyer's Comments:</h4>
                  <p className="text-sm text-muted-foreground">No comments yet. Your request is being reviewed.</p>
@@ -88,6 +87,7 @@ export function UserVerificationList({ userId }: { userId: string }) {
   const db = getFirestore(app);
   
   const requestsQuery = useMemo(() => {
+    // Only construct the query if the user is loaded and authenticated.
     if (isUserLoading || !user) {
         return null;
     }
@@ -101,7 +101,8 @@ export function UserVerificationList({ userId }: { userId: string }) {
 
   const { data: requests, isLoading } = useCollection<VerificationRequest>(requestsQuery);
 
-  const effectiveIsLoading = isLoading || isUserLoading;
+  // Show skeleton if auth is loading OR if the query is valid and data is being fetched.
+  const effectiveIsLoading = isUserLoading || (requestsQuery !== null && isLoading);
 
   if (effectiveIsLoading && !requests) {
     return (
