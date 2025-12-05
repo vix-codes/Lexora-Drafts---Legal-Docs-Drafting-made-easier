@@ -3,12 +3,15 @@
 
 import { generateLegalDraft } from '@/ai/flows/generate-legal-draft';
 import { answerLegalQuery, type LegalQueryOutput } from '@/ai/flows/answer-legal-query';
-import { getFirestore, collection, addDoc, serverTimestamp, doc, updateDoc, arrayUnion } from 'firebase/firestore';
+import { getFirestore, collection, addDoc, serverTimestamp, doc, updateDoc, arrayUnion, getDocs, query, where, orderBy } from 'firebase/firestore';
 import { documentTemplates } from '@/lib/data';
 import { initializeApp, getApps, getApp, type FirebaseApp } from 'firebase/app';
 import { firebaseConfig } from '@/firebase/config';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
+import { createServerClient } from '@/firebase/server-client';
+import { getFirestore as getAdminFirestore } from 'firebase-admin/firestore';
+
 
 // Correctly initialize Firebase app for server-side usage
 function getFirebaseApp(): FirebaseApp {
@@ -186,4 +189,56 @@ export async function approveRequest(requestId: string): Promise<void> {
     });
     errorEmitter.emit('permission-error', permissionError);
   });
+}
+
+
+export async function getUserRequests(userId: string): Promise<any[]> {
+    if (!userId) {
+        return [];
+    }
+
+    try {
+        const adminApp = createServerClient();
+        if (!adminApp) {
+            throw new Error("Failed to initialize server client. Is the service account key configured?");
+        }
+
+        const db = getAdminFirestore(adminApp);
+        const requestsRef = collection(db, 'verificationRequests');
+        const q = query(
+            requestsRef,
+            where('userId', '==', userId),
+            orderBy('createdAt', 'desc')
+        );
+
+        const snapshot = await getDocs(q);
+
+        if (snapshot.empty) {
+            return [];
+        }
+
+        // The data from the admin SDK needs to be serialized to be sent to the client.
+        // Timestamps, in particular, must be converted.
+        const requests = snapshot.docs.map(doc => {
+            const data = doc.data();
+            return {
+                id: doc.id,
+                ...data,
+                // Convert Firestore Timestamps to serializable format (ISO string)
+                createdAt: data.createdAt?.toDate ? data.createdAt.toDate().toISOString() : null,
+                updatedAt: data.updatedAt?.toDate ? data.updatedAt.toDate().toISOString() : null,
+                lawyerComments: data.lawyerComments?.map((c: any) => ({
+                    ...c,
+                    timestamp: c.timestamp?.toDate ? c.timestamp.toDate().toISOString() : null,
+                })) || [],
+            };
+        });
+
+        return requests;
+    } catch (error) {
+        console.error("Error fetching user requests on server:", error);
+        // Do not re-throw the error to the client, as it might expose internal details.
+        // Return an empty array or an object indicating an error.
+        return [];
+    }
 }

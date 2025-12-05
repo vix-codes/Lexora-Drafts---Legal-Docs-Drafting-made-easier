@@ -1,25 +1,25 @@
+
 "use client";
 
+import { useEffect, useState } from "react";
 import { useAuth } from "@/components/auth-provider";
-import { collection, query, where, orderBy, getFirestore } from "firebase/firestore";
-import { useCollection, type WithId } from "@/firebase/firestore/use-collection";
-import { app } from "@/firebase/client";
+import { getUserRequests } from "@/app/actions";
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { formatDistanceToNow } from "date-fns";
 import Header from "@/components/header";
 import { ShieldQuestion } from "lucide-react";
-import { useMemo } from "react";
 
 type VerificationRequest = {
+  id: string;
   userId: string;
   documentType: string;
   status: 'pending' | 'reviewed' | 'approved';
-  createdAt: { seconds: number; nanoseconds: number };
+  createdAt: string; // ISO string
   draftContent: string;
   formInputs: Record<string, any>;
-  lawyerComments: { text: string; timestamp: { seconds: number } }[];
+  lawyerComments: { text: string; timestamp: string }[];
   lawyerNotification: string;
 };
 
@@ -31,41 +31,32 @@ const statusConfig = {
 
 export default function MyRequestsPage() {
   const { user, isUserLoading } = useAuth();
-  const db = getFirestore(app);
+  const [requests, setRequests] = useState<VerificationRequest[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  // HARD GUARD to prevent early Firestore queries
-  if (isUserLoading || !user) {
-    return (
-      <div className="flex flex-col min-h-screen bg-background text-foreground">
-        <Header />
-        <main className="flex-1 p-4 lg:p-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>My Verification Requests</CardTitle>
-              <CardDescription>Loading your requests…</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Skeleton className="h-28 w-full" />
-              <Skeleton className="h-28 w-full" />
-              <Skeleton className="h-28 w-full" />
-            </CardContent>
-          </Card>
-        </main>
-      </div>
-    );
-  }
+  useEffect(() => {
+    // Only fetch requests if the user is loaded and logged in
+    if (!isUserLoading && user) {
+      setIsLoading(true);
+      getUserRequests(user.uid)
+        .then(data => {
+          setRequests(data as VerificationRequest[]);
+        })
+        .catch(error => {
+          console.error("Failed to fetch requests:", error);
+          // Optionally, set an error state here to show in the UI
+        })
+        .finally(() => {
+          setIsLoading(false);
+        });
+    } else if (!isUserLoading && !user) {
+        // If user is not logged in after auth check, stop loading
+        setIsLoading(false);
+    }
+  }, [user, isUserLoading]);
 
-  // Only compute query AFTER user is guaranteed loaded
-  const requestsQuery = useMemo(() => {
-    return query(
-      collection(db, "verificationRequests"),
-      where("userId", "==", user.uid),
-      orderBy("createdAt", "desc")
-    );
-  }, [db, user.uid]);
-
-  // Now safe to call useCollection
-  const { data: requests, isLoading } = useCollection<VerificationRequest>(requestsQuery);
+  // Combined loading state for auth and data fetching
+  const showLoadingState = isUserLoading || isLoading;
 
   return (
     <div className="flex flex-col min-h-screen bg-background text-foreground">
@@ -83,7 +74,7 @@ export default function MyRequestsPage() {
           </CardHeader>
 
           <CardContent className="space-y-4">
-            {isLoading && (
+            {showLoadingState && (
               <>
                 <Skeleton className="h-28 w-full" />
                 <Skeleton className="h-28 w-full" />
@@ -91,17 +82,16 @@ export default function MyRequestsPage() {
               </>
             )}
 
-            {!isLoading && requests && requests.length > 0 && (
+            {!showLoadingState && requests.length > 0 && (
               requests.map((req) => {
                 const statusInfo = statusConfig[req.status];
-
                 return (
                   <div key={req.id} className="border rounded-lg p-4 space-y-3 hover:border-primary/80">
                     <div className="flex justify-between items-start">
                       <div>
                         <h3 className="font-semibold">{req.documentType}</h3>
                         <p className="text-sm text-muted-foreground">
-                          Submitted {formatDistanceToNow(new Date(req.createdAt.seconds * 1000), { addSuffix: true })}
+                          Submitted {req.createdAt ? formatDistanceToNow(new Date(req.createdAt), { addSuffix: true }) : 'a while ago'}
                         </p>
                       </div>
                       <Badge className={statusInfo.className}>{statusInfo.label}</Badge>
@@ -128,7 +118,7 @@ export default function MyRequestsPage() {
               })
             )}
 
-            {!isLoading && (!requests || requests.length === 0) && (
+            {!showLoadingState && requests.length === 0 && (
               <div className="text-center py-16 text-muted-foreground border-2 border-dashed rounded-lg">
                 <p className="font-semibold">No Requests Found</p>
                 <p className="text-sm">You have not submitted any documents for verification yet.</p>
