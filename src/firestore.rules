@@ -1,20 +1,9 @@
 
-/**
- * @file Firestore Security Rules for Lexora Drafts application.
- *
- * Core Philosophy:
- * This ruleset prioritizes user authentication and data access control.
- * - Server actions (like creating a verification request) are permitted.
- * - Authenticated users can only read their own data.
- * - A designated lawyer has special privileges to review all verification requests.
- * - Public collections (templates, feed, glossary) are read-only for everyone.
- */
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     
     function isLawyer() {
-      // The official lawyer's email address.
       return request.auth.token.email == 'lawyer@lexintel.com';
     }
 
@@ -80,16 +69,13 @@ service cloud.firestore {
      * @path /verificationRequests/{requestId}
      */
     match /verificationRequests/{requestId} {
-      // Allow create if user is logged in OR if it's a server-side request.
-      // request.time is non-null for server-side requests (server actions),
-      // which allows them to bypass auth checks for writes.
+      // Any authenticated user OR server action can create
       allow create: if request.auth != null || request.time != null;
 
-      // The designated lawyer can list, read, update, and delete all requests.
-      allow list, read, update, delete: if isLawyer();
-      
-      // A normal user can only GET their own requests (but cannot LIST all of them).
-      // This rule is layered on top of the lawyer rule. A user request will be checked here first.
+      // Lawyer can read/update/delete ALL requests
+      allow read, update, delete: if isLawyer();
+
+      // A normal user may read ONLY their own request. This does not allow list.
       allow get: if request.auth != null && resource.data.userId == request.auth.uid;
     }
   }

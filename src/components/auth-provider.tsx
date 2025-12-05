@@ -14,7 +14,7 @@ const AuthContext = createContext<{ user: User | null; isUserLoading: boolean }>
 const authRequiredRoutes = ['/dashboard', '/lawyer-panel', '/my-requests'];
 const lawyerOnlyRoutes = ['/lawyer-panel'];
 const publicOnlyRoutes = ['/login', '/signup', '/lawyer-login', '/lawyer-signup'];
-const LAWYER_EMAIL = 'official.lawyer@mail.com';
+const LAWYER_EMAIL = 'lawyer@lexintel.com';
 
 function LoadingScreen() {
   return (
