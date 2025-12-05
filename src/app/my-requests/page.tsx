@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useAuth } from "@/components/auth-provider";
@@ -34,22 +33,39 @@ export default function MyRequestsPage() {
   const { user, isUserLoading } = useAuth();
   const db = getFirestore(app);
 
+  // HARD GUARD to prevent early Firestore queries
+  if (isUserLoading || !user) {
+    return (
+      <div className="flex flex-col min-h-screen bg-background text-foreground">
+        <Header />
+        <main className="flex-1 p-4 lg:p-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>My Verification Requests</CardTitle>
+              <CardDescription>Loading your requests…</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Skeleton className="h-28 w-full" />
+              <Skeleton className="h-28 w-full" />
+              <Skeleton className="h-28 w-full" />
+            </CardContent>
+          </Card>
+        </main>
+      </div>
+    );
+  }
+
+  // Only compute query AFTER user is guaranteed loaded
   const requestsQuery = useMemo(() => {
-    if (isUserLoading || !user) {
-      return null;
-    }
     return query(
-        collection(db, "verificationRequests"),
-        where("userId", "==", user.uid),
-        orderBy("createdAt", "desc")
-      );
-  }, [db, user, isUserLoading]);
+      collection(db, "verificationRequests"),
+      where("userId", "==", user.uid),
+      orderBy("createdAt", "desc")
+    );
+  }, [db, user.uid]);
 
-  const { data: requests, isLoading } = requestsQuery
-    ? useCollection<VerificationRequest>(requestsQuery)
-    : { data: null, isLoading: true };
-
-  const effectiveIsLoading = isUserLoading || isLoading;
+  // Now safe to call useCollection
+  const { data: requests, isLoading } = useCollection<VerificationRequest>(requestsQuery);
 
   return (
     <div className="flex flex-col min-h-screen bg-background text-foreground">
@@ -58,15 +74,16 @@ export default function MyRequestsPage() {
         <Card>
           <CardHeader>
             <CardTitle className="font-headline flex items-center gap-2">
-                <ShieldQuestion className="h-6 w-6 text-primary" />
-                My Verification Requests
+              <ShieldQuestion className="h-6 w-6 text-primary" />
+              My Verification Requests
             </CardTitle>
             <CardDescription>
-                Here is the history of your document verification requests and lawyer feedback.
+              Here is the history of your document verification requests and lawyer feedback.
             </CardDescription>
           </CardHeader>
+
           <CardContent className="space-y-4">
-            {effectiveIsLoading && (
+            {isLoading && (
               <>
                 <Skeleton className="h-28 w-full" />
                 <Skeleton className="h-28 w-full" />
@@ -74,43 +91,44 @@ export default function MyRequestsPage() {
               </>
             )}
 
-            {!effectiveIsLoading && requests && requests.length > 0 && (
-              requests.map((req: WithId<VerificationRequest>) => {
-                const statusInfo = statusConfig[req.status] || { label: 'Unknown', className: 'bg-gray-400' };
-                return (
-                    <div key={req.id} className="border rounded-lg p-4 space-y-3 transition-colors hover:border-primary/80">
-                        <div className="flex justify-between items-start">
-                            <div>
-                                <h3 className="font-semibold">{req.documentType}</h3>
-                                <p className="text-sm text-muted-foreground">
-                                    Submitted {req.createdAt ? formatDistanceToNow(new Date(req.createdAt.seconds * 1000), { addSuffix: true }) : 'just now'}
-                                </p>
-                            </div>
-                            <Badge className={statusInfo.className}>{statusInfo.label}</Badge>
-                        </div>
+            {!isLoading && requests && requests.length > 0 && (
+              requests.map((req) => {
+                const statusInfo = statusConfig[req.status];
 
-                        {req.lawyerNotification && (
-                            <div className="border-l-4 border-accent p-3 bg-accent/10 rounded-r-md">
-                                <p className="font-semibold text-accent-foreground text-sm">{req.lawyerNotification}</p>
-                            </div>
-                        )}
-                        
-                        {req.lawyerComments?.length > 0 && (
-                            <div className="mt-3 space-y-2">
-                            <h4 className="font-medium text-sm">Lawyer's Feedback:</h4>
-                            {req.lawyerComments.slice().reverse().map((c, i) => (
-                                <blockquote key={i} className="text-sm text-muted-foreground border-l-2 pl-3 italic">
-                                {c.text}
-                                </blockquote>
-                            ))}
-                            </div>
-                        )}
+                return (
+                  <div key={req.id} className="border rounded-lg p-4 space-y-3 hover:border-primary/80">
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <h3 className="font-semibold">{req.documentType}</h3>
+                        <p className="text-sm text-muted-foreground">
+                          Submitted {formatDistanceToNow(new Date(req.createdAt.seconds * 1000), { addSuffix: true })}
+                        </p>
+                      </div>
+                      <Badge className={statusInfo.className}>{statusInfo.label}</Badge>
                     </div>
-                )
+
+                    {req.lawyerNotification && (
+                      <div className="border-l-4 border-accent p-3 bg-accent/10 rounded-r-md">
+                        <p className="font-semibold text-sm">{req.lawyerNotification}</p>
+                      </div>
+                    )}
+
+                    {req.lawyerComments?.length > 0 && (
+                      <div className="mt-3 space-y-2">
+                        <h4 className="font-medium text-sm">Lawyer's Feedback:</h4>
+                        {req.lawyerComments.slice().reverse().map((c, i) => (
+                          <blockquote key={i} className="text-sm text-muted-foreground border-l-2 pl-3 italic">
+                            {c.text}
+                          </blockquote>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                );
               })
             )}
 
-            {!effectiveIsLoading && (!requests || requests.length === 0) && (
+            {!isLoading && (!requests || requests.length === 0) && (
               <div className="text-center py-16 text-muted-foreground border-2 border-dashed rounded-lg">
                 <p className="font-semibold">No Requests Found</p>
                 <p className="text-sm">You have not submitted any documents for verification yet.</p>
