@@ -14,7 +14,7 @@ const AuthContext = createContext<{ user: User | null; isUserLoading: boolean }>
 const authRequiredRoutes = ['/dashboard', '/lawyer-panel'];
 const lawyerOnlyRoutes = ['/lawyer-panel'];
 const publicOnlyRoutes = ['/login', '/signup', '/lawyer-login', '/lawyer-signup'];
-const LAWYER_EMAIL = 'lawyer@lexintel.com';
+const LAWYER_EMAIL = 'official.lawyer@mail.com';
 
 function LoadingScreen() {
   return (
@@ -61,7 +61,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (user) {
       if (isLawyer) {
         // If lawyer is logged in and not on their panel, redirect them.
-        if (!pathIsLawyerOnly) {
+        if (pathname !== '/lawyer-panel') {
           router.push('/lawyer-panel');
         }
       } else { // Regular user

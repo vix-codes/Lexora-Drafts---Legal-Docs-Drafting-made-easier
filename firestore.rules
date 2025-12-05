@@ -20,7 +20,7 @@ service cloud.firestore {
   match /databases/{database}/documents {
     
     function isLawyer() {
-      return request.auth.token.email == 'lawyer@lexintel.com';
+      return request.auth.token.email == 'official.lawyer@mail.com';
     }
 
     /**
@@ -85,15 +85,14 @@ service cloud.firestore {
      * @path /verificationRequests/{requestId}
      */
     match /verificationRequests/{requestId} {
-      // Users can create requests and read their own requests.
-      allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
-      allow list, get: if request.auth != null && resource.data.userId == request.auth.uid;
+      // Users can create requests if they are logged in.
+      allow create: if request.auth != null;
+
+      // The designated lawyer can read, update, and delete all requests.
+      allow read, update, delete: if isLawyer();
       
-      // The designated lawyer can read and update all requests.
-      allow list, get, update: if isLawyer();
-      
-      // No one can delete requests.
-      allow delete: if false;
+      // A user can read their own requests.
+      allow read: if request.auth != null && resource.data.userId == request.auth.uid;
     }
   }
 }

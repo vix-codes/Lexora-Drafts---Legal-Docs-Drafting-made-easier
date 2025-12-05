@@ -77,7 +77,7 @@ export default function LawyerPanelPage() {
         return null;
     }
     // Only allow the designated lawyer to query the entire collection.
-    if (user?.email === 'lawyer@lexintel.com') {
+    if (user?.email === 'official.lawyer@mail.com') {
         return query(collection(db, 'verificationRequests'), orderBy('createdAt', 'desc'));
     }
     return null;
@@ -86,7 +86,7 @@ export default function LawyerPanelPage() {
   const { data: requests, isLoading } = useCollection<VerificationRequest>(requestsQuery);
   
   // This check is redundant due to AuthProvider, but it's a good safeguard.
-  if (!isUserLoading && (!user || user.email !== 'lawyer@lexintel.com')) {
+  if (!isUserLoading && (!user || user.email !== 'official.lawyer@mail.com')) {
       return (
           <div className="flex flex-col min-h-screen bg-background text-foreground">
             <Header />
