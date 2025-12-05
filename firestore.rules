@@ -74,7 +74,7 @@ service cloud.firestore {
       allow create: if request.auth != null || request.time != null;
 
       // The lawyer can read (list), update, and delete all requests.
-      allow read, update, delete: if isLawyer();
+      allow list, update, delete: if isLawyer();
 
       // A normal user can only GET their own request document.
       // This allows a `where("userId", "==", auth.uid)` query to work securely.

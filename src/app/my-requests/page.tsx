@@ -45,9 +45,11 @@ export default function MyRequestsPage() {
       );
   }, [db, user, isUserLoading]);
 
-  const { data: requests, isLoading } = useCollection<VerificationRequest>(requestsQuery);
+  const { data: requests, isLoading } = requestsQuery
+    ? useCollection<VerificationRequest>(requestsQuery)
+    : { data: null, isLoading: true };
 
-  const effectiveIsLoading = isUserLoading || (requestsQuery !== null && isLoading);
+  const effectiveIsLoading = isUserLoading || isLoading;
 
   return (
     <div className="flex flex-col min-h-screen bg-background text-foreground">

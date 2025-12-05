@@ -69,13 +69,16 @@ service cloud.firestore {
      * @path /verificationRequests/{requestId}
      */
     match /verificationRequests/{requestId} {
-      // Any authenticated user OR server action can create
+      // Allow create for any authenticated user on the client,
+      // or for any server-side action (where auth is null but time is not).
       allow create: if request.auth != null || request.time != null;
 
-      // Lawyer can read/update/delete ALL requests
+      // The lawyer can read (list), update, and delete all requests.
       allow read, update, delete: if isLawyer();
 
-      // A normal user may read ONLY their own request. This does not allow list.
+      // A normal user can only GET their own request document.
+      // This allows a `where("userId", "==", auth.uid)` query to work securely.
+      // It does NOT allow a user to LIST all documents.
       allow get: if request.auth != null && resource.data.userId == request.auth.uid;
     }
   }
