@@ -70,19 +70,19 @@ function VerificationRequestCard({ request }: { request: WithId<VerificationRequ
 export default function LawyerPanelPage() {
   const { user, isUserLoading } = useAuth();
   const db = getFirestore(app);
+  
+  const isLawyer = !isUserLoading && user?.email === 'lawyer@lexintel.com';
 
   const requestsQuery = useMemo(() => {
     // Wait until auth state is resolved and we know if the user is the lawyer
-    if (isUserLoading || !user || user.email !== 'lawyer@lexintel.com') {
+    if (isUserLoading || !isLawyer) {
       return null;
     }
     // Only allow the designated lawyer to query the entire collection.
     return query(collection(db, 'verificationRequests'), orderBy('createdAt', 'desc'));
-  }, [db, user, isUserLoading]);
+  }, [db, isUserLoading, isLawyer]);
 
   const { data: requests, isLoading } = useCollection<VerificationRequest>(requestsQuery);
-  
-  const isLawyer = !isUserLoading && user?.email === 'lawyer@lexintel.com';
   
   if (!isUserLoading && !isLawyer) {
       return (

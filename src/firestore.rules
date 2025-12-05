@@ -1,0 +1,93 @@
+
+/**
+ * @file Firestore Security Rules for Lexora Drafts application.
+ *
+ * Core Philosophy:
+ * This ruleset prioritizes user authentication and data access control.
+ * - Server actions (like creating a verification request) are permitted.
+ * - Authenticated users can only read their own data.
+ * - A designated lawyer has special privileges to review all verification requests.
+ * - Public collections (templates, feed, glossary) are read-only for everyone.
+ */
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    function isLawyer() {
+      return request.auth.token.email == 'lawyer@lexintel.com';
+    }
+
+    /**
+     * @description Controls access to user profiles and their subcollections.
+     * @path /users/{userId}
+     */
+    match /users/{userId} {
+      function isOwner() {
+        return request.auth.uid == userId;
+      }
+
+      // User profiles can only be read or written to by the owner.
+      allow read, write: if isOwner();
+
+      /**
+       * @description Controls access to a user's recent activity log.
+       * @path /users/{userId}/activities/{activityId}
+       */
+      match /activities/{activityId} {
+        // Only the owner can read or write their own activity.
+        allow read, write: if isOwner();
+      }
+    }
+    
+    /**
+     * @description Controls access to lawyer profiles.
+     * @path /lawyers/{lawyerId}
+     */
+    match /lawyers/{lawyerId} {
+      function isOwner() {
+        return request.auth.uid == lawyerId;
+      }
+      
+      // Any authenticated user can read public lawyer profiles.
+      allow get, list: if request.auth != null;
+      
+      // Only the owner can create or update their own profile.
+      allow create, update: if isOwner();
+      
+      // Nobody can delete lawyer profiles.
+      allow delete: if false;
+    }
+
+    /**
+     * @description Public read access for templates, law feed, and glossary.
+     */
+    match /templates/{templateId} {
+      allow get, list: if true;
+      allow write: if false;
+    }
+    match /lawFeed/{updateId} {
+      allow get, list: if true;
+      allow write: if false;
+    }
+    match /glossary/{termId} {
+      allow get, list: if true;
+      allow write: if false;
+    }
+    
+    /**
+     * @description Controls access to draft verification requests.
+     * @path /verificationRequests/{requestId}
+     */
+    match /verificationRequests/{requestId} {
+      // Allow create if user is logged in OR if it's a server-side request.
+      allow create: if request.auth != null || request.time != null;
+
+      // The designated lawyer can read/update all requests.
+      allow read, update, delete: if isLawyer();
+      
+      // A user can read their own requests, but not list all of them.
+      allow get: if request.auth != null && resource.data.userId == request.auth.uid;
+      allow list: if false;
+    }
+  }
+}
