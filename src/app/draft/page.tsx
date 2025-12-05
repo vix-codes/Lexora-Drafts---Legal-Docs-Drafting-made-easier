@@ -30,7 +30,6 @@ import { DocumentPreview } from '@/components/document-preview';
 import { SubmitButton } from '@/components/submit-button';
 import { useAuth } from '@/components/auth-provider';
 import { VerificationButton } from '@/components/verification-button';
-import { UserVerificationList } from '@/components/user-verification-list';
 
 type DraftState = {
   draft?: string;
@@ -175,8 +174,6 @@ export default function DraftPage() {
             )}
         </Card>
       )}
-
-      {user && <UserVerificationList userId={user.uid} />}
     </div>
   );
 }
