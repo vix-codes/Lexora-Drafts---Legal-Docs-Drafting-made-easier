@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useMemo } from 'react';
@@ -87,7 +88,7 @@ export function UserVerificationList({ userId }: { userId: string }) {
   const db = getFirestore(app);
   
   const requestsQuery = useMemo(() => {
-    // Only fetch requests if the user's auth state is resolved and the user exists.
+    // Only build the query if auth has resolved and we have a user.
     if (isUserLoading || !user) {
         return null;
     }
@@ -118,7 +119,7 @@ export function UserVerificationList({ userId }: { userId: string }) {
     );
   }
 
-  // Do not render the card if there are no requests to show.
+  // Do not render the card if there are no requests to show after loading.
   if (!requests || requests.length === 0) {
     return null;
   }
