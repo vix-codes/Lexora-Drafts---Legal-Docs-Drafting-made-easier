@@ -83,23 +83,27 @@ function VerificationRequestItem({ request }: { request: WithId<VerificationRequ
 }
 
 export function UserVerificationList({ userId }: { userId: string }) {
-  const { user } = useAuth();
+  const { user, isUserLoading } = useAuth();
   const db = getFirestore(app);
   
   const requestsQuery = useMemo(() => {
-    // Only fetch requests if the user is logged in.
-    if (!user) return null;
+    // Only fetch requests if the user's auth state is resolved and the user exists.
+    if (isUserLoading || !user) {
+        return null;
+    }
     
     return query(
       collection(db, 'verificationRequests'),
       where('userId', '==', user.uid),
       orderBy('createdAt', 'desc')
     );
-  }, [db, user]);
+  }, [db, user, isUserLoading]);
 
   const { data: requests, isLoading } = useCollection<VerificationRequest>(requestsQuery);
 
-  if (isLoading) {
+  const effectiveIsLoading = isLoading || isUserLoading;
+
+  if (effectiveIsLoading) {
     return (
       <Card>
         <CardHeader>
