@@ -5,7 +5,7 @@ import MainContent from '@/app/main-content';
 import { Lawbot } from '@/components/lawbot';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Search } from 'lucide-react';
+import { Search, ShieldQuestion } from 'lucide-react';
 import Link from 'next/link';
 import { useAuth } from '@/components/auth-provider';
 import { useDoc } from '@/firebase/firestore/use-doc';
@@ -14,6 +14,7 @@ import { app } from '@/firebase/client';
 import { useMemo } from 'react';
 
 const FIND_LAWYER_URL = '/find-lawyer';
+const MY_REQUESTS_URL = '/my-requests';
 
 function LawyerDashboardLinkCard() {
   const { user } = useAuth();
@@ -52,10 +53,27 @@ function LawyerDashboardLinkCard() {
 }
 
 export default function HomeContent() {
+  const { user } = useAuth();
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-6 lg:gap-8 p-4 lg:p-6">
       <MainContent />
       <Lawbot />
+       {user && (
+        <Card>
+            <CardHeader>
+                <CardTitle className="font-headline flex items-center gap-2">
+                    <ShieldQuestion className="h-5 w-5 text-primary" />
+                    My Verification Requests
+                </CardTitle>
+                <CardDescription>Check the status of your submitted document verifications.</CardDescription>
+            </CardHeader>
+            <CardContent>
+                <Button asChild className="w-full">
+                    <Link href={MY_REQUESTS_URL}>View My Requests</Link>
+                </Button>
+            </CardContent>
+        </Card>
+      )}
       <Card>
         <CardHeader>
           <CardTitle className="font-headline flex items-center gap-2">

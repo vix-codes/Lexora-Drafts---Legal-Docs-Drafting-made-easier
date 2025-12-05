@@ -71,7 +71,7 @@ export default function LawyerPanelPage() {
   const { user, isUserLoading } = useAuth();
   const db = getFirestore(app);
   
-  const isLawyer = !isUserLoading && user?.email === 'lawyer@lexintel.com';
+  const isLawyer = !isUserLoading && user?.email === 'official.lawyer@mail.com';
 
   const requestsQuery = useMemo(() => {
     // Wait until auth state is resolved and we know if the user is the lawyer.

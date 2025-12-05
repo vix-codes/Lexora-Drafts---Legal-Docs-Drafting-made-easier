@@ -11,10 +11,10 @@ import { FirebaseErrorListener } from './FirebaseErrorListener';
 
 const AuthContext = createContext<{ user: User | null; isUserLoading: boolean }>({ user: null, isUserLoading: true });
 
-const authRequiredRoutes = ['/dashboard', '/lawyer-panel'];
+const authRequiredRoutes = ['/dashboard', '/lawyer-panel', '/my-requests'];
 const lawyerOnlyRoutes = ['/lawyer-panel'];
 const publicOnlyRoutes = ['/login', '/signup', '/lawyer-login', '/lawyer-signup'];
-const LAWYER_EMAIL = 'lawyer@lexintel.com';
+const LAWYER_EMAIL = 'official.lawyer@mail.com';
 
 function LoadingScreen() {
   return (

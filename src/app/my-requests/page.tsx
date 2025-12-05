@@ -1,0 +1,118 @@
+
+"use client";
+
+import { useAuth } from "@/components/auth-provider";
+import { collection, query, where, orderBy, getFirestore } from "firebase/firestore";
+import { useCollection, type WithId } from "@/firebase/firestore/use-collection";
+import { app } from "@/firebase/client";
+import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Badge } from "@/components/ui/badge";
+import { formatDistanceToNow } from "date-fns";
+import Header from "@/components/header";
+import { ShieldQuestion } from "lucide-react";
+
+type VerificationRequest = {
+  userId: string;
+  documentType: string;
+  status: 'pending' | 'reviewed' | 'approved';
+  createdAt: { seconds: number; nanoseconds: number };
+  draftContent: string;
+  formInputs: Record<string, any>;
+  lawyerComments: { text: string; timestamp: { seconds: number } }[];
+  lawyerNotification: string;
+};
+
+const statusConfig = {
+  pending: { label: 'Pending', className: 'bg-yellow-500' },
+  reviewed: { label: 'Reviewed', className: 'bg-blue-500' },
+  approved: { label: 'Approved', className: 'bg-green-500' },
+};
+
+export default function MyRequestsPage() {
+  const { user, isUserLoading } = useAuth();
+  const db = getFirestore(app);
+
+  const requestsQuery =
+    !isUserLoading && user
+      ? query(
+          collection(db, "verificationRequests"),
+          where("userId", "==", user.uid),
+          orderBy("createdAt", "desc")
+        )
+      : null;
+
+  const { data: requests, isLoading } = useCollection<VerificationRequest>(requestsQuery);
+
+  const effectiveIsLoading = isUserLoading || isLoading;
+
+  return (
+    <div className="flex flex-col min-h-screen bg-background text-foreground">
+      <Header />
+      <main className="flex-1 p-4 lg:p-6">
+        <Card>
+          <CardHeader>
+            <CardTitle className="font-headline flex items-center gap-2">
+                <ShieldQuestion className="h-6 w-6 text-primary" />
+                My Verification Requests
+            </CardTitle>
+            <CardDescription>
+                Here is the history of your document verification requests and lawyer feedback.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {effectiveIsLoading && (
+              <>
+                <Skeleton className="h-24 w-full" />
+                <Skeleton className="h-24 w-full" />
+                <Skeleton className="h-24 w-full" />
+              </>
+            )}
+
+            {!effectiveIsLoading && requests && requests.length > 0 && (
+              requests.map((req: WithId<VerificationRequest>) => {
+                const statusInfo = statusConfig[req.status] || { label: 'Unknown', className: 'bg-gray-400' };
+                return (
+                    <div key={req.id} className="border rounded-lg p-4 space-y-3 transition-colors hover:border-primary">
+                        <div className="flex justify-between items-start">
+                            <div>
+                                <h3 className="font-semibold">{req.documentType}</h3>
+                                <p className="text-sm text-muted-foreground">
+                                    Submitted {formatDistanceToNow(new Date(req.createdAt.seconds * 1000), { addSuffix: true })}
+                                </p>
+                            </div>
+                            <Badge className={statusInfo.className}>{statusInfo.label}</Badge>
+                        </div>
+
+                        {req.lawyerNotification && (
+                            <div className="border-l-4 border-accent p-3 bg-accent/10 rounded-r-md">
+                                <p className="font-semibold text-accent-foreground text-sm">{req.lawyerNotification}</p>
+                            </div>
+                        )}
+                        
+                        {req.lawyerComments?.length > 0 && (
+                            <div className="mt-2 space-y-2">
+                            <h4 className="font-medium text-sm">Lawyer Comments:</h4>
+                            {req.lawyerComments.map((c, i) => (
+                                <blockquote key={i} className="text-sm text-muted-foreground border-l-2 pl-3 italic">
+                                {c.text}
+                                </blockquote>
+                            ))}
+                            </div>
+                        )}
+                    </div>
+                )
+              })
+            )}
+
+            {!effectiveIsLoading && (!requests || requests.length === 0) && (
+              <div className="text-center py-12 text-muted-foreground">
+                <p>No verification requests submitted yet.</p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </main>
+    </div>
+  );
+}
