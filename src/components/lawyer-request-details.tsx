@@ -85,12 +85,12 @@ export function LawyerRequestDetails({ request, isOpen, onOpenChange }: LawyerRe
           </DialogDescription>
         </DialogHeader>
         
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-x-6 px-6 py-4 flex-1 overflow-y-auto">
+        <div className="flex-1 grid grid-cols-1 lg:grid-cols-2 gap-x-6 px-6 py-4 overflow-y-auto">
           {/* Left Column: Draft */}
           <div className="flex flex-col gap-2">
-            <h3 className="font-semibold text-foreground sticky top-0 bg-background py-1">Generated Draft</h3>
+            <h3 className="font-semibold text-foreground">Generated Draft</h3>
             <div className="rounded-md border bg-muted/30 flex-1">
-              <ScrollArea className="h-[calc(100vh_-_250px)]">
+              <ScrollArea className="h-[calc(80vh_-_200px)]">
                 <pre className="text-sm whitespace-pre-wrap font-body p-4">{request.draftContent}</pre>
               </ScrollArea>
             </div>
@@ -142,7 +142,7 @@ export function LawyerRequestDetails({ request, isOpen, onOpenChange }: LawyerRe
           </div>
         </div>
 
-        <DialogFooter className="p-6 border-t bg-background/95 sticky bottom-0">
+        <DialogFooter className="p-6 border-t bg-background/95">
            <div className="w-full flex items-start gap-4">
                 <Textarea
                     placeholder="Add a new comment or suggest changes here..."
@@ -158,8 +158,7 @@ export function LawyerRequestDetails({ request, isOpen, onOpenChange }: LawyerRe
                         disabled={isSubmitting || !comment.trim()}
                         className="w-[120px]"
                     >
-                        {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                        Send Advice
+                        {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : 'Send Advice'}
                     </Button>
                     <Button 
                         variant="outline"
@@ -167,8 +166,7 @@ export function LawyerRequestDetails({ request, isOpen, onOpenChange }: LawyerRe
                         disabled={isSubmitting || request.status === 'approved'} 
                         className="w-[120px]"
                     >
-                        {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                        {request.status === 'approved' ? 'Approved' : 'Approve'}
+                        {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : (request.status === 'approved' ? 'Approved' : 'Approve')}
                     </Button>
                 </div>
            </div>
