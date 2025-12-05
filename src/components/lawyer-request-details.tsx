@@ -47,14 +47,10 @@ export function LawyerRequestDetails({ request, isOpen, onOpenChange }: LawyerRe
     }
     setIsSubmitting(true);
     try {
-      const result = await addLawyerComment(request.id, comment);
-      if (result.success) {
-        toast({ title: 'Advice Sent', description: result.message });
-        setComment('');
-        onOpenChange(false);
-      } else {
-        throw new Error(result.message);
-      }
+      await addLawyerComment(request.id, comment);
+      toast({ title: 'Advice Sent', description: "The user has been notified of your comments." });
+      setComment('');
+      onOpenChange(false);
     } catch (error: any) {
       toast({ variant: 'destructive', title: 'Error', description: error.message });
     } finally {
@@ -65,13 +61,9 @@ export function LawyerRequestDetails({ request, isOpen, onOpenChange }: LawyerRe
   const handleApprove = async () => {
     setIsSubmitting(true);
     try {
-      const result = await approveRequest(request.id);
-      if (result.success) {
-        toast({ title: 'Draft Approved', description: result.message });
-        onOpenChange(false);
-      } else {
-        throw new Error(result.message);
-      }
+      await approveRequest(request.id);
+      toast({ title: 'Draft Approved', description: "The user has been notified." });
+      onOpenChange(false);
     } catch (error: any) {
       toast({ variant: 'destructive', title: 'Error', description: error.message });
     } finally {
@@ -79,85 +71,104 @@ export function LawyerRequestDetails({ request, isOpen, onOpenChange }: LawyerRe
     }
   };
 
+  const handleClose = () => {
+    if (isSubmitting) return;
+    onOpenChange(false);
+  }
+
   return (
-    <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl h-[90vh] flex flex-col">
-        <DialogHeader>
-          <DialogTitle>Review Draft: {request.documentType}</DialogTitle>
+    <Dialog open={isOpen} onOpenChange={handleClose}>
+      <DialogContent className="max-w-6xl h-[90vh] flex flex-col p-0">
+        <DialogHeader className="p-6 pb-4">
+          <DialogTitle className="font-headline">Review Draft: {request.documentType}</DialogTitle>
           <DialogDescription>
-            Review the user's generated draft, the inputs provided, and provide feedback or approval.
+            Review the user's generated draft and provide feedback or approval.
           </DialogDescription>
         </DialogHeader>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 flex-1 min-h-0">
-          {/* Left Side: Draft and Comments */}
-          <div className="flex flex-col gap-4">
-            <h3 className="font-semibold">Generated Draft</h3>
-            <ScrollArea className="rounded-md border p-4 flex-1 bg-muted/50">
-              <pre className="text-sm whitespace-pre-wrap font-body">{request.draftContent}</pre>
-            </ScrollArea>
-            <div className="space-y-2">
-              <h3 className="font-semibold">Add Comments / Advice</h3>
-              <Textarea
-                placeholder="Provide your legal advice or suggest changes here..."
-                value={comment}
-                onChange={(e) => setComment(e.target.value)}
-                rows={5}
-                disabled={isSubmitting}
-              />
+        
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-x-6 px-6 flex-1 min-h-0">
+          {/* Left Column: Draft */}
+          <div className="flex flex-col gap-2 min-h-0">
+            <h3 className="font-semibold text-foreground">Generated Draft</h3>
+            <div className="rounded-md border bg-muted/30 flex-1">
+              <ScrollArea className="h-full">
+                <pre className="text-sm whitespace-pre-wrap font-body p-4">{request.draftContent}</pre>
+              </ScrollArea>
             </div>
           </div>
 
-          {/* Right Side: Inputs and History */}
-          <div className="flex flex-col gap-4">
-            <h3 className="font-semibold">User-Provided Inputs</h3>
-            <ScrollArea className="rounded-md border p-4 flex-1 bg-muted/50">
-              <div className="space-y-2 text-sm">
-                {Object.entries(request.formInputs).map(([key, value]) => (
-                  <div key={key}>
-                    <strong className="font-medium capitalize">{key.replace(/([A-Z])/g, ' $1')}:</strong> {String(value)}
-                  </div>
-                ))}
-              </div>
-            </ScrollArea>
-            
-            <h3 className="font-semibold">Comments History</h3>
-            <ScrollArea className="rounded-md border p-4 flex-1 bg-muted/50">
-                {request.lawyerComments && request.lawyerComments.length > 0 ? (
-                    <div className="space-y-3">
-                        {request.lawyerComments.map((c, i) => (
-                           <div key={i} className="p-3 rounded-md bg-muted/50 border">
-                              <p className="text-sm">{c.text}</p>
-                              {c.timestamp && (
-                                <p className="text-xs text-muted-foreground mt-1">
-                                  {formatDistanceToNow(new Date(c.timestamp.seconds * 1000), { addSuffix: true })}
-                                </p>
-                              )}
-                           </div>
-                        ))}
+          {/* Right Column: Inputs & History */}
+          <div className="flex flex-col gap-4 min-h-0">
+            <div className="flex flex-col gap-2 flex-1 min-h-0">
+                <h3 className="font-semibold text-foreground">User-Provided Inputs</h3>
+                <div className="rounded-md border p-4 bg-muted/30 flex-1">
+                  <ScrollArea className="h-full">
+                    <div className="space-y-2 text-sm">
+                      {Object.entries(request.formInputs).map(([key, value]) => (
+                        <div key={key} className="flex">
+                          <strong className="font-medium capitalize w-1/3">{key.replace(/([A-Z])/g, ' $1')}:</strong>
+                          <span className="text-muted-foreground w-2/3">{String(value)}</span>
+                        </div>
+                      ))}
                     </div>
-                ) : (
-                    <p className="text-sm text-muted-foreground">No comments yet.</p>
-                )}
-            </ScrollArea>
+                  </ScrollArea>
+                </div>
+            </div>
+            
+            <div className="flex flex-col gap-2 flex-1 min-h-0">
+                <h3 className="font-semibold text-foreground">Comments History</h3>
+                <div className="rounded-md border p-4 bg-muted/30 flex-1">
+                  <ScrollArea className="h-full">
+                      {request.lawyerComments && request.lawyerComments.length > 0 ? (
+                          <div className="space-y-3">
+                              {request.lawyerComments.slice().reverse().map((c, i) => (
+                                <div key={i} className="p-3 rounded-md bg-background/50 border">
+                                    <p className="text-sm">{c.text}</p>
+                                    {c.timestamp && (
+                                      <p className="text-xs text-muted-foreground mt-2">
+                                        {formatDistanceToNow(new Date(c.timestamp.seconds * 1000), { addSuffix: true })}
+                                      </p>
+                                    )}
+                                </div>
+                              ))}
+                          </div>
+                      ) : (
+                          <div className="flex items-center justify-center h-full">
+                            <p className="text-sm text-muted-foreground">No comments yet.</p>
+                          </div>
+                      )}
+                  </ScrollArea>
+                </div>
+            </div>
           </div>
         </div>
 
-        <DialogFooter className="mt-4">
-          <DialogClose asChild>
-            <Button variant="ghost" disabled={isSubmitting}>Cancel</Button>
-          </DialogClose>
-          <Button
-            variant="outline"
-            onClick={handleSendAdvice}
-            disabled={isSubmitting || !comment.trim()}
-          >
-            {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            Send Advice
-          </Button>
-          <Button onClick={handleApprove} disabled={isSubmitting || request.status === 'approved'}>
-            {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            {request.status === 'approved' ? 'Approved' : 'Approve Draft'}
-          </Button>
+        <DialogFooter className="p-6 border-t mt-4 bg-background/95 sticky bottom-0">
+           <div className="w-full flex items-start gap-4">
+                <Textarea
+                    placeholder="Add a new comment or suggest changes here..."
+                    value={comment}
+                    onChange={(e) => setComment(e.target.value)}
+                    rows={2}
+                    className="flex-1"
+                    disabled={isSubmitting}
+                />
+                <div className="flex flex-col gap-2">
+                     <Button
+                        variant="outline"
+                        onClick={handleSendAdvice}
+                        disabled={isSubmitting || !comment.trim()}
+                        className="w-[120px]"
+                    >
+                        {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                        Send Advice
+                    </Button>
+                    <Button onClick={handleApprove} disabled={isSubmitting || request.status === 'approved'} className="w-[120px]">
+                        {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                        {request.status === 'approved' ? 'Approved' : 'Approve'}
+                    </Button>
+                </div>
+           </div>
         </DialogFooter>
       </DialogContent>
     </Dialog>
