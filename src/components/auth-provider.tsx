@@ -9,7 +9,7 @@ import { Skeleton } from './ui/skeleton';
 import { Logo } from './icons';
 import { FirebaseErrorListener } from './FirebaseErrorListener';
 
-const AuthContext = createContext<{ user: User | null }>({ user: null });
+const AuthContext = createContext<{ user: User | null; isUserLoading: boolean }>({ user: null, isUserLoading: true });
 
 const authRequiredRoutes = ['/dashboard', '/lawyer-panel'];
 const lawyerOnlyRoutes = ['/lawyer-panel'];
@@ -95,7 +95,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   return (
-    <AuthContext.Provider value={{ user }}>
+    <AuthContext.Provider value={{ user, isUserLoading }}>
       {children}
       <FirebaseErrorListener />
     </AuthContext.Provider>

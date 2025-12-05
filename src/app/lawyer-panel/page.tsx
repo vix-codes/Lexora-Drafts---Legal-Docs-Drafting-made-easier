@@ -68,21 +68,25 @@ function VerificationRequestCard({ request }: { request: WithId<VerificationRequ
 
 
 export default function LawyerPanelPage() {
-  const { user } = useAuth();
+  const { user, isUserLoading } = useAuth();
   const db = getFirestore(app);
 
   const requestsQuery = useMemo(() => {
+    // Wait until auth state is resolved
+    if (isUserLoading) {
+        return null;
+    }
     // Only allow the designated lawyer to query the entire collection.
     if (user?.email === 'lawyer@lexintel.com') {
         return query(collection(db, 'verificationRequests'), orderBy('createdAt', 'desc'));
     }
     return null;
-  }, [db, user]);
+  }, [db, user, isUserLoading]);
 
   const { data: requests, isLoading } = useCollection<VerificationRequest>(requestsQuery);
   
   // This check is redundant due to AuthProvider, but it's a good safeguard.
-  if (!user || user.email !== 'lawyer@lexintel.com') {
+  if (!isUserLoading && (!user || user.email !== 'lawyer@lexintel.com')) {
       return (
           <div className="flex flex-col min-h-screen bg-background text-foreground">
             <Header />
@@ -94,6 +98,8 @@ export default function LawyerPanelPage() {
           </div>
       );
   }
+
+  const effectiveIsLoading = isUserLoading || isLoading;
 
   return (
     <div className="flex flex-col min-h-screen bg-background text-foreground">
@@ -108,7 +114,7 @@ export default function LawyerPanelPage() {
                 <CardDescription>Review and manage all user-submitted draft verification requests.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
-                 {isLoading && (
+                 {effectiveIsLoading && (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                         <Skeleton className="h-48 w-full" />
                         <Skeleton className="h-48 w-full" />
@@ -122,7 +128,7 @@ export default function LawyerPanelPage() {
                         ))}
                      </div>
                  )}
-                 {!isLoading && (!requests || requests.length === 0) && (
+                 {!effectiveIsLoading && (!requests || requests.length === 0) && (
                     <div className="text-center py-12 text-muted-foreground">
                         <p>No verification requests found.</p>
                     </div>
