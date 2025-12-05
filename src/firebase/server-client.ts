@@ -1,20 +1,36 @@
 import { initializeApp, getApps, App, cert } from 'firebase-admin/app';
 
-const serviceAccount = process.env.FIREBASE_SERVICE_ACCOUNT_KEY
-  ? JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT_KEY)
-  : undefined;
-
 export function createServerClient(): App | null {
-  if (!serviceAccount) {
-    // Return null if the service account key is not available
+  
+  const projectId = process.env.FIREBASE_PROJECT_ID;
+  const clientEmail = process.env.FIREBASE_CLIENT_EMAIL;
+  let privateKey = process.env.FIREBASE_PRIVATE_KEY;
+
+  if (!projectId || !clientEmail || !privateKey) {
+    console.error("Missing admin credentials", {
+      projectId,
+      clientEmail,
+      privateKeyExists: !!privateKey,
+    });
     return null;
   }
-  
+
+  // Fix newline issue
+  privateKey = privateKey.replace(/\\n/g, "\n");
+
   if (getApps().some(app => app.name === 'admin-sdk')) {
     return getApps().find(app => app.name === 'admin-sdk')!;
   }
 
-  return initializeApp({
-    credential: cert(serviceAccount),
-  }, 'admin-sdk');
+  return initializeApp(
+    {
+      // @ts-ignore – admin cert fields are valid
+      credential: cert({
+        project_id: projectId,
+        client_email: clientEmail,
+        private_key: privateKey,
+      }),
+    },
+    "admin-sdk"
+  );
 }
