@@ -47,21 +47,27 @@ service cloud.firestore {
       allow write: if false;
     }
 
-    /** VERIFICATION REQUESTS **/
-    match /verificationRequests/{requestId} {
 
-      // Any logged-in user or server action can create
-      allow create: if request.auth != null || request.time != null;
+/**
+ * @description Controls access to draft verification requests.
+ * @path /verificationRequests/{requestId}
+ */
+match /verificationRequests/{requestId} {
 
-      // Allow LIST for logged-in users (needed for queries)
-      allow list: if request.auth != null;
+  // Allow anyone logged in or server (auth=null but request.time exists) to create
+  allow create: if request.auth != null || request.time != null;
 
-      // Lawyer can do everything
-      allow read, update, delete: if isLawyer();
+  // Allow LIST for:
+  // - logged-in users (client request)
+  // - server requests (auth=null)
+  allow list: if request.auth != null || request.time != null;
 
-      // User can GET ONLY their own document
-      allow get: if request.auth != null
-                 && resource.data.userId == request.auth.uid;
-    }
+  // Lawyer full access
+  allow read, update, delete: if isLawyer();
+
+  // Normal user can read only his own docs (GET)
+  allow get: if request.auth != null
+             && resource.data.userId == request.auth.uid;
+}
   }
 }
