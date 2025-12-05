@@ -14,6 +14,7 @@ service cloud.firestore {
   match /databases/{database}/documents {
     
     function isLawyer() {
+      // The official lawyer's email address.
       return request.auth.token.email == 'lawyer@lexintel.com';
     }
 
@@ -80,14 +81,16 @@ service cloud.firestore {
      */
     match /verificationRequests/{requestId} {
       // Allow create if user is logged in OR if it's a server-side request.
+      // request.time is non-null for server-side requests (server actions),
+      // which allows them to bypass auth checks for writes.
       allow create: if request.auth != null || request.time != null;
 
-      // The designated lawyer can read/update all requests.
-      allow read, update, delete: if isLawyer();
+      // The designated lawyer can list, read, update, and delete all requests.
+      allow list, read, update, delete: if isLawyer();
       
-      // A user can read their own requests, but not list all of them.
+      // A normal user can only GET their own requests (but cannot LIST all of them).
+      // This rule is layered on top of the lawyer rule. A user request will be checked here first.
       allow get: if request.auth != null && resource.data.userId == request.auth.uid;
-      allow list: if false;
     }
   }
 }

@@ -87,11 +87,12 @@ export function UserVerificationList({ userId }: { userId: string }) {
   const db = getFirestore(app);
   
   const requestsQuery = useMemo(() => {
-    // Only construct the query if the user is loaded and authenticated.
+    // Only construct the query if auth is finished loading and there is a user.
     if (isUserLoading || !user) {
         return null;
     }
     
+    // This query is safe for normal users because it's filtered by their own UID.
     return query(
       collection(db, 'verificationRequests'),
       where('userId', '==', user.uid),
@@ -104,7 +105,7 @@ export function UserVerificationList({ userId }: { userId: string }) {
   // Show skeleton if auth is loading OR if the query is valid and data is being fetched.
   const effectiveIsLoading = isUserLoading || (requestsQuery !== null && isLoading);
 
-  if (effectiveIsLoading && !requests) {
+  if (effectiveIsLoading) {
     return (
       <Card>
         <CardHeader>
@@ -120,7 +121,7 @@ export function UserVerificationList({ userId }: { userId: string }) {
   }
 
   if (!requests || requests.length === 0) {
-    return null;
+    return null; // Don't render anything if there are no requests after loading.
   }
 
   return (

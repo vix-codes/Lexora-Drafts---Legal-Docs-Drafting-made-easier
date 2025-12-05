@@ -74,11 +74,12 @@ export default function LawyerPanelPage() {
   const isLawyer = !isUserLoading && user?.email === 'lawyer@lexintel.com';
 
   const requestsQuery = useMemo(() => {
-    // Wait until auth state is resolved and we know if the user is the lawyer
+    // Wait until auth state is resolved and we know if the user is the lawyer.
+    // If not the lawyer, the query remains null and no data is fetched.
     if (isUserLoading || !isLawyer) {
       return null;
     }
-    // Only allow the designated lawyer to query the entire collection.
+    // This is the privileged query that only the lawyer should run.
     return query(collection(db, 'verificationRequests'), orderBy('createdAt', 'desc'));
   }, [db, isUserLoading, isLawyer]);
 
@@ -97,7 +98,8 @@ export default function LawyerPanelPage() {
       );
   }
 
-  // Combine auth loading and data loading states
+  // Combine auth loading and data loading states.
+  // The query is only non-null when it's safe to run, so `isLoading` is reliable.
   const effectiveIsLoading = isUserLoading || (requestsQuery !== null && isLoading);
 
   return (
