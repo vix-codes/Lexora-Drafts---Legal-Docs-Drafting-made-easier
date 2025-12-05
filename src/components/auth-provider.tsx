@@ -13,7 +13,7 @@ const AuthContext = createContext<{ user: User | null; isUserLoading: boolean }>
 
 const authRequiredRoutes = ['/dashboard', '/lawyer-panel', '/my-requests'];
 const lawyerOnlyRoutes = ['/lawyer-panel'];
-const publicOnlyRoutes = ['/login', '/signup', '/lawyer-login', '/lawyer-signup'];
+const publicOnlyRoutes = ['/login', '/signup'];
 const LAWYER_EMAIL = 'lawyer@lexintel.com';
 
 function LoadingScreen() {
@@ -68,7 +68,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         // If a regular user tries to access a lawyer-only page, sign them out and redirect.
         if (pathIsLawyerOnly) {
           signOut(auth).then(() => {
-            router.push('/lawyer-login');
+            router.push('/');
           });
         }
         // If a regular user is on a public-only page (e.g. /login), redirect to homepage.
@@ -82,7 +82,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // If the user is not logged in and tries to access a protected route, redirect to login.
       if (pathIsAuthRequired) {
         if(pathIsLawyerOnly) {
-            router.push('/lawyer-login');
+            router.push('/login');
         } else {
             router.push('/login');
         }
