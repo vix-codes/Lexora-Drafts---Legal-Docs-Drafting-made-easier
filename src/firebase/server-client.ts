@@ -1,3 +1,4 @@
+
 import { initializeApp, getApps, App, cert } from 'firebase-admin/app';
 
 export function createServerClient(): App | null {
