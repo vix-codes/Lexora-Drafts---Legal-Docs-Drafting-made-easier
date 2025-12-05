@@ -1,33 +1,54 @@
-
 'use server';
 
 import { generateLegalDraft } from '@/ai/flows/generate-legal-draft';
 import { answerLegalQuery, type LegalQueryOutput } from '@/ai/flows/answer-legal-query';
-import { getFirestore, collection, addDoc, serverTimestamp, doc, updateDoc, arrayUnion, getDocs, query, where, orderBy } from 'firebase/firestore';
+import {
+  getFirestore,
+  collection,
+  addDoc,
+  serverTimestamp,
+  doc,
+  updateDoc,
+  arrayUnion,
+  getDocs,
+  query,
+  where,
+  orderBy
+} from 'firebase/firestore';
+
 import { documentTemplates } from '@/lib/data';
+
 import { initializeApp, getApps, getApp, type FirebaseApp } from 'firebase/app';
 import { firebaseConfig } from '@/firebase/config';
+
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
+
 import { createServerClient } from '@/firebase/server-client';
 import { getFirestore as getAdminFirestore } from 'firebase-admin/firestore';
 
+/* -----------------------------------------
+   Initialize Client Firebase App (Next.js)
+------------------------------------------*/
 
-// Correctly initialize Firebase app for server-side usage
 function getFirebaseApp(): FirebaseApp {
-  if (getApps().length > 0) {
-    return getApp();
-  }
+  if (getApps().length > 0) return getApp();
   return initializeApp(firebaseConfig);
 }
 
+/* -----------------------------------------
+   GENERATE DRAFT
+------------------------------------------*/
 
 type DraftState = {
   draft?: string;
   error?: string;
 };
 
-export const generateDraft = async (prevState: DraftState, formData: FormData): Promise<DraftState> => {
+export const generateDraft = async (
+  prevState: DraftState,
+  formData: FormData
+): Promise<DraftState> => {
   const docType = formData.get('documentType') as string;
   const rawData = Object.fromEntries(formData.entries());
   const userId = formData.get('userId') as string;
@@ -35,70 +56,80 @@ export const generateDraft = async (prevState: DraftState, formData: FormData): 
   try {
     const result = await generateLegalDraft({
       documentType: docType,
-      formData: rawData,
+      formData: rawData
     });
-    
+
     const draftContent = result.legalDraft;
 
-    // Log activity to Firestore
+    // Activity logging (non-blocking)
     if (userId) {
       try {
         const app = getFirebaseApp();
         const db = getFirestore(app);
         const activitiesRef = collection(db, 'users', userId, 'activities');
-        const docLabel = documentTemplates.find(t => t.value === docType)?.label ?? 'document';
-        
+
+        const docLabel =
+          documentTemplates.find(t => t.value === docType)?.label ?? 'document';
+
         await addDoc(activitiesRef, {
           action: 'Generated',
           subject: docLabel,
           timestamp: serverTimestamp(),
-          userId: userId,
+          userId
         });
-      } catch (dbError) {
-        // Not using the emitter here as it's a non-critical logging operation.
-        console.error('Failed to log activity:', dbError);
+      } catch (err) {
+        console.error('Failed to log activity:', err);
       }
     }
-
 
     return { draft: draftContent };
   } catch (error: any) {
     console.error('Error generating draft:', error);
+
     if (error.message.includes('overloaded')) {
-        return { error: 'The AI service is currently busy. Please try again in a moment.' };
+      return { error: 'AI is busy. Try again shortly.' };
     }
-    return { error: 'Failed to generate draft. Please try again.' };
+
+    return { error: 'Could not generate draft. Try again.' };
   }
 };
+
+/* -----------------------------------------
+   LAW BOT QUERY
+------------------------------------------*/
 
 interface Message {
   sender: 'user' | 'bot';
   text: string;
 }
 
-export const askLawbot = async (query: string, history: Message[]): Promise<LegalQueryOutput> => {
-  if (!query) {
-    return { answer: "Please provide a query." };
-  }
+export const askLawbot = async (
+  query: string,
+  history: Message[]
+): Promise<LegalQueryOutput> => {
+  if (!query) return { answer: 'Please provide a query.' };
 
   try {
     const result = await answerLegalQuery({ query, history });
     return result;
   } catch (error: any) {
-    console.error('Error in askLawbot action:', error);
-    let errorMessage = "I'm sorry, I encountered an issue and can't respond right now. Please try again later.";
-    
-    if (error.message) {
-      if (error.message.includes('overloaded')) {
-          errorMessage = "The AI service is currently experiencing high traffic. Please try again in a few moments.";
-      } else if (error.message.includes('blocked')) {
-          errorMessage = "Your query could not be processed due to the content policy. Please try rephrasing your question.";
-      }
+    console.error('LawBot Error:', error);
+
+    let msg = "I'm having trouble answering. Try again soon.";
+
+    if (error.message.includes('overloaded')) {
+      msg = 'AI is overloaded. Try again shortly.';
+    } else if (error.message.includes('blocked')) {
+      msg = 'Your query violates content policy. Rephrase it.';
     }
-    
-    return { answer: errorMessage };
+
+    return { answer: msg };
   }
 };
+
+/* -----------------------------------------
+   REQUEST VERIFICATION
+------------------------------------------*/
 
 export async function requestVerification(
   userId: string,
@@ -113,6 +144,7 @@ export async function requestVerification(
   try {
     const app = getFirebaseApp();
     const db = getFirestore(app);
+
     const requestsRef = collection(db, 'verificationRequests');
 
     const requestData = {
@@ -122,55 +154,65 @@ export async function requestVerification(
       formInputs,
       status: 'pending',
       lawyerComments: [],
+      lawyerNotification: '',
       createdAt: serverTimestamp(),
-      updatedAt: serverTimestamp(),
+      updatedAt: serverTimestamp()
     };
-    
+
     await addDoc(requestsRef, requestData);
 
     return { success: true };
-
   } catch (error) {
-      console.error("SERVER VERIFICATION ERROR:", error);
-      // Re-throw a generic error to the client, but the detailed error is logged on the server.
-      throw new Error("Failed to save verification request on the server.");
+    console.error('SERVER VERIFICATION ERROR:', error);
+    throw new Error('Failed to save verification request on server.');
   }
 }
 
-export async function addLawyerComment(requestId: string, commentText: string): Promise<void> {
+/* -----------------------------------------
+   LAWYER COMMENT
+------------------------------------------*/
+
+export async function addLawyerComment(
+  requestId: string,
+  commentText: string
+): Promise<void> {
   if (!requestId || !commentText) {
     throw new Error('Request ID and comment are required.');
   }
+
   const app = getFirebaseApp();
   const db = getFirestore(app);
   const requestRef = doc(db, 'verificationRequests', requestId);
 
   const newComment = {
     text: commentText,
-    timestamp: new Date(),
+    timestamp: new Date()
   };
 
   const updateData = {
-      status: 'reviewed',
-      lawyerComments: arrayUnion(newComment),
-      updatedAt: serverTimestamp(),
-      lawyerNotification: 'Your draft has been reviewed. Please see lawyer comments.',
+    status: 'reviewed',
+    lawyerComments: arrayUnion(newComment),
+    updatedAt: serverTimestamp(),
+    lawyerNotification: 'Your draft has been reviewed.'
   };
 
-  updateDoc(requestRef, updateData).catch((error) => {
+  updateDoc(requestRef, updateData).catch(err => {
     const permissionError = new FirestorePermissionError({
       path: requestRef.path,
       operation: 'update',
-      requestResourceData: updateData,
+      requestResourceData: updateData
     });
     errorEmitter.emit('permission-error', permissionError);
   });
 }
 
+/* -----------------------------------------
+   APPROVE REQUEST
+------------------------------------------*/
+
 export async function approveRequest(requestId: string): Promise<void> {
-  if (!requestId) {
-    throw new Error('Request ID is required.');
-  }
+  if (!requestId) throw new Error('Request ID required.');
+
   const app = getFirebaseApp();
   const db = getFirestore(app);
   const requestRef = doc(db, 'verificationRequests', requestId);
@@ -178,67 +220,68 @@ export async function approveRequest(requestId: string): Promise<void> {
   const updateData = {
     status: 'approved',
     updatedAt: serverTimestamp(),
-    lawyerNotification: 'Your draft has been approved.',
+    lawyerNotification: 'Your draft has been approved.'
   };
 
-  updateDoc(requestRef, updateData).catch((error) => {
+  updateDoc(requestRef, updateData).catch(err => {
     const permissionError = new FirestorePermissionError({
       path: requestRef.path,
       operation: 'update',
-      requestResourceData: updateData,
+      requestResourceData: updateData
     });
     errorEmitter.emit('permission-error', permissionError);
   });
 }
 
+/* -----------------------------------------
+   GET USER REQUESTS (ADMIN SDK)
+------------------------------------------*/
 
-export async function getUserRequests(userId: string): Promise<any[]> {
-    if (!userId) {
-        return [];
-    }
+export async function getUserRequests(
+  userId: string
+): Promise<any[]> {
+  if (!userId) return [];
 
-    try {
-        const adminApp = createServerClient();
-        if (!adminApp) {
-            throw new Error("Failed to initialize server client. Is the service account key configured?");
-        }
+  try {
+    const adminApp = createServerClient();
+    if (!adminApp) throw new Error('Service account client not found.');
 
-        const db = getAdminFirestore(adminApp);
-        const requestsRef = collection(db, 'verificationRequests');
-        const q = query(
-            requestsRef,
-            where('userId', '==', userId),
-            orderBy('createdAt', 'desc')
-        );
+    const db = getAdminFirestore(adminApp);
 
-        const snapshot = await getDocs(q);
+    // Admin SDK uses db.collection()
+    const requestsRef = db.collection('verificationRequests');
 
-        if (snapshot.empty) {
-            return [];
-        }
+    const q = requestsRef
+      .where('userId', '==', userId)
+      .orderBy('createdAt', 'desc');
 
-        // The data from the admin SDK needs to be serialized to be sent to the client.
-        // Timestamps, in particular, must be converted.
-        const requests = snapshot.docs.map(doc => {
-            const data = doc.data();
-            return {
-                id: doc.id,
-                ...data,
-                // Convert Firestore Timestamps to serializable format (ISO string)
-                createdAt: data.createdAt?.toDate ? data.createdAt.toDate().toISOString() : null,
-                updatedAt: data.updatedAt?.toDate ? data.updatedAt.toDate().toISOString() : null,
-                lawyerComments: data.lawyerComments?.map((c: any) => ({
-                    ...c,
-                    timestamp: c.timestamp?.toDate ? c.timestamp.toDate().toISOString() : null,
-                })) || [],
-            };
-        });
+    const snapshot = await q.get();
 
-        return requests;
-    } catch (error) {
-        console.error("Error fetching user requests on server:", error);
-        // Do not re-throw the error to the client, as it might expose internal details.
-        // Return an empty array or an object indicating an error.
-        return [];
-    }
+    if (snapshot.empty) return [];
+
+    return snapshot.docs.map(doc => {
+      const data = doc.data();
+
+      return {
+        id: doc.id,
+        ...data,
+        createdAt: data.createdAt?.toDate
+          ? data.createdAt.toDate().toISOString()
+          : null,
+        updatedAt: data.updatedAt?.toDate
+          ? data.updatedAt.toDate().toISOString()
+          : null,
+        lawyerComments:
+          data.lawyerComments?.map((c: any) => ({
+            ...c,
+            timestamp: c.timestamp?.toDate
+              ? c.timestamp.toDate().toISOString()
+              : null
+          })) ?? []
+      };
+    });
+  } catch (err) {
+    console.error('Error fetching user requests:', err);
+    return [];
+  }
 }
