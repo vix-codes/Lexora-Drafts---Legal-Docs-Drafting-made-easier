@@ -1,3 +1,4 @@
+
 'use server';
 
 import { generateLegalDraft } from '@/ai/flows/generate-legal-draft';
