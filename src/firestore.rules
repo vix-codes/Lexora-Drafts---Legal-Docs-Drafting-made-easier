@@ -3,61 +3,96 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
+    // Helper function to check if the request is from the designated lawyer admin.
     function isLawyer() {
-      return request.auth != null
-        && request.auth.token.email == 'lawyer@lexintel.com';
+      return request.auth != null && request.auth.token.email == 'lawyer@lexintel.com';
     }
 
-    /** USER PROFILES **/
+    // Helper function to check if the user is the owner of a document.
+    function isOwner(userId) {
+      return request.auth != null && request.auth.uid == userId;
+    }
+
+    /**
+     * ==================================================================
+     *  USER PROFILES
+     * ==================================================================
+     * Controls access to user-specific data.
+     */
     match /users/{userId} {
-      function isOwner() {
-        return request.auth != null && request.auth.uid == userId;
-      }
+      // A user can only read or write their own profile data.
+      allow read, write: if isOwner(userId);
 
-      allow read, write: if isOwner();
-
+      /**
+       * USER ACTIVITIES SUBCOLLECTION
+       * A user can only manage their own activity log.
+       */
       match /activities/{activityId} {
-        allow read, write: if isOwner();
+        allow read, write: if isOwner(userId);
       }
     }
 
-    /** LAWYER PROFILES **/
+    /**
+     * ==================================================================
+     *  LAWYER PROFILES
+     * ==================================================================
+     * Controls access to public-facing lawyer profiles.
+     */
     match /lawyers/{lawyerId} {
-      function isOwner() {
-        return request.auth != null && request.auth.uid == lawyerId;
-      }
-
-      // Allow any authenticated user to view lawyer profiles
+      // Any authenticated user can view lawyer profiles (for "Find a Lawyer").
       allow get, list: if request.auth != null;
       
-      // Only the lawyer can create or update their own profile
-      allow create, update: if isOwner();
+      // Only the lawyer can create or update their own profile.
+      // Assumes the lawyer's UID is used as the document ID.
+      allow create, update: if isOwner(lawyerId);
       
-      // Prevent deletes
+      // Prevent accidental deletion of lawyer profiles from the client.
       allow delete: if false;
     }
 
-    /** PUBLIC DATA **/
+    /**
+     * ==================================================================
+     *  VERIFICATION REQUESTS
+     * ==================================================================
+     * Manages the workflow for draft and profile verification.
+     */
+    match /verificationRequests/{requestId} {
+      // Any authenticated user can submit a new verification request.
+      allow create: if request.auth != null;
+
+      // The lawyer admin can list all requests to populate the lawyer panel.
+      allow list: if isLawyer();
+
+      // The lawyer admin can read any individual request to see its details.
+      // A regular user can only read their own requests.
+      allow get: if isLawyer() || (request.auth != null && resource.data.userId == request.auth.uid);
+
+      // The lawyer admin can update any request (to add comments or approve).
+      allow update: if isLawyer();
+
+      // Prevent any client-side deletions.
+      allow delete: if false;
+    }
+
+    /**
+     * ==================================================================
+     *  PUBLIC READ-ONLY DATA
+     * ==================================================================
+     * Collections that are public to all users but should not be writable.
+     */
     match /templates/{templateId} {
-      allow get, list: if true;
-      allow write: if false;
+      allow get, list: if request.auth != null;
+      allow write: if false; // Read-only
     }
 
     match /lawFeed/{updateId} {
-      allow get, list: if true;
-      allow write: if false;
+      allow get, list: if request.auth != null;
+      allow write: if false; // Read-only
     }
 
     match /glossary/{termId} {
-      allow get, list: if true;
-      allow write: if false;
-    }
-    
-    /** VERIFICATION REQUESTS **/
-    match /verificationRequests/{requestId} {
-        // Logged-in users can create. Lawyers have full read/write. Users can read their own.
-        allow read, write: if request.auth != null;
-        allow delete: if false;
+      allow get, list: if request.auth != null;
+      allow write: if false; // Read-only
     }
   }
 }
