@@ -74,7 +74,7 @@ service cloud.firestore {
       allow list: if isLawyer();
 
       // Lawyer can GET any request
-      allow get: if isLayeR();
+      allow get: if isLawyer();
 
       // Lawyer can update requests
       allow update: if isLawyer();
