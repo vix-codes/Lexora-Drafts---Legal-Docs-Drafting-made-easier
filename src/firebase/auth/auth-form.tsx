@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useForm, Controller } from 'react-hook-form';
+import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword } from 'firebase/auth';
@@ -13,27 +13,11 @@ import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import { Button, type ButtonProps } from '@/components/ui/button';
 import { Loader2 } from 'lucide-react';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 
-const baseSchema = {
+const authSchema = z.object({
   email: z.string().email({ message: 'Please enter a valid email address.' }),
   password: z.string().min(6, { message: 'Password must be at least 6 characters long.' }),
-};
-
-const lawyerSchema = z.object({
-  ...baseSchema,
-  name: z.string().min(2, { message: 'Full name is required.' }),
-  enrollmentNumber: z.string().min(1, { message: 'Enrollment number is required.' }),
-  stateBarCouncil: z.string().min(1, { message: 'Please select your bar council.' }),
 });
-
-const userSchema = z.object(baseSchema);
 
 function FormSubmitButton({ children, isSubmitting, ...props }: ButtonProps & { isSubmitting: boolean }) {
   return (
@@ -48,12 +32,8 @@ function getUsernameFromEmail(email: string) {
 }
 
 type AuthFormProps = {
-  mode: 'login' | 'signup' | 'lawyer-signup' | 'lawyer-login';
+  mode: 'login' | 'signup';
 }
-
-const allStateBarCouncils = [
-    "Andhra Pradesh", "Assam, Nagaland, Mizoram, Arunachal Pradesh & Sikkim", "Bihar", "Chhattisgarh", "Delhi", "Gujarat", "Himachal Pradesh", "Jammu & Kashmir and Ladakh", "Jharkhand", "Karnataka", "Kerala", "Madhya Pradesh", "Maharashtra & Goa", "Manipur", "Meghalaya", "Odisha", "Patna", "Punjab & Haryana", "Rajasthan", "Tamil Nadu & Puducherry", "Telangana", "Tripura", "Uttar Pradesh", "Uttarakhand", "West Bengal"
-];
 
 const LAWYER_EMAIL = 'lawyer@lexintel.com';
 
@@ -61,59 +41,36 @@ export function AuthForm({ mode }: AuthFormProps) {
   const { toast } = useToast();
   const router = useRouter();
 
-  const isLawyerSignup = mode === 'lawyer-signup';
-  const schema = isLawyerSignup ? lawyerSchema : userSchema;
-
   const {
     register,
     handleSubmit,
-    control,
     formState: { errors, isSubmitting },
   } = useForm({
-    resolver: zodResolver(schema),
+    resolver: zodResolver(authSchema),
   });
 
-  const handleAuthAction = async (data: z.infer<typeof schema>) => {
+  const handleAuthAction = async (data: z.infer<typeof authSchema>) => {
     const auth = getAuth(app);
     const { email, password } = data;
 
     try {
-      if (mode === 'signup' || mode === 'lawyer-signup') {
+      if (mode === 'signup') {
         const userCredential = await createUserWithEmailAndPassword(auth, email, password);
         const user = userCredential.user;
         const db = getFirestore(app);
 
-        if (mode === 'lawyer-signup') {
-            const lawyerData = data as z.infer<typeof lawyerSchema>;
-            // Create a placeholder lawyer doc, user will fill it on /dashboard
-            const lawyerRef = doc(db, 'lawyers', user.uid);
-            await setDoc(lawyerRef, {
-                id: user.uid,
-                email: user.email!,
-                name: lawyerData.name,
-                enrollmentNumber: lawyerData.enrollmentNumber,
-                stateBarCouncil: lawyerData.stateBarCouncil,
-                createdAt: serverTimestamp(),
-                isVerified: false, // Default to not verified
-            });
-             toast({
-                title: 'Account Created',
-                description: "Welcome! You can now create your lawyer profile from the dashboard.",
-            });
-        } else {
-            const userRef = doc(db, 'users', user.uid);
-            await setDoc(userRef, {
-                email: user.email,
-                username: getUsernameFromEmail(user.email!),
-                createdAt: serverTimestamp(),
-            });
-            toast({
-                title: 'Account Created',
-                description: "You've been successfully signed up!",
-            });
-        }
+        const userRef = doc(db, 'users', user.uid);
+        await setDoc(userRef, {
+            email: user.email,
+            username: getUsernameFromEmail(user.email!),
+            createdAt: serverTimestamp(),
+        });
+        toast({
+            title: 'Account Created',
+            description: "You've been successfully signed up!",
+        });
         // No redirect here, AuthProvider will handle it
-      } else { // Login or Lawyer Login
+      } else { // Login
         await signInWithEmailAndPassword(auth, email, password);
         
         if (email === LAWYER_EMAIL) {
@@ -160,19 +117,6 @@ export function AuthForm({ mode }: AuthFormProps) {
 
   return (
     <form onSubmit={handleSubmit(handleAuthAction)} className="space-y-6">
-      {isLawyerSignup && (
-        <div className="space-y-2">
-            <Label htmlFor="name">Full Name</Label>
-            <Input
-                id="name"
-                type="text"
-                placeholder="e.g. Jane Doe"
-                {...register('name')}
-                required
-            />
-            {errors.name && <p className="text-destructive text-sm mt-1">{(errors.name as any).message}</p>}
-        </div>
-      )}
       <div className="space-y-2">
         <Label htmlFor="email">Email</Label>
         <Input
@@ -183,7 +127,7 @@ export function AuthForm({ mode }: AuthFormProps) {
           required
           autoComplete="email"
         />
-        {errors.email && <p className="text-destructive text-sm mt-1">{(errors.email as any).message}</p>}
+        {errors.email && <p className="text-destructive text-sm mt-1">{errors.email.message}</p>}
       </div>
       <div className="space-y-2">
         <Label htmlFor="password">Password</Label>
@@ -193,51 +137,13 @@ export function AuthForm({ mode }: AuthFormProps) {
           placeholder="••••••••"
           {...register('password')}
           required
-          autoComplete={mode === 'login' || mode === 'lawyer-login' ? 'current-password' : 'new-password'}
+          autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
         />
-        {errors.password && <p className="text-destructive text-sm mt-1">{(errors.password as any).message}</p>}
+        {errors.password && <p className="text-destructive text-sm mt-1">{errors.password.message}</p>}
       </div>
 
-      {isLawyerSignup && (
-        <>
-            <div className="space-y-2">
-                <Label htmlFor="enrollmentNumber">Bar Council Enrollment Number</Label>
-                <Input
-                    id="enrollmentNumber"
-                    type="text"
-                    placeholder="e.g., MAH/1234/2010"
-                    {...register('enrollmentNumber')}
-                    required
-                />
-                {errors.enrollmentNumber && <p className="text-destructive text-sm mt-1">{(errors.enrollmentNumber as any).message}</p>}
-            </div>
-            <div className="space-y-2">
-                <Label htmlFor="stateBarCouncil">State Bar Council</Label>
-                 <Controller
-                    name="stateBarCouncil"
-                    control={control}
-                    render={({ field }) => (
-                        <Select onValueChange={field.onChange} defaultValue={field.value} required>
-                            <SelectTrigger id="stateBarCouncil">
-                                <SelectValue placeholder="Select your state bar council..." />
-                            </SelectTrigger>
-                            <SelectContent>
-                                {allStateBarCouncils.map(council => (
-                                <SelectItem key={council} value={council}>
-                                    {council}
-                                </SelectItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
-                    )}
-                />
-                {errors.stateBarCouncil && <p className="text-destructive text-sm mt-1">{(errors.stateBarCouncil as any).message}</p>}
-            </div>
-        </>
-      )}
-
       <FormSubmitButton isSubmitting={isSubmitting}>
-        {mode === 'login' || mode === 'lawyer-login' ? 'Log In' : 'Sign Up'}
+        {mode === 'login' ? 'Log In' : 'Sign Up'}
       </FormSubmitButton>
     </form>
   );
