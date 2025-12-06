@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useEffect, useState } from "react";
@@ -22,6 +23,7 @@ type VerificationRequest = {
   documentType: string;
   status: "pending" | "reviewed" | "approved";
   createdAt: string; // ISO string
+  updatedAt: string; // ISO string
   draftContent: string;
   formInputs: Record<string, any>;
   lawyerComments: { text: string; timestamp: string }[];
@@ -39,25 +41,28 @@ export default function MyRequestsPage() {
   const [requests, setRequests] = useState<VerificationRequest[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Fetch data ONLY from server action (never Firestore client)
   useEffect(() => {
-    if (!isUserLoading && user) {
+    if (isUserLoading) {
       setIsLoading(true);
-
+      return;
+    }
+    if (user) {
+      setIsLoading(true);
       getUserRequests(user.uid)
         .then((data) => {
           setRequests(data as VerificationRequest[]);
         })
         .catch((err) => {
           console.error("Failed to fetch requests:", err);
+          setRequests([]); // Clear requests on error
         })
         .finally(() => {
           setIsLoading(false);
         });
-    }
-
-    if (!isUserLoading && !user) {
+    } else {
+      // Not logged in
       setIsLoading(false);
+      setRequests([]);
     }
   }, [user, isUserLoading]);
 
@@ -74,30 +79,24 @@ export default function MyRequestsPage() {
               My Verification Requests
             </CardTitle>
             <CardDescription>
-              Track your document submissions and lawyer feedback.
+              Track your document and profile submissions and lawyer feedback.
             </CardDescription>
           </CardHeader>
 
           <CardContent className="space-y-4">
-            {/* Loading skeletons */}
             {showLoading && (
               <>
-                <Skeleton className="h-28 w-full" />
                 <Skeleton className="h-28 w-full" />
                 <Skeleton className="h-28 w-full" />
               </>
             )}
 
-            {/* Render requests */}
-            {!showLoading &&
-              requests.length > 0 &&
-              requests.map((req) => {
+            {!showLoading && requests.length > 0 && requests.map((req) => {
                 const statusInfo = statusConfig[req.status];
-
                 return (
                   <div
                     key={req.id}
-                    className="border rounded-lg p-4 space-y-3 hover:border-primary/80"
+                    className="border rounded-lg p-4 space-y-3 hover:border-primary/80 transition-colors"
                   >
                     <div className="flex justify-between items-start">
                       <div>
@@ -105,27 +104,21 @@ export default function MyRequestsPage() {
                         <p className="text-sm text-muted-foreground">
                           Submitted{" "}
                           {req.createdAt
-                            ? formatDistanceToNow(new Date(req.createdAt), {
-                                addSuffix: true,
-                              })
+                            ? formatDistanceToNow(new Date(req.createdAt), { addSuffix: true })
                             : "recently"}
                         </p>
                       </div>
-                      <Badge className={statusInfo.className}>
-                        {statusInfo.label}
-                      </Badge>
+                      {statusInfo && <Badge className={statusInfo.className}>{statusInfo.label}</Badge>}
                     </div>
 
-                    {/* Lawyer Notification */}
                     {req.lawyerNotification && (
                       <div className="border-l-4 border-accent p-3 bg-accent/10 rounded-r-md">
-                        <p className="font-semibold text-sm">
+                        <p className="font-semibold text-sm text-accent-foreground/90">
                           {req.lawyerNotification}
                         </p>
                       </div>
                     )}
 
-                    {/* Lawyer Comments */}
                     {req.lawyerComments?.length > 0 && (
                       <div className="mt-3 space-y-2">
                         <h4 className="font-medium text-sm">
@@ -139,7 +132,7 @@ export default function MyRequestsPage() {
                               key={i}
                               className="text-sm text-muted-foreground border-l-2 pl-3 italic"
                             >
-                              {c.text}
+                              "{c.text}"
                             </blockquote>
                           ))}
                       </div>
@@ -148,7 +141,6 @@ export default function MyRequestsPage() {
                 );
               })}
 
-            {/* No requests */}
             {!showLoading && requests.length === 0 && (
               <div className="text-center py-16 text-muted-foreground border-2 border-dashed rounded-lg">
                 <p className="font-semibold">No Requests Found</p>

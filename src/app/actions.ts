@@ -11,15 +11,13 @@ import {
   doc,
   updateDoc,
   arrayUnion,
+  setDoc,
 } from 'firebase/firestore';
 
 import { documentTemplates } from '@/lib/data';
 
 import { initializeApp, getApps, getApp, type FirebaseApp } from 'firebase/app';
 import { firebaseConfig } from '@/firebase/config';
-
-import { errorEmitter } from '@/firebase/error-emitter';
-import { FirestorePermissionError } from '@/firebase/errors';
 
 import { createServerClient } from '@/firebase/server-client';
 import { getFirestore as getAdminFirestore } from 'firebase-admin/firestore';
@@ -220,83 +218,83 @@ Bio: ${profileData.description}`,
 export async function addLawyerComment(
   requestId: string,
   commentText: string
-): Promise<void> {
+): Promise<{ success: boolean; error?: string }> {
   if (!requestId || !commentText) {
-    throw new Error('Request ID and comment are required.');
+    return { success: false, error: 'Request ID and comment are required.' };
   }
 
-  const app = getFirebaseApp();
-  const db = getFirestore(app);
-  const requestRef = doc(db, 'verificationRequests', requestId);
+  try {
+    const app = getFirebaseApp();
+    const db = getFirestore(app);
+    const requestRef = doc(db, 'verificationRequests', requestId);
 
-  const newComment = {
-    text: commentText,
-    timestamp: new Date()
-  };
+    const newComment = {
+      text: commentText,
+      timestamp: new Date() 
+    };
 
-  const updateData = {
-    status: 'reviewed',
-    lawyerComments: arrayUnion(newComment),
-    updatedAt: serverTimestamp(),
-    lawyerNotification: 'Your draft has been reviewed.'
-  };
-
-  updateDoc(requestRef, updateData).catch(err => {
-    const permissionError = new FirestorePermissionError({
-      path: requestRef.path,
-      operation: 'update',
-      requestResourceData: updateData
+    await updateDoc(requestRef, {
+      status: 'reviewed',
+      lawyerComments: arrayUnion(newComment),
+      updatedAt: serverTimestamp(),
+      lawyerNotification: 'Your draft has been reviewed.'
     });
-    errorEmitter.emit('permission-error', permissionError);
-  });
+
+    return { success: true };
+  } catch (error: any) {
+    console.error('Error adding lawyer comment:', error);
+    return { success: false, error: error.message || 'Failed to add comment.' };
+  }
 }
 
-export async function approveRequest(requestId: string, requestData?: any): Promise<void> {
-  if (!requestId) throw new Error('Request ID required.');
-
-  const app = getFirebaseApp();
-  const db = getFirestore(app);
-  const requestRef = doc(db, 'verificationRequests', requestId);
-
-  // If it's a lawyer verification, create the lawyer profile
-  if (requestData?.type === 'lawyer' && requestData.userId && requestData.formInputs) {
-      const lawyerRef = doc(db, 'lawyers', requestData.userId);
-      const profileData = requestData.formInputs;
-      
-      const newLawyerData = {
-        id: requestData.userId,
-        email: profileData.email,
-        name: profileData.name,
-        phone: profileData.phone,
-        location: profileData.location,
-        specializations: profileData.specializations,
-        experience: profileData.experience,
-        description: profileData.description,
-        isVerified: true,
-        rating: 4.0 + Math.random(), // Assign a default rating
-        createdAt: serverTimestamp(),
-        lastUpdated: serverTimestamp(),
-        source: 'internal'
-      };
-
-      // Use setDoc to create the new lawyer document
-      await setDoc(lawyerRef, newLawyerData);
+export async function approveRequest(requestId: string, requestData?: any): Promise<{ success: boolean; error?: string }> {
+  if (!requestId) {
+    return { success: false, error: 'Request ID is required.' };
   }
 
-  const updateData = {
-    status: 'approved',
-    updatedAt: serverTimestamp(),
-    lawyerNotification: `Your ${requestData?.type ?? 'draft'} has been approved.`
-  };
+  try {
+    const app = getFirebaseApp();
+    const db = getFirestore(app);
+    const requestRef = doc(db, 'verificationRequests', requestId);
 
-  updateDoc(requestRef, updateData).catch(err => {
-    const permissionError = new FirestorePermissionError({
-      path: requestRef.path,
-      operation: 'update',
-      requestResourceData: updateData
+    // If it's a lawyer verification, create the lawyer profile
+    if (requestData?.type === 'lawyer' && requestData.userId && requestData.formInputs) {
+        const adminApp = createServerClient();
+        if (!adminApp) throw new Error('Admin client initialization failed.');
+
+        const adminDb = getAdminFirestore(adminApp);
+        const lawyerRef = adminDb.collection('lawyers').doc(requestData.userId);
+
+        const profileData = requestData.formInputs;
+        
+        const newLawyerData = {
+          id: requestData.userId,
+          email: profileData.email,
+          name: profileData.name,
+          phone: profileData.phone,
+          location: profileData.location,
+          specializations: profileData.specializations,
+          experience: profileData.experience,
+          description: profileData.description,
+          isVerified: true,
+          rating: 4.0 + Math.random(), // Assign a default rating
+          createdAt: serverTimestamp(),
+          source: 'internal'
+        };
+        await lawyerRef.set(newLawyerData);
+    }
+    
+    await updateDoc(requestRef, {
+      status: 'approved',
+      updatedAt: serverTimestamp(),
+      lawyerNotification: `Your ${requestData?.type ?? 'draft'} has been approved.`
     });
-    errorEmitter.emit('permission-error', permissionError);
-  });
+
+    return { success: true };
+  } catch (error: any) {
+    console.error('Error approving request:', error);
+    return { success: false, error: error.message || 'Failed to approve request.' };
+  }
 }
 
 /* -----------------------------------------
@@ -314,7 +312,6 @@ export async function getUserRequests(
 
     const db = getAdminFirestore(adminApp);
 
-    // Admin SDK uses db.collection()
     const requestsRef = db.collection('verificationRequests');
 
     const q = requestsRef

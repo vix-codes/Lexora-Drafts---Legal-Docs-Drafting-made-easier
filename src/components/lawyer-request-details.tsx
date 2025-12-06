@@ -48,10 +48,14 @@ export function LawyerRequestDetails({ request, isOpen, onOpenChange }: LawyerRe
     }
     setIsSubmitting(true);
     try {
-      await addLawyerComment(request.id, comment);
-      toast({ title: 'Advice Sent', description: "The user has been notified of your comments." });
-      setComment('');
-      onOpenChange(false);
+      const result = await addLawyerComment(request.id, comment);
+      if (result.success) {
+        toast({ title: 'Advice Sent', description: "The user has been notified of your comments." });
+        setComment('');
+        onOpenChange(false);
+      } else {
+        throw new Error(result.error);
+      }
     } catch (error: any) {
       toast({ variant: 'destructive', title: 'Error', description: error.message });
     } finally {
@@ -62,10 +66,13 @@ export function LawyerRequestDetails({ request, isOpen, onOpenChange }: LawyerRe
   const handleApprove = async () => {
     setIsSubmitting(true);
     try {
-      // Pass the full request object to the action
-      await approveRequest(request.id, request);
-      toast({ title: 'Request Approved', description: "The user has been notified and relevant actions are taken." });
-      onOpenChange(false);
+      const result = await approveRequest(request.id, request);
+       if (result.success) {
+        toast({ title: 'Request Approved', description: "The user has been notified and relevant actions are taken." });
+        onOpenChange(false);
+      } else {
+        throw new Error(result.error);
+      }
     } catch (error: any) {
       toast({ variant: 'destructive', title: 'Error', description: error.message });
     } finally {
@@ -75,6 +82,7 @@ export function LawyerRequestDetails({ request, isOpen, onOpenChange }: LawyerRe
 
   const handleClose = () => {
     if (isSubmitting) return;
+    setComment('');
     onOpenChange(false);
   }
   
@@ -103,13 +111,13 @@ export function LawyerRequestDetails({ request, isOpen, onOpenChange }: LawyerRe
 
           {/* Right Column: Inputs & History */}
           <div className="flex flex-col gap-4">
-             {isLawyerRequest && request.formInputs && (
+             {(isLawyerRequest || (request.formInputs && Object.keys(request.formInputs).length > 1)) && (
                  <div className="flex flex-col gap-2">
                     <h3 className="font-semibold text-foreground">User-Provided Inputs</h3>
                     <div className="rounded-md border p-4 bg-muted/30">
                         <ScrollArea className="h-48">
                             <div className="space-y-2 text-sm">
-                            {Object.entries(request.formInputs).map(([key, value]) => {
+                            {Object.entries(request.formInputs).filter(([key]) => key !== 'userId').map(([key, value]) => {
                                 const formattedValue = typeof value === 'object' ? JSON.stringify(value) : String(value);
                                 return (
                                     <div key={key} className="grid grid-cols-2 gap-2">
@@ -160,15 +168,15 @@ export function LawyerRequestDetails({ request, isOpen, onOpenChange }: LawyerRe
                     onChange={(e) => setComment(e.target.value)}
                     rows={2}
                     className="flex-1 bg-muted/50"
-                    disabled={isSubmitting}
+                    disabled={isSubmitting || request.status === 'approved'}
                 />
                 <div className="flex flex-col gap-2">
                      <Button
                         onClick={handleSendAdvice}
-                        disabled={isSubmitting || !comment.trim()}
+                        disabled={isSubmitting || !comment.trim() || request.status === 'approved'}
                         className="w-[120px]"
                     >
-                        {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : 'Send Advice'}
+                        {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Send Advice'}
                     </Button>
                     <Button 
                         variant="outline"
@@ -176,7 +184,7 @@ export function LawyerRequestDetails({ request, isOpen, onOpenChange }: LawyerRe
                         disabled={isSubmitting || request.status === 'approved'} 
                         className="w-[120px]"
                     >
-                        {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : (request.status === 'approved' ? 'Approved' : 'Approve')}
+                        {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : (request.status === 'approved' ? 'Approved' : 'Approve')}
                     </Button>
                 </div>
            </div>

@@ -2,7 +2,7 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { collection, query, orderBy, getFirestore } from 'firebase/firestore';
+import { collection, query, orderBy, getFirestore, where } from 'firebase/firestore';
 import { app } from '@/firebase/client';
 import { useCollection, type WithId } from '@/firebase/firestore/use-collection';
 import Header from '@/components/header';
@@ -14,6 +14,8 @@ import { LawyerRequestDetails } from '@/components/lawyer-request-details';
 import { Button } from '@/components/ui/button';
 import { Briefcase, CheckCircle, Clock, MessageSquare } from 'lucide-react';
 import { useAuth } from '@/components/auth-provider';
+import { PreviouslyApprovedRequests } from '@/components/previously-approved-requests';
+
 
 type VerificationRequest = {
   userId: string;
@@ -23,6 +25,7 @@ type VerificationRequest = {
   draftContent: string;
   formInputs: Record<string, any>;
   lawyerComments: { text: string; timestamp: { seconds: number } }[];
+  type?: 'document' | 'lawyer';
 };
 
 const statusConfig = {
@@ -73,17 +76,27 @@ export default function LawyerPanelPage() {
   
   const isLawyer = !isUserLoading && user?.email === 'lawyer@lexintel.com';
 
-  const requestsQuery = useMemo(() => {
-    // Wait until auth state is resolved and we know if the user is the lawyer.
-    // If not the lawyer, the query remains null and no data is fetched.
-    if (isUserLoading || !isLawyer) {
-      return null;
-    }
-    // This is the privileged query that only the lawyer should run.
-    return query(collection(db, 'verificationRequests'), orderBy('createdAt', 'desc'));
+  const activeRequestsQuery = useMemo(() => {
+    if (isUserLoading || !isLawyer) return null;
+    return query(
+        collection(db, 'verificationRequests'), 
+        where('status', '!=', 'approved'),
+        orderBy('status', 'desc'),
+        orderBy('createdAt', 'desc')
+    );
   }, [db, isUserLoading, isLawyer]);
 
-  const { data: requests, isLoading } = useCollection<VerificationRequest>(requestsQuery);
+  const approvedRequestsQuery = useMemo(() => {
+    if (isUserLoading || !isLawyer) return null;
+    return query(
+        collection(db, 'verificationRequests'), 
+        where('status', '==', 'approved'),
+        orderBy('createdAt', 'desc')
+    );
+  }, [db, isUserLoading, isLawyer]);
+
+  const { data: activeRequests, isLoading: isLoadingActive } = useCollection<VerificationRequest>(activeRequestsQuery);
+  const { data: approvedRequests, isLoading: isLoadingApproved } = useCollection<VerificationRequest>(approvedRequestsQuery);
   
   if (!isUserLoading && !isLawyer) {
       return (
@@ -98,9 +111,7 @@ export default function LawyerPanelPage() {
       );
   }
 
-  // Combine auth loading and data loading states.
-  // The query is only non-null when it's safe to run, so `isLoading` is reliable.
-  const effectiveIsLoading = isUserLoading || (requestsQuery !== null && isLoading);
+  const effectiveIsLoading = isUserLoading || isLoadingActive || isLoadingApproved;
 
   return (
     <div className="flex flex-col min-h-screen bg-background text-foreground">
@@ -122,18 +133,24 @@ export default function LawyerPanelPage() {
                         <Skeleton className="h-48 w-full" />
                     </div>
                  )}
-                 {!effectiveIsLoading && requests && requests.length > 0 && (
+                 {!effectiveIsLoading && activeRequests && activeRequests.length > 0 && (
                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                        {requests.map(request => (
+                        {activeRequests.map(request => (
                             <VerificationRequestCard key={request.id} request={request} />
                         ))}
                      </div>
                  )}
-                 {!effectiveIsLoading && (!requests || requests.length === 0) && (
-                    <div className="text-center py-12 text-muted-foreground">
-                        <p>No verification requests found.</p>
+                 {!effectiveIsLoading && (!activeRequests || activeRequests.length === 0) && (
+                    <div className="text-center py-12 text-muted-foreground border-2 border-dashed rounded-lg">
+                        <p className="font-semibold">No Active Requests</p>
+                        <p>There are currently no pending or reviewed requests.</p>
                     </div>
                  )}
+
+                {!effectiveIsLoading && approvedRequests && approvedRequests.length > 0 && (
+                    <PreviouslyApprovedRequests requests={approvedRequests} />
+                )}
+
             </CardContent>
         </Card>
       </main>

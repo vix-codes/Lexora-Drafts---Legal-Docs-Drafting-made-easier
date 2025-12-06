@@ -4,7 +4,7 @@ service cloud.firestore {
   match /databases/{database}/documents {
     
     function isLawyer() {
-      return request.auth.token.email == 'lawyer@lexintel.com';
+      return request.auth != null && request.auth.token.email == 'lawyer@lexintel.com';
     }
 
     /**
@@ -13,7 +13,7 @@ service cloud.firestore {
      */
     match /users/{userId} {
       function isOwner() {
-        return request.auth.uid == userId;
+        return request.auth != null && request.auth.uid == userId;
       }
 
       // User profiles can only be read or written to by the owner.
@@ -37,7 +37,7 @@ service cloud.firestore {
       // Any authenticated user can read public lawyer profiles.
       allow get, list: if request.auth != null;
       
-      // Only a server-side process (admin action) can create/update lawyer profiles.
+      // The admin can create/update lawyer profiles via server-side action.
       // This happens when a lawyer's verification request is approved.
       allow create, update: if request.auth == null;
       
@@ -66,17 +66,17 @@ service cloud.firestore {
      * @path /verificationRequests/{requestId}
      */
     match /verificationRequests/{requestId} {
-      // Allow create for any authenticated user on the client,
-      // or for any server-side action (where auth is null but time is not).
-      allow create: if request.auth != null || request.time != null;
+      // Allow create for any authenticated user.
+      allow create: if request.auth != null;
 
-      // The lawyer can read (list), update, and delete all requests.
-      allow list, update, delete: if isLawyer();
+      // The lawyer can read all requests (list) and update them.
+      allow list, update, read: if isLawyer();
 
       // A normal user can only GET their own request document.
-      // This allows a `where("userId", "==", auth.uid)` query to work securely.
-      // It does NOT allow a user to LIST all documents.
       allow get: if request.auth != null && resource.data.userId == request.auth.uid;
+
+      // No one can delete from the client side directly
+      allow delete: if false;
     }
   }
 }
