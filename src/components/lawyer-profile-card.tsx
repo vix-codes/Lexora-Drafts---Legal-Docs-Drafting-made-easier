@@ -1,12 +1,9 @@
+
 'use client';
 
-import { useMemo } from 'react';
 import { useAuth } from '@/components/auth-provider';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { useDoc } from '@/firebase/firestore/use-doc';
-import { doc, getFirestore, updateDoc, setDoc, serverTimestamp } from 'firebase/firestore';
-import { app } from '@/firebase/client';
-import { useForm } from 'react-hook-form';
+import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Input } from '@/components/ui/input';
@@ -16,12 +13,16 @@ import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Briefcase, Loader2, FilePlus } from 'lucide-react';
+import { requestLawyerVerification } from '@/app/actions';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
+import { allStates, citiesByState } from '@/lib/data';
+import { useState } from 'react';
 
 const lawyerProfileSchema = z.object({
   name: z.string().min(2, 'Name is required.'),
   phone: z.string().min(10, 'A valid phone number is required.'),
-  'location.city': z.string().min(2, 'City is required.'),
-  'location.state': z.string().min(2, 'State is required.'),
+  state: z.string().min(1, 'State is required.'),
+  city: z.string().min(1, 'City is required.'),
   specializations: z.string().min(2, 'At least one specialization is required.'),
   experience: z.coerce.number().min(0, 'Experience cannot be negative.'),
   description: z.string().min(20, 'A brief description is required (min. 20 characters).'),
@@ -29,72 +30,61 @@ const lawyerProfileSchema = z.object({
 
 type LawyerFormData = z.infer<typeof lawyerProfileSchema>;
 
-function LawyerProfileForm({ lawyerData, lawyerId, isNewProfile }: { lawyerData: any, lawyerId: string, isNewProfile: boolean }) {
+function LawyerProfileForm({ userId, userEmail }: { userId: string, userEmail: string }) {
   const { toast } = useToast();
-  
-  const { register, handleSubmit, formState: { errors, isSubmitting, isDirty } } = useForm<LawyerFormData>({
+  const [selectedState, setSelectedState] = useState('');
+
+  const { register, handleSubmit, control, watch, formState: { errors, isSubmitting } } = useForm<LawyerFormData>({
     resolver: zodResolver(lawyerProfileSchema),
     defaultValues: {
-      name: lawyerData?.name || '',
-      phone: lawyerData?.phone || '',
-      'location.city': lawyerData?.location?.city || '',
-      'location.state': lawyerData?.location?.state || '',
-      specializations: lawyerData?.specializations?.join(', ') || '',
-      experience: lawyerData?.experience || 0,
-      description: lawyerData?.description || '',
+        name: '',
+        phone: '',
+        state: '',
+        city: '',
+        specializations: '',
+        experience: 0,
+        description: '',
     },
   });
 
   const onSubmit = async (data: LawyerFormData) => {
-    const db = getFirestore(app);
-    const lawyerRef = doc(db, 'lawyers', lawyerId);
     try {
-      const updateData = {
+      const profileData = {
         name: data.name,
+        email: userEmail,
         phone: data.phone,
         location: {
-          city: data['location.city'],
-          state: data['location.state'],
+          state: data.state,
+          city: data.city,
         },
         specializations: data.specializations.split(',').map(s => s.trim()),
         experience: data.experience,
         description: data.description,
-        lastUpdated: serverTimestamp(),
       };
-      
-      if (isNewProfile) {
-          const newLawyerData = {
-            ...updateData,
-            id: lawyerId,
-            email: lawyerData.email, // This should come from auth user, passed in
-            isVerified: true, // Auto-verified
-            rating: 4.0,
-            createdAt: serverTimestamp(),
-            source: 'internal'
-          };
-          await setDoc(lawyerRef, newLawyerData);
-          toast({
-            title: 'Profile Created',
-            description: 'Your professional profile has been created.',
-          });
-      } else {
-        await updateDoc(lawyerRef, updateData);
+
+      const result = await requestLawyerVerification(userId, profileData);
+
+      if (result.success) {
         toast({
-          title: 'Profile Updated',
-          description: 'Your professional profile has been saved.',
+            title: 'Request Submitted',
+            description: 'Your profile has been sent for verification. You can check the status on the "My Requests" page.',
         });
+      } else {
+        throw new Error(result.error || 'An unknown error occurred');
       }
 
     } catch (error) {
-      console.error('Error updating profile:', error);
+      console.error('Error submitting verification request:', error);
       toast({
         variant: 'destructive',
-        title: 'Update Failed',
-        description: 'Could not save your profile. Please try again.',
+        title: 'Submission Failed',
+        description: 'Could not submit your profile for verification. Please try again.',
       });
     }
   };
   
+  const watchedState = watch('state');
+
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -108,16 +98,56 @@ function LawyerProfileForm({ lawyerData, lawyerId, isNewProfile }: { lawyerData:
           <Input id="phone" {...register('phone')} />
           {errors.phone && <p className="text-destructive text-sm">{errors.phone.message}</p>}
         </div>
+
         <div className="space-y-2">
-          <Label htmlFor="location.city">City</Label>
-          <Input id="location.city" {...register('location.city')} />
-          {errors['location.city'] && <p className="text-destructive text-sm">{errors['location.city'].message}</p>}
+            <Label htmlFor="state">State</Label>
+            <Controller
+                name="state"
+                control={control}
+                render={({ field }) => (
+                    <Select onValueChange={(value) => {
+                        field.onChange(value);
+                        setSelectedState(value);
+                    }} defaultValue={field.value}>
+                        <SelectTrigger>
+                            <SelectValue placeholder="Select your state" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            {allStates.map(state => (
+                                <SelectItem key={state} value={state}>{state}</SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+                )}
+            />
+            {errors.state && <p className="text-destructive text-sm">{errors.state.message}</p>}
         </div>
+
         <div className="space-y-2">
-          <Label htmlFor="location.state">State</Label>
-          <Input id="location.state" {...register('location.state')} />
-          {errors['location.state'] && <p className="text-destructive text-sm">{errors['location.state'].message}</p>}
+            <Label htmlFor="city">City</Label>
+            <Controller
+                name="city"
+                control={control}
+                render={({ field }) => (
+                     <Select onValueChange={field.onChange} value={field.value} disabled={!watchedState}>
+                        <SelectTrigger>
+                            <SelectValue placeholder="Select your city" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            {watchedState && citiesByState[watchedState] ? (
+                                citiesByState[watchedState].map(city => (
+                                    <SelectItem key={city} value={city}>{city}</SelectItem>
+                                ))
+                            ) : (
+                                <SelectItem value="-" disabled>Select a state first</SelectItem>
+                            )}
+                        </SelectContent>
+                    </Select>
+                )}
+            />
+            {errors.city && <p className="text-destructive text-sm">{errors.city.message}</p>}
         </div>
+        
          <div className="space-y-2">
           <Label htmlFor="experience">Years of Experience</Label>
           <Input id="experience" type="number" {...register('experience')} />
@@ -136,8 +166,8 @@ function LawyerProfileForm({ lawyerData, lawyerId, isNewProfile }: { lawyerData:
       </div>
       
       <div className="flex justify-end">
-        <Button type="submit" disabled={isSubmitting || !isDirty}>
-          {isSubmitting ? <Loader2 className="animate-spin" /> : (isNewProfile ? 'Create Profile' : 'Save Changes')}
+        <Button type="submit" disabled={isSubmitting}>
+          {isSubmitting ? <Loader2 className="animate-spin" /> : 'Request Verification'}
         </Button>
       </div>
     </form>
@@ -165,26 +195,19 @@ function LoadingSkeleton() {
 
 
 export function LawyerProfileCard() {
-  const { user } = useAuth();
+  const { user, isUserLoading } = useAuth();
   
-  const lawyerDocRef = useMemo(() => {
-    if (!user) return null;
-    const db = getFirestore(app);
-    return doc(db, 'lawyers', user.uid);
-  }, [user]);
-
-  const { data: lawyerData, isLoading } = useDoc(lawyerDocRef);
+  if (isUserLoading) {
+      return <LoadingSkeleton />;
+  }
 
   if (!user) {
     return <p className="text-muted-foreground">Please log in to manage your profile.</p>;
   }
 
-  const isNewProfile = !isLoading && !lawyerData;
-  const cardTitle = isNewProfile ? "Create Your Professional Profile" : "Your Professional Profile";
-  const cardDescription = isNewProfile
-    ? "Fill out the form below to create your public lawyer profile."
-    : "This information is visible to potential clients. Keep it up-to-date.";
-  const cardIcon = isNewProfile ? <FilePlus className="h-6 w-6 text-primary" /> : <Briefcase className="h-6 w-6 text-primary" />;
+  const cardTitle = "Create Your Professional Profile";
+  const cardDescription = "Fill out the form below to submit your profile for verification.";
+  const cardIcon = <FilePlus className="h-6 w-6 text-primary" />;
   
   return (
     <Card className="col-span-1">
@@ -196,8 +219,7 @@ export function LawyerProfileCard() {
           <CardDescription>{cardDescription}</CardDescription>
         </CardHeader>
         <CardContent>
-            {isLoading && <LoadingSkeleton />}
-            {!isLoading && user && <LawyerProfileForm lawyerData={lawyerData || { email: user.email }} lawyerId={user.uid} isNewProfile={isNewProfile} />}
+            {user && <LawyerProfileForm userId={user.uid} userEmail={user.email!} />}
         </CardContent>
     </Card>
   )

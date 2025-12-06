@@ -1,3 +1,4 @@
+
 {
   "entities": {
     "UserProfile": {
@@ -113,8 +114,7 @@
         "experience": { "type": "number" },
         "description": { "type": "string" },
         "rating": { "type": "number" },
-        "isVerified": { "type": "boolean" },
-        "govIdUrl": { "type": "string", "format": "uri" }
+        "isVerified": { "type": "boolean" }
       },
       "required": ["id", "name", "email", "location", "specializations", "isVerified"]
     },
@@ -145,7 +145,7 @@
     },
     "verificationRequest": {
         "title": "Verification Request",
-        "description": "A user's request for a lawyer to verify a generated draft.",
+        "description": "A user's request for a lawyer to verify a generated draft or a lawyer profile.",
         "type": "object",
         "properties": {
             "userId": { "type": "string" },
@@ -153,6 +153,7 @@
             "draftContent": { "type": "string" },
             "formInputs": { "type": "object" },
             "status": { "type": "string", "enum": ["pending", "reviewed", "approved"] },
+            "type": { "type": "string", "enum": ["document", "lawyer"] },
             "lawyerComments": { 
                 "type": "array",
                 "items": {
@@ -167,7 +168,7 @@
             "updatedAt": { "type": "string", "format": "date-time" },
             "lawyerNotification": { "type": "string" }
         },
-        "required": ["userId", "documentType", "draftContent", "status", "createdAt", "updatedAt"]
+        "required": ["userId", "documentType", "draftContent", "status", "createdAt", "updatedAt", "type"]
     }
   },
   "auth": {
@@ -217,7 +218,7 @@
         "schema": {
             "$ref": "#/entities/verificationRequest"
         },
-        "description": "Stores user draft verification requests for the lawyer."
+        "description": "Stores user draft and lawyer profile verification requests."
     }
   }
 }

@@ -11,10 +11,6 @@ import {
   doc,
   updateDoc,
   arrayUnion,
-  getDocs,
-  query,
-  where,
-  orderBy
 } from 'firebase/firestore';
 
 import { documentTemplates } from '@/lib/data';
@@ -129,7 +125,7 @@ export const askLawbot = async (
 };
 
 /* -----------------------------------------
-   REQUEST VERIFICATION
+   REQUEST DRAFT VERIFICATION
 ------------------------------------------*/
 
 export async function requestVerification(
@@ -157,7 +153,8 @@ export async function requestVerification(
       lawyerComments: [],
       lawyerNotification: '',
       createdAt: serverTimestamp(),
-      updatedAt: serverTimestamp()
+      updatedAt: serverTimestamp(),
+      type: 'document' // Distinguish from lawyer verification
     };
 
     await addDoc(requestsRef, requestData);
@@ -170,7 +167,54 @@ export async function requestVerification(
 }
 
 /* -----------------------------------------
-   LAWYER COMMENT
+   REQUEST LAWYER VERIFICATION
+------------------------------------------*/
+export async function requestLawyerVerification(
+  userId: string,
+  profileData: Record<string, any>
+): Promise<{ success: boolean; error?: string }> {
+    if (!userId) {
+        throw new Error('User ID is required.');
+    }
+
+    try {
+        const app = getFirebaseApp();
+        const db = getFirestore(app);
+        const requestsRef = collection(db, 'verificationRequests');
+
+        // Create a document that contains all the profile info for the admin to review
+        const requestData = {
+            userId,
+            documentType: 'Lawyer Profile', // Specific type for this request
+            draftContent: `Verification request for ${profileData.name}.
+Email: ${profileData.email}
+Phone: ${profileData.phone}
+Location: ${profileData.location.city}, ${profileData.location.state}
+Specializations: ${profileData.specializations.join(', ')}
+Experience: ${profileData.experience} years
+Bio: ${profileData.description}`,
+            formInputs: profileData, // Store the raw form data
+            status: 'pending',
+            lawyerComments: [],
+            lawyerNotification: '',
+
+            createdAt: serverTimestamp(),
+            updatedAt: serverTimestamp(),
+            type: 'lawyer' // Distinguish from document verification
+        };
+
+        await addDoc(requestsRef, requestData);
+
+        return { success: true };
+    } catch (error) {
+        console.error('LAWYER VERIFICATION SUBMISSION ERROR:', error);
+        throw new Error('Failed to submit lawyer profile for verification.');
+    }
+}
+
+
+/* -----------------------------------------
+   LAWYER ACTIONS (Comments, Approvals)
 ------------------------------------------*/
 
 export async function addLawyerComment(
@@ -207,21 +251,42 @@ export async function addLawyerComment(
   });
 }
 
-/* -----------------------------------------
-   APPROVE REQUEST
-------------------------------------------*/
-
-export async function approveRequest(requestId: string): Promise<void> {
+export async function approveRequest(requestId: string, requestData?: any): Promise<void> {
   if (!requestId) throw new Error('Request ID required.');
 
   const app = getFirebaseApp();
   const db = getFirestore(app);
   const requestRef = doc(db, 'verificationRequests', requestId);
 
+  // If it's a lawyer verification, create the lawyer profile
+  if (requestData?.type === 'lawyer' && requestData.userId && requestData.formInputs) {
+      const lawyerRef = doc(db, 'lawyers', requestData.userId);
+      const profileData = requestData.formInputs;
+      
+      const newLawyerData = {
+        id: requestData.userId,
+        email: profileData.email,
+        name: profileData.name,
+        phone: profileData.phone,
+        location: profileData.location,
+        specializations: profileData.specializations,
+        experience: profileData.experience,
+        description: profileData.description,
+        isVerified: true,
+        rating: 4.0 + Math.random(), // Assign a default rating
+        createdAt: serverTimestamp(),
+        lastUpdated: serverTimestamp(),
+        source: 'internal'
+      };
+
+      // Use setDoc to create the new lawyer document
+      await setDoc(lawyerRef, newLawyerData);
+  }
+
   const updateData = {
     status: 'approved',
     updatedAt: serverTimestamp(),
-    lawyerNotification: 'Your draft has been approved.'
+    lawyerNotification: `Your ${requestData?.type ?? 'draft'} has been approved.`
   };
 
   updateDoc(requestRef, updateData).catch(err => {

@@ -34,17 +34,14 @@ service cloud.firestore {
      * @path /lawyers/{lawyerId}
      */
     match /lawyers/{lawyerId} {
-      function isOwner() {
-        return request.auth.uid == lawyerId;
-      }
-      
       // Any authenticated user can read public lawyer profiles.
       allow get, list: if request.auth != null;
       
-      // Only the owner can create or update their own profile.
-      allow create, update: if isOwner();
+      // Only a server-side process (admin action) can create/update lawyer profiles.
+      // This happens when a lawyer's verification request is approved.
+      allow create, update: if request.auth == null;
       
-      // Nobody can delete lawyer profiles.
+      // Nobody can delete lawyer profiles through the client.
       allow delete: if false;
     }
 

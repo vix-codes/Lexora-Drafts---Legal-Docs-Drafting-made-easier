@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState } from 'react';
@@ -26,6 +27,7 @@ type VerificationRequest = {
   draftContent: string;
   formInputs: Record<string, any>;
   lawyerComments: { text: string; timestamp: { seconds: number, nanoseconds: number } }[];
+  type?: 'document' | 'lawyer';
 };
 
 interface LawyerRequestDetailsProps {
@@ -60,8 +62,9 @@ export function LawyerRequestDetails({ request, isOpen, onOpenChange }: LawyerRe
   const handleApprove = async () => {
     setIsSubmitting(true);
     try {
-      await approveRequest(request.id);
-      toast({ title: 'Draft Approved', description: "The user has been notified." });
+      // Pass the full request object to the action
+      await approveRequest(request.id, request);
+      toast({ title: 'Request Approved', description: "The user has been notified and relevant actions are taken." });
       onOpenChange(false);
     } catch (error: any) {
       toast({ variant: 'destructive', title: 'Error', description: error.message });
@@ -74,21 +77,23 @@ export function LawyerRequestDetails({ request, isOpen, onOpenChange }: LawyerRe
     if (isSubmitting) return;
     onOpenChange(false);
   }
+  
+  const isLawyerRequest = request.type === 'lawyer';
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
       <DialogContent className="max-w-6xl h-[90vh] flex flex-col p-0">
         <DialogHeader className="p-6 pb-4 border-b">
-          <DialogTitle className="font-headline">Review Draft: {request.documentType}</DialogTitle>
+          <DialogTitle className="font-headline">Review Request: {request.documentType}</DialogTitle>
           <DialogDescription>
-            Review the user's generated draft and provide feedback or approval.
+            Review the user's generated content and provide feedback or approval.
           </DialogDescription>
         </DialogHeader>
         
         <div className="flex-1 grid grid-cols-1 lg:grid-cols-2 gap-x-6 px-6 py-4 overflow-y-auto">
-          {/* Left Column: Draft */}
+          {/* Left Column: Draft / Profile Details */}
           <div className="flex flex-col gap-2">
-            <h3 className="font-semibold text-foreground">Generated Draft</h3>
+            <h3 className="font-semibold text-foreground">{isLawyerRequest ? 'Submitted Profile Details' : 'Generated Draft'}</h3>
             <div className="rounded-md border bg-muted/30 flex-1">
               <ScrollArea className="h-[calc(80vh_-_200px)]">
                 <pre className="text-sm whitespace-pre-wrap font-body p-4">{request.draftContent}</pre>
@@ -98,21 +103,26 @@ export function LawyerRequestDetails({ request, isOpen, onOpenChange }: LawyerRe
 
           {/* Right Column: Inputs & History */}
           <div className="flex flex-col gap-4">
-             <div className="flex flex-col gap-2">
-                <h3 className="font-semibold text-foreground">User-Provided Inputs</h3>
-                <div className="rounded-md border p-4 bg-muted/30">
-                  <ScrollArea className="h-48">
-                    <div className="space-y-2 text-sm">
-                      {Object.entries(request.formInputs).map(([key, value]) => (
-                        <div key={key} className="grid grid-cols-2 gap-2">
-                          <strong className="font-medium capitalize truncate">{key.replace(/([A-Z])/g, ' $1')}:</strong>
-                          <span className="text-muted-foreground">{String(value)}</span>
-                        </div>
-                      ))}
+             {isLawyerRequest && request.formInputs && (
+                 <div className="flex flex-col gap-2">
+                    <h3 className="font-semibold text-foreground">User-Provided Inputs</h3>
+                    <div className="rounded-md border p-4 bg-muted/30">
+                        <ScrollArea className="h-48">
+                            <div className="space-y-2 text-sm">
+                            {Object.entries(request.formInputs).map(([key, value]) => {
+                                const formattedValue = typeof value === 'object' ? JSON.stringify(value) : String(value);
+                                return (
+                                    <div key={key} className="grid grid-cols-2 gap-2">
+                                        <strong className="font-medium capitalize truncate">{key.replace(/([A-Z])/g, ' $1')}:</strong>
+                                        <span className="text-muted-foreground">{formattedValue}</span>
+                                    </div>
+                                );
+                            })}
+                            </div>
+                        </ScrollArea>
                     </div>
-                  </ScrollArea>
                 </div>
-            </div>
+             )}
             
             <div className="flex flex-col gap-2 flex-1">
                 <h3 className="font-semibold text-foreground">Comments History</h3>

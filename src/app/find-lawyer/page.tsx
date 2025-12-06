@@ -1,15 +1,20 @@
 
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { lawyers } from '@/lib/data';
+import { lawyers as mockLawyers } from '@/lib/data';
 import { MapPin, Search, Loader2, LocateFixed, Globe } from 'lucide-react';
 import Header from '@/components/header';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { LawyerCard, type LawyerProfile } from '@/components/lawyer-card';
 import { useToast } from '@/hooks/use-toast';
+import { useCollection } from '@/firebase/firestore/use-collection';
+import { collection, getFirestore } from 'firebase/firestore';
+import { app } from '@/firebase/client';
+import { Skeleton } from '@/components/ui/skeleton';
+
 
 type TabValue = 'all-india' | 'near-me';
 
@@ -18,7 +23,26 @@ export default function FindLawyerPage() {
   const [currentLocation, setCurrentLocation] = useState<string | null>(null);
   const [isLocating, setIsLocating] = useState(false);
   const [activeTab, setActiveTab] = useState<TabValue>('all-india');
-  const [allLawyers] = useState<LawyerProfile[]>(lawyers);
+  
+  const db = getFirestore(app);
+  const lawyersRef = useMemo(() => collection(db, 'lawyers'), [db]);
+  const { data: firestoreLawyers, isLoading: isLoadingFirestore } = useCollection<LawyerProfile>(lawyersRef);
+
+  // Combine mock data and firestore data, ensuring no duplicates
+  const allLawyers = useMemo(() => {
+    const combined = [...mockLawyers];
+    const mockIds = new Set(mockLawyers.map(l => l.id));
+    
+    if (firestoreLawyers) {
+      firestoreLawyers.forEach(fl => {
+        if (!mockIds.has(fl.id)) {
+          combined.push(fl);
+        }
+      });
+    }
+    return combined;
+  }, [firestoreLawyers]);
+
 
   const handleUseLocation = () => {
     setIsLocating(true);
@@ -59,15 +83,16 @@ export default function FindLawyerPage() {
     if (activeTab === 'near-me' && currentLocation) {
       return allLawyers.filter(lawyer => lawyer.location.city === currentLocation);
     }
-    return [];
+    return allLawyers; // Return all if no location set on near-me tab yet
   }, [activeTab, currentLocation, allLawyers]);
   
   const renderContent = () => {
-    if (isLocating) {
+    if (isLoadingFirestore || isLocating) {
       return (
-        <div className="flex flex-col items-center justify-center text-center gap-4 p-8">
-          <Loader2 className="h-10 w-10 animate-spin text-primary" />
-          <p className="text-muted-foreground">Getting your location...</p>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <Skeleton className="h-64 w-full" />
+            <Skeleton className="h-64 w-full" />
+            <Skeleton className="h-64 w-full" />
         </div>
       );
     }

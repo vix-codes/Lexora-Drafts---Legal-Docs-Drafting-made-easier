@@ -1,3 +1,4 @@
+
 import type { LawUpdate } from '@/ai/flows/display-law-updates-with-summaries';
 
 export type LawyerProfile = {
@@ -11,8 +12,8 @@ export type LawyerProfile = {
   description: string;
   rating: number;
   isVerified: boolean;
-  enrollmentNumber: string;
-  stateBarCouncil: string;
+  enrollmentNumber?: string;
+  stateBarCouncil?: string;
   source: 'internal';
 };
 
@@ -152,15 +153,36 @@ export const glossaryTerms = [
   { term: 'Writ', definition: 'A form of written command in the name of a court or other legal authority to act, or abstain from acting, in a particular way.' },
 ];
 
-export const popularCitiesByState: Record<string, string[]> = {
-  "Maharashtra": ["Mumbai", "Pune", "Nagpur", "Nashik"],
-  "Delhi": ["New Delhi", "Noida", "Gurugram", "Faridabad"],
-  "Karnataka": ["Bengaluru", "Mysuru", "Mangaluru", "Hubballi"],
-  "Tamil Nadu": ["Chennai", "Coimbatore", "Madurai", "Tiruchirappalli"],
-  "West Bengal": ["Kolkata", "Howrah", "Asansol", "Siliguri"],
-  "Telangana": ["Hyderabad", "Warangal", "Nizamabad", "Karimnagar"],
-  "Gujarat": ["Ahmedabad", "Surat", "Vadodara", "Rajkot"],
+export const allStates = [
+    "Andhra Pradesh", "Arunachal Pradesh", "Assam", "Bihar", "Chhattisgarh", 
+    "Goa", "Gujarat", "Haryana", "Himachal Pradesh", "Jharkhand", "Karnataka", 
+    "Kerala", "Madhya Pradesh", "Maharashtra", "Manipur", "Meghalaya", 
+    "Mizoram", "Nagaland", "Odisha", "Punjab", "Rajasthan", "Sikkim", 
+    "Tamil Nadu", "Telangana", "Tripura", "Uttar Pradesh", "Uttarakhand", 
+    "West Bengal", "Andaman and Nicobar Islands", "Chandigarh", 
+    "Dadra and Nagar Haveli and Daman and Diu", "Delhi", "Jammu and Kashmir", 
+    "Ladakh", "Lakshadweep", "Puducherry"
+];
+
+export const citiesByState: Record<string, string[]> = {
+    "Maharashtra": ["Mumbai", "Pune", "Nagpur", "Nashik", "Thane"],
+    "Delhi": ["New Delhi", "Delhi"],
+    "Karnataka": ["Bengaluru", "Mysuru", "Mangaluru", "Hubballi", "Belagavi"],
+    "Tamil Nadu": ["Chennai", "Coimbatore", "Madurai", "Tiruchirappalli", "Salem"],
+    "West Bengal": ["Kolkata", "Howrah", "Asansol", "Siliguri", "Durgapur"],
+    "Telangana": ["Hyderabad", "Warangal", "Nizamabad", "Karimnagar", "Ramagundam"],
+    "Gujarat": ["Ahmedabad", "Surat", "Vadodara", "Rajkot", "Bhavnagar"],
+    "Uttar Pradesh": ["Lucknow", "Kanpur", "Ghaziabad", "Agra", "Varanasi", "Noida"],
+    "Rajasthan": ["Jaipur", "Jodhpur", "Kota", "Bikaner", "Udaipur"],
+    "Andhra Pradesh": ["Visakhapatnam", "Vijayawada", "Guntur", "Nellore", "Kurnool"],
+    "Kerala": ["Thiruvananthapuram", "Kochi", "Kozhikode", "Thrissur", "Kollam"],
+    "Madhya Pradesh": ["Indore", "Bhopal", "Jabalpur", "Gwalior", "Ujjain"],
+    "Haryana": ["Faridabad", "Gurugram", "Panipat", "Ambala", "Karnal"],
+    "Bihar": ["Patna", "Gaya", "Bhagalpur", "Muzaffarpur", "Purnia"],
+    "Punjab": ["Ludhiana", "Amritsar", "Jalandhar", "Patiala", "Bathinda"],
+    // Add other states and cities as needed
 };
+
 
 export const lawyers: LawyerProfile[] = [
   {
