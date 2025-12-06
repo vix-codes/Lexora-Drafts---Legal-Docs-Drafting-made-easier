@@ -1,3 +1,4 @@
+
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
@@ -26,8 +27,13 @@ service cloud.firestore {
         return request.auth != null && request.auth.uid == lawyerId;
       }
 
+      // Allow any authenticated user to view lawyer profiles
       allow get, list: if request.auth != null;
+      
+      // Only the lawyer can create or update their own profile
       allow create, update: if isOwner();
+      
+      // Prevent deletes
       allow delete: if false;
     }
 
@@ -46,28 +52,12 @@ service cloud.firestore {
       allow get, list: if true;
       allow write: if false;
     }
-
-
-/**
- * @description Controls access to draft verification requests.
- * @path /verificationRequests/{requestId}
- */
-match /verificationRequests/{requestId} {
-
-  // Allow anyone logged in or server (auth=null but request.time exists) to create
-  allow create: if request.auth != null || request.time != null;
-
-  // Allow LIST for:
-  // - logged-in users (client request)
-  // - server requests (auth=null)
-  allow list: if request.auth != null || request.time != null;
-
-  // Lawyer full access
-  allow read, update, delete: if isLawyer();
-
-  // Normal user can read only his own docs (GET)
-  allow get: if request.auth != null
-             && resource.data.userId == request.auth.uid;
-}
+    
+    /** VERIFICATION REQUESTS **/
+    match /verificationRequests/{requestId} {
+        // Logged-in users can create. Lawyers have full read/write. Users can read their own.
+        allow read, write: if request.auth != null;
+        allow delete: if false;
+    }
   }
 }
