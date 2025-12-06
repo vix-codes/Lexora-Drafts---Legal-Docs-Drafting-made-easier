@@ -2,87 +2,44 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-
-    // Helper function to check if the request is from the designated lawyer admin.
+    
     function isLawyer() {
       return request.auth != null && request.auth.token.email == 'lawyer@lexintel.com';
     }
 
-    // Helper function to check if the user is the owner of a document.
     function isOwner(userId) {
       return request.auth != null && request.auth.uid == userId;
     }
 
-    /**
-     * ==================================================================
-     *  USER PROFILES
-     * ==================================================================
-     */
     match /users/{userId} {
       allow read, write: if isOwner(userId);
+
       match /activities/{activityId} {
         allow read, write: if isOwner(userId);
       }
     }
-
-    /**
-     * ==================================================================
-     *  LAWYER PROFILES
-     * ==================================================================
-     * Any authenticated user can read profiles (for "Find a Lawyer").
-     * A lawyer can only write to their own profile.
-     */
+    
     match /lawyers/{lawyerId} {
-      // Allow any logged-in user to get or list lawyer profiles.
-      // This rule does not use `resource.data`, so it works even if the document doesn't exist.
       allow get, list: if request.auth != null;
-      
-      // Only the lawyer can create or update their own profile.
       allow create, update: if isOwner(lawyerId);
     }
 
-    /**
-     * ==================================================================
-     *  VERIFICATION REQUESTS
-     * ==================================================================
-     */
-    match /verificationRequests/{requestId} {
-      // Anyone logged in can create a request.
-      allow create: if request.auth != null;
-
-      // The lawyer can list all requests for the admin panel.
-      allow list: if isLawyer();
-
-      // A user can get their own request. The lawyer can get any request.
-      allow get: if (isLawyer() || (request.auth != null && resource.data.userId == request.auth.uid));
-
-      // Only the lawyer admin can update the status of a request.
-      allow update: if isLawyer();
-    }
-    
-    /**
-     * ==================================================================
-     *  PUBLIC READ-ONLY DATA
-     * ==================================================================
-     */
     match /templates/{templateId} {
       allow get, list: if request.auth != null;
     }
-
     match /lawFeed/{updateId} {
       allow get, list: if request.auth != null;
     }
-
     match /glossary/{termId} {
       allow get, list: if request.auth != null;
     }
+    
+    match /verificationRequests/{requestId} {
+      allow create: if request.auth != null;
+      allow list, update: if isLawyer();
+      allow get: if isLawyer() || (request.auth != null && resource.data.userId == request.auth.uid);
+    }
 
-    /**
-     * ==================================================================
-     *  GLOBAL RULES
-     * ==================================================================
-     */
-    // Prevent accidental client-side deletes on all collections.
     match /{document=**} {
       allow delete: if false;
     }
