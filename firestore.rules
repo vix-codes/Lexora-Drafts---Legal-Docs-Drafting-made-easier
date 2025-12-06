@@ -2,88 +2,12 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    
-    function isLawyer() {
-      return request.auth != null && request.auth.token.email == 'lawyer@lexintel.com';
-    }
 
-    /**
-     * @description Controls access to user profiles and their subcollections.
-     * @path /users/{userId}
-     */
-    match /users/{userId} {
-      function isOwner() {
-        return request.auth != null && request.auth.uid == userId;
-      }
+    // Allow logged-in users to read & write everything
+    allow read, write: if request.auth != null;
 
-      // User profiles can only be read or written to by the owner.
-      allow read, write: if isOwner();
-
-      /**
-       * @description Controls access to a user's recent activity log.
-       * @path /users/{userId}/activities/{activityId}
-       */
-      match /activities/{activityId} {
-        // Only the owner can read or write their own activity.
-        allow read, write: if isOwner();
-      }
-    }
-    
-    /**
-     * @description Controls access to lawyer profiles.
-     * @path /lawyers/{lawyerId}
-     */
-    match /lawyers/{lawyerId} {
-      // Any authenticated user can read public lawyer profiles.
-      allow get, list: if request.auth != null;
-      
-      // Server-side actions can create/update profiles (e.g., on approval).
-      // request.auth will be null for admin SDK calls.
-      allow create, update: if request.auth == null;
-      
-      // Nobody can delete lawyer profiles through the client.
-      allow delete: if false;
-    }
-
-    /**
-     * @description Public read access for templates, law feed, and glossary.
-     */
-    match /templates/{templateId} {
-      allow get, list: if true;
-      allow write: if false;
-    }
-    match /lawFeed/{updateId} {
-      allow get, list: if true;
-      allow write: if false;
-    }
-    match /glossary/{termId} {
-      allow get, list: if true;
-      allow write: if false;
-    }
-    
-    /**
-     * @description Controls access to draft verification requests.
-     * @path /verificationRequests/{requestId}
-     */
-    match /verificationRequests/{requestId} {
-      
-      // Anyone logged in can create a request
-      allow create: if request.auth != null;
-
-      // Lawyer can LIST all requests
-      allow list: if isLawyer();
-
-      // Lawyer can GET any request
-      allow get: if isLawyer();
-
-      // Lawyer can update requests
-      allow update: if isLawyer();
-
-      // Normal user can GET only their own request
-      allow get: if request.auth != null
-                 && resource.data.userId == request.auth.uid;
-
-      // No client deletes
+    // Prevent deletes everywhere, just to avoid client delete mistakes
+    match /{document=**} {
       allow delete: if false;
     }
   }
