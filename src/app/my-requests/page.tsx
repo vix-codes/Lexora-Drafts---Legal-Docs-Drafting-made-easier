@@ -3,7 +3,7 @@
 
 import { useEffect, useState } from "react";
 import { useAuth } from "@/components/auth-provider";
-import { getUserRequests } from "@/app/actions";
+import { getUserRequests, requestVerification } from "@/app/actions";
 import {
   Card,
   CardHeader,
@@ -15,7 +15,10 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { formatDistanceToNow } from "date-fns";
 import Header from "@/components/header";
-import { ShieldQuestion } from "lucide-react";
+import { ShieldQuestion, Edit, Send, Loader2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
+import { useToast } from "@/hooks/use-toast";
 
 type VerificationRequest = {
   id: string;
@@ -36,16 +39,118 @@ const statusConfig = {
   approved: { label: "Approved", className: "bg-green-500 hover:bg-green-600" },
 };
 
+function RequestCard({ request, onResubmit }: { request: VerificationRequest, onResubmit: () => void }) {
+  const { toast } = useToast();
+  const [editingContent, setEditingContent] = useState(request.draftContent);
+  const [isEditing, setIsEditing] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const statusInfo = statusConfig[request.status];
+
+  const handleResubmit = async () => {
+    if (!editingContent.trim()) {
+      toast({ variant: "destructive", title: "Draft cannot be empty." });
+      return;
+    }
+    setIsSubmitting(true);
+    try {
+      const result = await requestVerification(
+        request.userId,
+        request.documentType,
+        editingContent,
+        request.formInputs
+      );
+      if (result.success) {
+        toast({ title: "Resubmitted Successfully", description: "Your updated draft has been sent for review." });
+        setIsEditing(false);
+        onResubmit(); // Trigger a refetch of requests in the parent component
+      } else {
+        throw new Error(result.error);
+      }
+    } catch (error: any) {
+      toast({ variant: "destructive", title: "Resubmission Failed", description: error.message });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  return (
+    <div className="border rounded-lg p-4 space-y-3 hover:border-primary/80 transition-colors">
+      <div className="flex justify-between items-start">
+        <div>
+          <h3 className="font-semibold">{request.documentType}</h3>
+          <p className="text-sm text-muted-foreground">
+            Submitted{" "}
+            {request.createdAt
+              ? formatDistanceToNow(new Date(request.createdAt), { addSuffix: true })
+              : "recently"}
+          </p>
+        </div>
+        {statusInfo && <Badge className={statusInfo.className}>{statusInfo.label}</Badge>}
+      </div>
+
+      {request.lawyerNotification && (
+        <div className="border-l-4 border-accent p-3 bg-accent/10 rounded-r-md">
+          <p className="font-semibold text-sm text-accent-foreground/90">
+            {request.lawyerNotification}
+          </p>
+        </div>
+      )}
+
+      {request.lawyerComments?.length > 0 && (
+        <div className="mt-3 space-y-2">
+          <h4 className="font-medium text-sm">Lawyer’s Feedback:</h4>
+          {request.lawyerComments
+            .slice()
+            .reverse()
+            .map((c, i) => (
+              <blockquote
+                key={i}
+                className="text-sm text-muted-foreground border-l-2 pl-3 italic"
+              >
+                "{c.text}"
+              </blockquote>
+            ))}
+        </div>
+      )}
+
+      {isEditing ? (
+        <div className="space-y-3 pt-2">
+          <Textarea 
+            value={editingContent}
+            onChange={(e) => setEditingContent(e.target.value)}
+            rows={10}
+            className="bg-background"
+          />
+          <div className="flex justify-end gap-2">
+            <Button variant="ghost" onClick={() => setIsEditing(false)} disabled={isSubmitting}>Cancel</Button>
+            <Button onClick={handleResubmit} disabled={isSubmitting}>
+              {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Send className="mr-2 h-4 w-4" />}
+              Resubmit for Verification
+            </Button>
+          </div>
+        </div>
+      ) : (
+        !isEditing && request.status === 'reviewed' && request.type === 'document' && (
+          <div className="flex justify-end pt-2">
+            <Button variant="outline" onClick={() => setIsEditing(true)}>
+              <Edit className="mr-2 h-4 w-4" />
+              Edit & Resubmit
+            </Button>
+          </div>
+        )
+      )}
+    </div>
+  );
+}
+
 export default function MyRequestsPage() {
   const { user, isUserLoading } = useAuth();
   const [requests, setRequests] = useState<VerificationRequest[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [fetchTrigger, setFetchTrigger] = useState(0); // Used to trigger re-fetch
 
-  useEffect(() => {
-    if (isUserLoading) {
-      setIsLoading(true);
-      return;
-    }
+  const fetchRequests = () => {
     if (user) {
       setIsLoading(true);
       getUserRequests(user.uid)
@@ -54,17 +159,26 @@ export default function MyRequestsPage() {
         })
         .catch((err) => {
           console.error("Failed to fetch requests:", err);
-          setRequests([]); // Clear requests on error
+          setRequests([]);
         })
         .finally(() => {
           setIsLoading(false);
         });
     } else {
-      // Not logged in
       setIsLoading(false);
       setRequests([]);
     }
-  }, [user, isUserLoading]);
+  }
+
+  useEffect(() => {
+    if (!isUserLoading) {
+      fetchRequests();
+    }
+  }, [user, isUserLoading, fetchTrigger]);
+
+  const handleResubmitSuccess = () => {
+    setFetchTrigger(prev => prev + 1); // Increment to trigger useEffect
+  }
 
   const showLoading = isUserLoading || isLoading;
 
@@ -86,60 +200,14 @@ export default function MyRequestsPage() {
           <CardContent className="space-y-4">
             {showLoading && (
               <>
-                <Skeleton className="h-28 w-full" />
-                <Skeleton className="h-28 w-full" />
+                <Skeleton className="h-32 w-full" />
+                <Skeleton className="h-32 w-full" />
               </>
             )}
 
-            {!showLoading && requests.length > 0 && requests.map((req) => {
-                const statusInfo = statusConfig[req.status];
-                return (
-                  <div
-                    key={req.id}
-                    className="border rounded-lg p-4 space-y-3 hover:border-primary/80 transition-colors"
-                  >
-                    <div className="flex justify-between items-start">
-                      <div>
-                        <h3 className="font-semibold">{req.documentType}</h3>
-                        <p className="text-sm text-muted-foreground">
-                          Submitted{" "}
-                          {req.createdAt
-                            ? formatDistanceToNow(new Date(req.createdAt), { addSuffix: true })
-                            : "recently"}
-                        </p>
-                      </div>
-                      {statusInfo && <Badge className={statusInfo.className}>{statusInfo.label}</Badge>}
-                    </div>
-
-                    {req.lawyerNotification && (
-                      <div className="border-l-4 border-accent p-3 bg-accent/10 rounded-r-md">
-                        <p className="font-semibold text-sm text-accent-foreground/90">
-                          {req.lawyerNotification}
-                        </p>
-                      </div>
-                    )}
-
-                    {req.lawyerComments?.length > 0 && (
-                      <div className="mt-3 space-y-2">
-                        <h4 className="font-medium text-sm">
-                          Lawyer’s Feedback:
-                        </h4>
-                        {req.lawyerComments
-                          .slice()
-                          .reverse()
-                          .map((c, i) => (
-                            <blockquote
-                              key={i}
-                              className="text-sm text-muted-foreground border-l-2 pl-3 italic"
-                            >
-                              "{c.text}"
-                            </blockquote>
-                          ))}
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
+            {!showLoading && requests.length > 0 && requests.map((req) => (
+                <RequestCard key={req.id} request={req} onResubmit={handleResubmitSuccess} />
+            ))}
 
             {!showLoading && requests.length === 0 && (
               <div className="text-center py-16 text-muted-foreground border-2 border-dashed rounded-lg">

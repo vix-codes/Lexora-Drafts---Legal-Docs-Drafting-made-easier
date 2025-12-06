@@ -16,8 +16,9 @@ import { useToast } from '@/hooks/use-toast';
 import { approveRequest, addLawyerComment } from '@/app/actions';
 import { type WithId } from '@/firebase/firestore/use-collection';
 import { ScrollArea } from './ui/scroll-area';
-import { Loader2 } from 'lucide-react';
+import { Loader2, User } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
+import { documentTemplates } from '@/lib/data';
 
 type VerificationRequest = {
   userId: string;
@@ -32,11 +33,18 @@ type VerificationRequest = {
 
 interface LawyerRequestDetailsProps {
   request: WithId<VerificationRequest>;
+  username: string;
   isOpen: boolean;
   onOpenChange: (isOpen: boolean) => void;
 }
 
-export function LawyerRequestDetails({ request, isOpen, onOpenChange }: LawyerRequestDetailsProps) {
+function getDocumentLabel(docValue: string) {
+    if (docValue === 'Lawyer Profile') return 'Lawyer Profile';
+    const template = documentTemplates.find(t => t.value === docValue);
+    return template ? template.label : docValue.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+}
+
+export function LawyerRequestDetails({ request, username, isOpen, onOpenChange }: LawyerRequestDetailsProps) {
   const { toast } = useToast();
   const [comment, setComment] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -87,14 +95,17 @@ export function LawyerRequestDetails({ request, isOpen, onOpenChange }: LawyerRe
   }
   
   const isLawyerRequest = request.type === 'lawyer';
+  const documentLabel = getDocumentLabel(request.documentType);
+
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
       <DialogContent className="max-w-6xl h-[90vh] flex flex-col p-0">
         <DialogHeader className="p-6 pb-4 border-b">
-          <DialogTitle className="font-headline">Review Request: {request.documentType}</DialogTitle>
-          <DialogDescription>
-            Review the user's generated content and provide feedback or approval.
+          <DialogTitle className="font-headline">Review: {documentLabel}</DialogTitle>
+          <DialogDescription className="flex items-center gap-1.5">
+            <User className="h-3.5 w-3.5" /> 
+            Submitted by {username} ({request.userId})
           </DialogDescription>
         </DialogHeader>
         

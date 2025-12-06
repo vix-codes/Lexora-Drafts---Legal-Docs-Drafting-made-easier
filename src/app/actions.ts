@@ -31,9 +31,8 @@ function getFirebaseApp(): FirebaseApp {
   return initializeApp(firebaseConfig);
 }
 
-/* -----------------------------------------
-   GENERATE DRAFT
-------------------------------------------*/
+/* _-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-*/
+/* _-_-_-_-_-_-_-_-_-_-_-_-_-  GENERATE DRAFT   -_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_*/
 
 type DraftState = {
   draft?: string;
@@ -89,9 +88,8 @@ export const generateDraft = async (
   }
 };
 
-/* -----------------------------------------
-   LAW BOT QUERY
-------------------------------------------*/
+/* _-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-*/
+/* _-_-_-_-_-_-_-_-_-_-_-_-_-_  LAW BOT QUERY   -_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_*/
 
 interface Message {
   sender: 'user' | 'bot';
@@ -122,9 +120,8 @@ export const askLawbot = async (
   }
 };
 
-/* -----------------------------------------
-   REQUEST DRAFT VERIFICATION
-------------------------------------------*/
+/* _-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-*/
+/* _-_-_-_-_-_-_-_-_-_-_-_  REQUEST VERIFICATION   -_-_-_-_-_-_-_-_-_-_-_-_-_-_*/
 
 export async function requestVerification(
   userId: string,
@@ -133,13 +130,12 @@ export async function requestVerification(
   formInputs: Record<string, any>
 ): Promise<{ success: boolean; error?: string }> {
   if (!userId || !draftContent) {
-    throw new Error('User ID and draft content are required.');
+    return { success: false, error: 'User ID and draft content are required.' };
   }
 
   try {
     const app = getFirebaseApp();
     const db = getFirestore(app);
-
     const requestsRef = collection(db, 'verificationRequests');
 
     const requestData = {
@@ -152,27 +148,27 @@ export async function requestVerification(
       lawyerNotification: '',
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp(),
-      type: 'document' // Distinguish from lawyer verification
+      type: 'document' as const // Distinguish from lawyer verification
     };
 
     await addDoc(requestsRef, requestData);
-
     return { success: true };
   } catch (error) {
     console.error('SERVER VERIFICATION ERROR:', error);
-    throw new Error('Failed to save verification request on server.');
+    // Instead of throwing, return a structured error response
+    return { success: false, error: 'Failed to save verification request on server.' };
   }
 }
 
-/* -----------------------------------------
-   REQUEST LAWYER VERIFICATION
-------------------------------------------*/
+/* _-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-*/
+/* _-_-_-_-_-_-_-_-_-_-_  REQUEST LAWYER VERIFICATION   -_-_-_-_-_-_-_-_-_-_-_-*/
+
 export async function requestLawyerVerification(
   userId: string,
   profileData: Record<string, any>
 ): Promise<{ success: boolean; error?: string }> {
     if (!userId) {
-        throw new Error('User ID is required.');
+        return { success: false, error: 'User ID is required.' };
     }
 
     try {
@@ -195,10 +191,9 @@ Bio: ${profileData.description}`,
             status: 'pending',
             lawyerComments: [],
             lawyerNotification: '',
-
             createdAt: serverTimestamp(),
             updatedAt: serverTimestamp(),
-            type: 'lawyer' // Distinguish from document verification
+            type: 'lawyer' as const // Distinguish from document verification
         };
 
         await addDoc(requestsRef, requestData);
@@ -206,14 +201,13 @@ Bio: ${profileData.description}`,
         return { success: true };
     } catch (error) {
         console.error('LAWYER VERIFICATION SUBMISSION ERROR:', error);
-        throw new Error('Failed to submit lawyer profile for verification.');
+        return { success: false, error: 'Failed to submit lawyer profile for verification.' };
     }
 }
 
 
-/* -----------------------------------------
-   LAWYER ACTIONS (Comments, Approvals)
-------------------------------------------*/
+/* _-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-*/
+/* _-_-_-_-_-_-_-_-_-_-_-  LAWYER ACTIONS   -_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_*/
 
 export async function addLawyerComment(
   requestId: string,
@@ -224,16 +218,18 @@ export async function addLawyerComment(
   }
 
   try {
-    const app = getFirebaseApp();
-    const db = getFirestore(app);
-    const requestRef = doc(db, 'verificationRequests', requestId);
+    const adminApp = createServerClient();
+    if (!adminApp) throw new Error('Admin client initialization failed.');
+    const adminDb = getAdminFirestore(adminApp);
+    
+    const requestRef = adminDb.collection('verificationRequests').doc(requestId);
 
     const newComment = {
       text: commentText,
-      timestamp: new Date() 
+      timestamp: new Date()
     };
 
-    await updateDoc(requestRef, {
+    await requestRef.update({
       status: 'reviewed',
       lawyerComments: arrayUnion(newComment),
       updatedAt: serverTimestamp(),
@@ -253,16 +249,13 @@ export async function approveRequest(requestId: string, requestData?: any): Prom
   }
 
   try {
-    const app = getFirebaseApp();
-    const db = getFirestore(app);
-    const requestRef = doc(db, 'verificationRequests', requestId);
+    const adminApp = createServerClient();
+    if (!adminApp) throw new Error('Admin client initialization failed.');
+    const adminDb = getAdminFirestore(adminApp);
 
-    // If it's a lawyer verification, create the lawyer profile
+    const requestRef = adminDb.collection('verificationRequests').doc(requestId);
+
     if (requestData?.type === 'lawyer' && requestData.userId && requestData.formInputs) {
-        const adminApp = createServerClient();
-        if (!adminApp) throw new Error('Admin client initialization failed.');
-
-        const adminDb = getAdminFirestore(adminApp);
         const lawyerRef = adminDb.collection('lawyers').doc(requestData.userId);
 
         const profileData = requestData.formInputs;
@@ -284,7 +277,7 @@ export async function approveRequest(requestId: string, requestData?: any): Prom
         await lawyerRef.set(newLawyerData);
     }
     
-    await updateDoc(requestRef, {
+    await requestRef.update({
       status: 'approved',
       updatedAt: serverTimestamp(),
       lawyerNotification: `Your ${requestData?.type ?? 'draft'} has been approved.`
@@ -297,9 +290,8 @@ export async function approveRequest(requestId: string, requestData?: any): Prom
   }
 }
 
-/* -----------------------------------------
-   GET USER REQUESTS (ADMIN SDK)
-------------------------------------------*/
+/* _-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-*/
+/* _-_-_-_-_-_-_-_-_-_-_-_-_  GET USER DATA   -_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_*/
 
 export async function getUserRequests(
   userId: string
@@ -311,7 +303,6 @@ export async function getUserRequests(
     if (!adminApp) throw new Error('Service account client not found.');
 
     const db = getAdminFirestore(adminApp);
-
     const requestsRef = db.collection('verificationRequests');
 
     const q = requestsRef
@@ -319,32 +310,57 @@ export async function getUserRequests(
       .orderBy('createdAt', 'desc');
 
     const snapshot = await q.get();
-
     if (snapshot.empty) return [];
 
     return snapshot.docs.map(doc => {
       const data = doc.data();
-
       return {
         id: doc.id,
         ...data,
-        createdAt: data.createdAt?.toDate
-          ? data.createdAt.toDate().toISOString()
-          : null,
-        updatedAt: data.updatedAt?.toDate
-          ? data.updatedAt.toDate().toISOString()
-          : null,
-        lawyerComments:
-          data.lawyerComments?.map((c: any) => ({
+        createdAt: data.createdAt?.toDate ? data.createdAt.toDate().toISOString() : new Date().toISOString(),
+        updatedAt: data.updatedAt?.toDate ? data.updatedAt.toDate().toISOString() : new Date().toISOString(),
+        lawyerComments: data.lawyerComments?.map((c: any) => ({
             ...c,
-            timestamp: c.timestamp?.toDate
-              ? c.timestamp.toDate().toISOString()
-              : null
-          })) ?? []
+            timestamp: c.timestamp?.toDate ? c.timestamp.toDate().toISOString() : new Date().toISOString(),
+        })) ?? [],
       };
     });
   } catch (err) {
     console.error('Error fetching user requests:', err);
     return [];
+  }
+}
+
+export async function getUserProfiles(userIds: string[]): Promise<Record<string, string>> {
+  if (!userIds || userIds.length === 0) {
+    return {};
+  }
+
+  try {
+    const adminApp = createServerClient();
+    if (!adminApp) throw new Error('Service account client not found.');
+
+    const db = getAdminFirestore(adminApp);
+    const usersRef = db.collection('users');
+    
+    // Firestore 'in' query supports up to 30 items. If more are needed, batching would be required.
+    const q = usersRef.where('__name__', 'in', userIds);
+    const snapshot = await q.get();
+
+    if (snapshot.empty) {
+      return {};
+    }
+
+    const profiles: Record<string, string> = {};
+    snapshot.docs.forEach(doc => {
+      // Assuming 'username' is the field to display. Default to a placeholder if not present.
+      profiles[doc.id] = doc.data()?.username || 'Unknown User';
+    });
+
+    return profiles;
+
+  } catch (err) {
+    console.error('Error fetching user profiles:', err);
+    return {};
   }
 }

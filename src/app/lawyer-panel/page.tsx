@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import { collection, query, orderBy, getFirestore, where } from 'firebase/firestore';
 import { app } from '@/firebase/client';
 import { useCollection, type WithId } from '@/firebase/firestore/use-collection';
@@ -12,10 +12,11 @@ import { Badge } from '@/components/ui/badge';
 import { formatDistanceToNow } from 'date-fns';
 import { LawyerRequestDetails } from '@/components/lawyer-request-details';
 import { Button } from '@/components/ui/button';
-import { Briefcase, CheckCircle, Clock, MessageSquare } from 'lucide-react';
+import { Briefcase, CheckCircle, Clock, MessageSquare, User } from 'lucide-react';
 import { useAuth } from '@/components/auth-provider';
 import { PreviouslyApprovedRequests } from '@/components/previously-approved-requests';
-
+import { getUserProfiles } from '@/app/actions';
+import { documentTemplates } from '@/lib/data';
 
 type VerificationRequest = {
   userId: string;
@@ -34,10 +35,16 @@ const statusConfig = {
   approved: { label: 'Approved', icon: CheckCircle, className: 'bg-green-500 hover:bg-green-600' },
 };
 
+function getDocumentLabel(docValue: string) {
+    if (docValue === 'Lawyer Profile') return 'Lawyer Profile';
+    const template = documentTemplates.find(t => t.value === docValue);
+    return template ? template.label : docValue.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+}
 
-function VerificationRequestCard({ request }: { request: WithId<VerificationRequest> }) {
+function VerificationRequestCard({ request, username }: { request: WithId<VerificationRequest>, username: string }) {
     const [isDetailsOpen, setIsDetailsOpen] = useState(false);
     const statusInfo = statusConfig[request.status];
+    const documentLabel = getDocumentLabel(request.documentType);
 
     return (
         <>
@@ -45,8 +52,11 @@ function VerificationRequestCard({ request }: { request: WithId<VerificationRequ
                 <CardHeader>
                     <div className="flex justify-between items-start">
                         <div>
-                            <CardTitle>{request.documentType}</CardTitle>
-                            <CardDescription>User ID: {request.userId}</CardDescription>
+                            <CardTitle>{documentLabel}</CardTitle>
+                            <CardDescription className="flex items-center gap-1 pt-1">
+                                <User className="h-3 w-3" />
+                                {username}
+                            </CardDescription>
                         </div>
                         <Badge className={statusInfo.className}>{statusInfo.label}</Badge>
                     </div>
@@ -62,6 +72,7 @@ function VerificationRequestCard({ request }: { request: WithId<VerificationRequ
             </Card>
             <LawyerRequestDetails 
                 request={request}
+                username={username}
                 isOpen={isDetailsOpen}
                 onOpenChange={setIsDetailsOpen}
             />
@@ -69,11 +80,11 @@ function VerificationRequestCard({ request }: { request: WithId<VerificationRequ
     );
 }
 
-
 export default function LawyerPanelPage() {
   const { user, isUserLoading } = useAuth();
   const db = getFirestore(app);
   
+  const [userProfiles, setUserProfiles] = useState<Record<string, string>>({});
   const isLawyer = !isUserLoading && user?.email === 'lawyer@lexintel.com';
 
   const activeRequestsQuery = useMemo(() => {
@@ -97,6 +108,16 @@ export default function LawyerPanelPage() {
 
   const { data: activeRequests, isLoading: isLoadingActive } = useCollection<VerificationRequest>(activeRequestsQuery);
   const { data: approvedRequests, isLoading: isLoadingApproved } = useCollection<VerificationRequest>(approvedRequestsQuery);
+
+  useEffect(() => {
+    const allRequests = [...(activeRequests || []), ...(approvedRequests || [])];
+    if (allRequests.length > 0) {
+        const userIds = [...new Set(allRequests.map(r => r.userId))];
+        getUserProfiles(userIds).then(profiles => {
+            setUserProfiles(profiles);
+        });
+    }
+  }, [activeRequests, approvedRequests]);
   
   if (!isUserLoading && !isLawyer) {
       return (
@@ -136,7 +157,7 @@ export default function LawyerPanelPage() {
                  {!effectiveIsLoading && activeRequests && activeRequests.length > 0 && (
                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                         {activeRequests.map(request => (
-                            <VerificationRequestCard key={request.id} request={request} />
+                            <VerificationRequestCard key={request.id} request={request} username={userProfiles[request.userId] || '...'} />
                         ))}
                      </div>
                  )}
@@ -148,7 +169,7 @@ export default function LawyerPanelPage() {
                  )}
 
                 {!effectiveIsLoading && approvedRequests && approvedRequests.length > 0 && (
-                    <PreviouslyApprovedRequests requests={approvedRequests} />
+                    <PreviouslyApprovedRequests requests={approvedRequests} profiles={userProfiles} />
                 )}
 
             </CardContent>
