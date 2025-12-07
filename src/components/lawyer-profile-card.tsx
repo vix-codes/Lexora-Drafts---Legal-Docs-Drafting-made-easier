@@ -21,6 +21,7 @@ import { useState } from 'react';
 const lawyerProfileSchema = z.object({
   name: z.string().min(2, 'Name is required.'),
   phone: z.string().min(10, 'A valid phone number is required.'),
+  enrollmentNumber: z.string().regex(/^[A-Z]{2,}\/\d{3,5}\/\d{4}$/, 'Invalid enrollment ID format (e.g., TN/1234/2023).'),
   state: z.string().min(1, 'State is required.'),
   city: z.string().min(1, 'City is required.'),
   specializations: z.string().min(2, 'At least one specialization is required.'),
@@ -39,6 +40,7 @@ function LawyerProfileForm({ userId, userEmail }: { userId: string, userEmail: s
     defaultValues: {
         name: '',
         phone: '',
+        enrollmentNumber: '',
         state: '',
         city: '',
         specializations: '',
@@ -53,6 +55,7 @@ function LawyerProfileForm({ userId, userEmail }: { userId: string, userEmail: s
         name: data.name,
         email: userEmail,
         phone: data.phone,
+        enrollmentNumber: data.enrollmentNumber,
         location: {
           state: data.state,
           city: data.city,
@@ -97,6 +100,12 @@ function LawyerProfileForm({ userId, userEmail }: { userId: string, userEmail: s
           <Label htmlFor="phone">Phone Number</Label>
           <Input id="phone" {...register('phone')} />
           {errors.phone && <p className="text-destructive text-sm">{errors.phone.message}</p>}
+        </div>
+        
+        <div className="space-y-2">
+          <Label htmlFor="enrollmentNumber">Bar Council Enrollment Number</Label>
+          <Input id="enrollmentNumber" placeholder="e.g., TN/1234/2023" {...register('enrollmentNumber')} />
+          {errors.enrollmentNumber && <p className="text-destructive text-sm">{errors.enrollmentNumber.message}</p>}
         </div>
 
         <div className="space-y-2">
@@ -198,11 +207,26 @@ export function LawyerProfileCard() {
   const { user, isUserLoading } = useAuth();
   
   if (isUserLoading) {
-      return <LoadingSkeleton />;
+      return (
+        <Card className="col-span-1 bg-card border-border shadow-sm">
+            <CardHeader>
+                <CardTitle className="font-headline flex items-center gap-2">
+                    <Skeleton className="h-6 w-6 rounded-sm" />
+                    <Skeleton className="h-6 w-64" />
+                </CardTitle>
+                <CardDescription>
+                    <Skeleton className="h-4 w-80" />
+                </CardDescription>
+            </CardHeader>
+            <CardContent>
+                <LoadingSkeleton />
+            </CardContent>
+        </Card>
+      );
   }
 
   if (!user) {
-    return <p className="text-muted-foreground">Please log in to manage your profile.</p>;
+    return null; // Or some other placeholder if you want to show a prompt to log in
   }
 
   const cardTitle = "Create Your Professional Profile";

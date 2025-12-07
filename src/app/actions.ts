@@ -1,3 +1,4 @@
+
 'use server';
 
 import { generateLegalDraft } from '@/ai/flows/generate-legal-draft';
@@ -138,6 +139,7 @@ export async function requestLawyerVerification(
 Verification request for ${profileData.name}.
 Email: ${profileData.email}
 Phone: ${profileData.phone}
+Enrollment ID: ${profileData.enrollmentNumber}
 Location: ${profileData.location.city}, ${profileData.location.state}
 Specializations: ${profileData.specializations.join(", ")}
 Experience: ${profileData.experience} years
