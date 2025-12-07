@@ -1,7 +1,6 @@
-
 import { initializeApp, getApps, App, cert } from 'firebase-admin/app';
+import { getFirestore as getAdminFirestoreOriginal } from 'firebase-admin/firestore';
 
-// Define a clearer return type for the function.
 type ServerClientResult = {
   app: App | null;
   error: string | null;
@@ -18,19 +17,15 @@ function isPreviewMode() {
 }
 
 export function createServerClient(): ServerClientResult {
-  // Case 1: Running in a preview/emulator environment
   if (isPreviewMode()) {
-    console.warn(PREVIEW_ERROR_MSG);
     return { app: null, error: PREVIEW_ERROR_MSG };
   }
 
-  // Ensure we don't initialize the app more than once
   const existingApp = getApps().find(app => app.name === 'admin-sdk');
   if (existingApp) {
     return { app: existingApp, error: null };
   }
   
-  // Case 2: Missing credentials in a non-preview environment
   const projectId = process.env.FIREBASE_PROJECT_ID;
   const clientEmail = process.env.FIREBASE_CLIENT_EMAIL;
   let privateKey = process.env.FIREBASE_PRIVATE_KEY;
@@ -46,10 +41,8 @@ export function createServerClient(): ServerClientResult {
       return { app: null, error: errorMessage };
   }
 
-
-  // Case 3: Initialize Admin SDK normally (Vercel, etc.)
   try {
-    privateKey = privateKey.replace(/\\n/g, '\n');
+    privateKey = privateKey!.replace(/\\n/g, '\n');
 
     const app = initializeApp(
       {
@@ -68,4 +61,13 @@ export function createServerClient(): ServerClientResult {
       console.error(errorMessage);
       return { app: null, error: errorMessage };
   }
+}
+
+export function getAdminFirestore() {
+  const { app, error } = createServerClient();
+  if (error || !app) {
+    // This will make it clear in the server logs that the DB is not available.
+    throw new Error(`Admin SDK not initialized: ${error}`);
+  }
+  return getAdminFirestoreOriginal(app);
 }

@@ -1,28 +1,16 @@
-
 'use server';
 
 import { generateLegalDraft } from '@/ai/flows/generate-legal-draft';
 import { answerLegalQuery, type LegalQueryOutput } from '@/ai/flows/answer-legal-query';
-
 import { documentTemplates } from '@/lib/data';
 
-import { initializeApp, getApps, getApp, type FirebaseApp } from 'firebase/app';
-import { getFirestore as getClientFirestore, collection, addDoc, serverTimestamp as clientServerTimestamp } from 'firebase/firestore';
-
-import { firebaseConfig } from '@/firebase/config';
+// ADMIN FIREBASE (CORRECT FOR SERVER ACTIONS)
+import { getAdminFirestore } from '@/firebase/server-client';
 
 
-/* -----------------------------------------
-   Initialize Client Firebase App (Next.js)
-------------------------------------------*/
-
-function getFirebaseApp(): FirebaseApp {
-  if (getApps().length > 0) return getApp();
-  return initializeApp(firebaseConfig);
-}
-
-/* _-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-*/
-/* _-_-_-_-_-_-_-_-_-_-_-_-  GENERATE DRAFT   -_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_*/
+/* ----------------------------
+   GENERATE DRAFT
+-----------------------------*/
 
 type DraftState = {
   draft?: string;
@@ -45,40 +33,32 @@ export const generateDraft = async (
 
     const draftContent = result.legalDraft;
 
-    // Activity logging (non-blocking)
+    // Log activity (admin SDK)
     if (userId) {
-      try {
-        const app = getFirebaseApp();
-        const db = getClientFirestore(app);
-        const activitiesRef = collection(db, 'users', userId, 'activities');
-
-        const docLabel =
-          documentTemplates.find(t => t.value === docType)?.label ?? 'document';
-
-        await addDoc(activitiesRef, {
-          action: 'Generated',
-          subject: docLabel,
-          timestamp: clientServerTimestamp(),
-          userId
+      const db = getAdminFirestore();
+      await db
+        .collection("users")
+        .doc(userId)
+        .collection("activities")
+        .add({
+          action: "Generated",
+          subject: documentTemplates.find(t => t.value === docType)?.label ?? "document",
+          timestamp: new Date(),
+          userId,
         });
-      } catch (err) {
-        console.error('Failed to log activity:', err);
-      }
     }
 
     return { draft: draftContent };
   } catch (error: any) {
-    console.error('Error generating draft:', error);
-
-    if (error.message.includes('overloaded')) {
-      return { error: 'AI is busy. Try again shortly.' };
-    }
-
-    return { error: 'Could not generate draft. Try again.' };
+    console.error("Error generating draft:", error);
+    return { error: "Could not generate draft. Try again." };
   }
 };
 
-/* _-_-_-_-_-_-_-_-_-_-_-_-_-_  LAW BOT QUERY   -_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_*/
+
+/* ----------------------------
+   LAW BOT
+-----------------------------*/
 
 interface Message {
   sender: 'user' | 'bot';
@@ -89,101 +69,92 @@ export const askLawbot = async (
   query: string,
   history: Message[]
 ): Promise<LegalQueryOutput> => {
-  if (!query) return { answer: 'Please provide a query.' };
+  if (!query) return { answer: "Please provide a query." };
 
   try {
-    const result = await answerLegalQuery({ query, history });
-    return result;
+    return await answerLegalQuery({ query, history });
   } catch (error: any) {
-    console.error('LawBot Error:', error);
-
-    let msg = "I'm having trouble answering. Try again soon.";
-
-    if (error.message.includes('overloaded')) {
-      msg = 'AI is overloaded. Try again shortly.';
-    } else if (error.message.includes('blocked')) {
-      msg = 'Your query violates content policy. Rephrase it.';
-    }
-
-    return { answer: msg };
+    console.error("LawBot Error:", error);
+    return { answer: "I'm having trouble answering. Try again soon." };
   }
 };
 
-/* _-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-*/
-/* _-_-_-_-_-_-_-_-_-_-_-_  REQUEST VERIFICATION   -_-_-_-_-_-_-_-_-_-_-_-_-_-_*/
+
+/* ----------------------------
+   REQUEST VERIFICATION
+-----------------------------*/
 
 export async function requestVerification(
   userId: string,
   documentType: string,
   draftContent: string,
   formInputs: Record<string, any>
-): Promise<{ success: boolean; error?: string }> {
+) {
   if (!userId || !draftContent) {
-    return { success: false, error: 'User ID and draft content are required.' };
+    return { success: false, error: "Missing data." };
   }
 
   try {
-    const app = getFirebaseApp();
-    const db = getClientFirestore(app);
-    const requestsRef = collection(db, 'verificationRequests');
+    const db = getAdminFirestore();
 
-    const requestData = {
+    await db.collection("verificationRequests").add({
       userId,
       documentType,
       draftContent,
       formInputs,
-      status: 'pending',
+      status: "pending",
       lawyerComments: [],
-      lawyerNotification: '',
-      createdAt: clientServerTimestamp(),
-      updatedAt: clientServerTimestamp(),
-      type: 'document' as const // Distinguish from lawyer verification
-    };
+      lawyerNotification: "",
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      type: "document",
+    });
 
-    await addDoc(requestsRef, requestData);
     return { success: true };
   } catch (error) {
-    console.error('SERVER VERIFICATION ERROR:', error);
-    // Instead of throwing, return a structured error response
-    return { success: false, error: 'Failed to save verification request on server.' };
+    console.error("SERVER VERIFICATION ERROR:", error);
+    return { success: false, error: "Failed to save verification request on server." };
   }
 }
 
-/* _-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-*/
-/* _-_-_-_-_-_-_-_-_-_-_  REQUEST LAWYER VERIFICATION   -_-_-_-_-_-_-_-_-_-_-_-*/
+
+/* ----------------------------
+   REQUEST LAWYER VERIFICATION
+-----------------------------*/
 
 export async function requestLawyerVerification(
   userId: string,
   profileData: Record<string, any>
-): Promise<{ success: boolean; error?: string }> {
-    if (!userId) {
-        return { success: false, error: 'User ID is required.' };
-    }
+) {
+  if (!userId) return { success: false, error: "Missing user ID." };
 
-    try {
-        const app = getFirebaseApp();
-        const db = getClientFirestore(app);
-        const requestsRef = collection(db, 'verificationRequests');
+  try {
+    const db = getAdminFirestore();
 
-        // Create a document that contains all the profile info for the admin to review
-        const requestData = {
-            userId,
-            documentType: 'Lawyer Profile', // Specific type for this request
-            draftContent: `Verification request for ${profileData.name}.\nEmail: ${profileData.email}\nPhone: ${profileData.phone}\nLocation: ${profileData.location.city}, ${profileData.location.state}\nSpecializations: ${profileData.specializations.join(', ')}\nExperience: ${profileData.experience} years\nBio: ${profileData.description}`,
-            formInputs: profileData, // Store the raw form data
-            status: 'pending',
-            lawyerComments: [],
-            lawyerNotification: '',
-            createdAt: clientServerTimestamp(),
-            updatedAt: clientServerTimestamp(),
-            type: 'lawyer' as const // Distinguish from document verification
-        };
+    await db.collection("verificationRequests").add({
+      userId,
+      documentType: "Lawyer Profile",
+      draftContent: `
+Verification request for ${profileData.name}.
+Email: ${profileData.email}
+Phone: ${profileData.phone}
+Location: ${profileData.location.city}, ${profileData.location.state}
+Specializations: ${profileData.specializations.join(", ")}
+Experience: ${profileData.experience} years
+Bio: ${profileData.description}
+      `.trim(),
+      formInputs: profileData,
+      status: "pending",
+      lawyerComments: [],
+      lawyerNotification: "",
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      type: "lawyer",
+    });
 
-        await addDoc(requestsRef, requestData);
-
-        return { success: true };
-    } catch (error) {
-        console.error('LAWYER VERIFICATION SUBMISSION ERROR:', error);
-        return { success: false, error: 'Failed to submit lawyer profile for verification.' };
-    }
+    return { success: true };
+  } catch (error) {
+    console.error("LAWYER VERIFICATION ERROR:", error);
+    return { success: false, error: "Failed to submit lawyer profile for verification." };
+  }
 }
