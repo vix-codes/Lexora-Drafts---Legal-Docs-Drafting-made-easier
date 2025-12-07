@@ -37,9 +37,15 @@ type LawyerCardProps = {
 };
 
 const renderStars = (rating: number) => {
+  // Guard against invalid rating values that cause crashes.
+  if (typeof rating !== 'number' || isNaN(rating) || rating < 0) {
+    return null; // Return nothing if the rating is invalid
+  }
+
   const fullStars = Math.floor(rating);
   const halfStar = rating % 1 !== 0;
   const emptyStars = 5 - fullStars - (halfStar ? 1 : 0);
+  
   return (
     <div className="flex items-center">
       {[...Array(fullStars)].map((_, i) => <Star key={`full-${i}`} className="h-4 w-4 fill-accent text-accent" />)}
@@ -76,7 +82,7 @@ export function LawyerCard({ lawyer }: LawyerCardProps) {
         </div>
         <div className="flex items-center gap-2 mt-3">
             {renderStars(lawyer.rating)}
-            <span className="text-xs text-muted-foreground">({lawyer.rating.toFixed(1)})</span>
+            <span className="text-xs text-muted-foreground">({lawyer.rating?.toFixed(1) || 'N/A'})</span>
         </div>
 
         <div className="mt-4 space-y-2 text-sm">
