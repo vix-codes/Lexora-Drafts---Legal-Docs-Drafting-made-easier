@@ -183,8 +183,7 @@ export default function MyRequestsPage() {
   const showLoading = isUserLoading || (user && isRequestsLoading);
   
   // This handles the case where the server actions are disabled in preview environments.
-  // The `getUserRequests` server action now returns `null` in that case.
-  const isFeatureDisabled = error !== null;
+  const isFeatureDisabled = allRequests === null && !isRequestsLoading && user;
 
   return (
     <div className="flex flex-col min-h-screen bg-background text-foreground">
@@ -227,7 +226,7 @@ export default function MyRequestsPage() {
                 </div>
             )}
             
-            {!showLoading && !isFeatureDisabled && activeRequests.length === 0 && (
+            {!showLoading && !isFeatureDisabled && activeRequests.length === 0 && approvedRequests.length === 0 && (
               <div className="text-center py-12 text-muted-foreground border-2 border-dashed rounded-lg">
                 <p className="font-semibold">No Active Requests</p>
                 <p className="text-sm">
