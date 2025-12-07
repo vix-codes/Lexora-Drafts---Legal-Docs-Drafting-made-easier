@@ -67,7 +67,11 @@ export function LawyerCard({ lawyer }: LawyerCardProps) {
             {lawyer.specializations && lawyer.specializations.length > 0 && (
               <p className="text-primary text-sm font-medium">{lawyer.specializations[0]}</p>
             )}
-            <p className="text-muted-foreground text-sm">{lawyer.location.city}, {lawyer.location.state}</p>
+            <p className="text-muted-foreground text-sm">
+              {lawyer?.location?.city && lawyer?.location?.state
+                ? `${lawyer.location.city}, ${lawyer.location.state}`
+                : "Location not available"}
+            </p>
           </div>
         </div>
         <div className="flex items-center gap-2 mt-3">
