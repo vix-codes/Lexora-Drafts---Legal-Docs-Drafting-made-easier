@@ -8,115 +8,95 @@ service cloud.firestore {
      * ============================================================
      */
 
-    // Lawyer admin is identified ONLY by their email.
-    function isLawyer() {
-      return request.auth != null
-             && request.auth.token.email == 'lawyer@lexintel.com';
+    // The lawyer admin is identified by their specific email address.
+    function isLawyerAdmin() {
+      return request.auth != null && request.auth.token.email == 'lawyer@lexintel.com';
     }
 
-    // Checks if the logged-in user is the document owner.
+    // Checks if the authenticated user's UID matches the given userId.
     function isOwner(userId) {
-      return request.auth != null
-             && request.auth.uid == userId;
+      return request.auth != null && request.auth.uid == userId;
     }
 
-    // Checks if user is authenticated.
+    // Checks if a user is authenticated (logged in).
     function isLoggedIn() {
       return request.auth != null;
     }
 
     /**
      * ============================================================
-     *  USERS & ACTIVITIES
+     *  USERS COLLECTION
      * ============================================================
-     * A user may only read or write their OWN profile and activities.
+     * A user can create, read, and update their own document. No one else can.
      */
-
     match /users/{userId} {
-      allow read, write: if isOwner(userId);
+      allow read, update: if isOwner(userId);
+      allow create: if isLoggedIn();
 
+      // Sub-collections for a user can only be accessed by that user.
       match /activities/{activityId} {
+        allow read, write: if isOwner(userId);
+      }
+      match /approvedDrafts/{draftId} {
         allow read, write: if isOwner(userId);
       }
     }
 
-
     /**
      * ============================================================
-     *  LAWYER PROFILES
+     *  LAWYERS COLLECTION
      * ============================================================
-     * Anyone logged in can READ lawyer profiles.
-     * Only the lawyer THEMSELVES can create or update their own profile.
+     * Anyone can view lawyer profiles. Only the lawyer can create/update their own.
      */
-
     match /lawyers/{lawyerId} {
-
-      // Logged-in users can view lawyers.
       allow get, list: if isLoggedIn();
-
-      // Lawyer can create/update ONLY their own profile.
       allow create, update: if isOwner(lawyerId);
     }
 
-
     /**
      * ============================================================
-     *  VERIFICATION REQUESTS
+     *  VERIFICATION REQUESTS COLLECTION
      * ============================================================
-     *  - Users create requests.
-     *  - Users can read ONLY their own requests.
-     *  - Lawyer admin can read/list ALL requests.
-     *  - Lawyer admin can update requests (approve / add comments).
+     * - Any logged-in user can create a request.
+     * - Users can only read their own requests.
+     * - The lawyer admin can read all requests and update them.
      */
-
     match /verificationRequests/{requestId} {
-
-      // Anyone logged in may create.
       allow create: if isLoggedIn();
 
-      // Lawyer admin can LIST all requests (for lawyer-panel)
-      allow list: if isLawyer();
-
-      // Lawyer admin can read any request.
-      // Users can read ONLY their request.
-      allow get: if isLawyer()
-                 || ( isLoggedIn()
-                      && resource.data.userId == request.auth.uid );
-
-      // Lawyer admin can update (approve, add comments, change status).
-      allow update: if isLawyer();
+      // Lawyer admin can list and get any request.
+      // A regular user can only get their own request, identified by the userId field in the document.
+      allow get, list: if isLawyerAdmin() || (isLoggedIn() && resource.data.userId == request.auth.uid);
+      
+      // Only the lawyer admin can update the status or add comments.
+      allow update: if isLawyerAdmin();
     }
-
 
     /**
      * ============================================================
-     *  PUBLIC READ-ONLY DATA
+     *  PUBLIC READ-ONLY COLLECTIONS
      * ============================================================
+     * These collections are readable by any authenticated user but cannot be written to.
      */
-
     match /templates/{templateId} {
       allow get, list: if isLoggedIn();
       allow write: if false;
     }
-
     match /lawFeed/{updateId} {
       allow get, list: if isLoggedIn();
       allow write: if false;
     }
-
     match /glossary/{termId} {
       allow get, list: if isLoggedIn();
       allow write: if false;
     }
 
-
     /**
      * ============================================================
-     *  GLOBAL RULES (APPLY TO EVERYTHING)
+     *  GLOBAL RULES (APPLY TO ALL DOCUMENTS)
      * ============================================================
-     * Prevent all deletes from client side.
+     * Prevent all client-side deletes across the entire database for safety.
      */
-
     match /{document=**} {
       allow delete: if false;
     }

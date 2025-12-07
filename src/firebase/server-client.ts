@@ -15,7 +15,11 @@ export function createServerClient(): App | null {
   let privateKey = process.env.FIREBASE_PRIVATE_KEY;
 
   if (!projectId || !clientEmail || !privateKey) {
-    console.error("Missing admin credentials. " + PREVIEW_ERROR_MSG);
+    let missingVars = [];
+    if (!projectId) missingVars.push('FIREBASE_PROJECT_ID');
+    if (!clientEmail) missingVars.push('FIREBASE_CLIENT_EMAIL');
+    if (!privateKey) missingVars.push('FIREBASE_PRIVATE_KEY');
+    console.error(`Missing admin credential(s): ${missingVars.join(', ')}. ${PREVIEW_ERROR_MSG}`);
     return null;
   }
 
@@ -46,3 +50,5 @@ export function createServerClient(): App | null {
       return null;
   }
 }
+
+    
