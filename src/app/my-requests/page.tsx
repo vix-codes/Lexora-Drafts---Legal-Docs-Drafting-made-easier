@@ -39,9 +39,9 @@ type VerificationRequest = {
 };
 
 const statusConfig = {
-  pending: { label: "Pending", className: "bg-yellow-500 hover:bg-yellow-600" },
-  reviewed: { label: "Reviewed", className: "bg-blue-500 hover:bg-blue-600" },
-  approved: { label: "Approved", className: "bg-green-500 hover:bg-green-600" },
+  pending: { label: "Pending", className: "bg-yellow-500 hover:bg-yellow-600 border-transparent text-white" },
+  reviewed: { label: "Reviewed", className: "bg-blue-500 hover:bg-blue-600 border-transparent text-white" },
+  approved: { label: "Approved", className: "bg-green-600 hover:bg-green-700 border-transparent text-white" },
 };
 
 function getDocumentLabel(docValue: string) {
@@ -88,10 +88,10 @@ function RequestCard({ request, onResubmit }: { request: WithId<VerificationRequ
   };
 
   return (
-    <div className="border rounded-lg p-4 space-y-3 hover:border-primary/80 transition-colors">
+    <div className="border border-border rounded-lg p-4 space-y-3 bg-card hover:border-primary/50 transition-colors">
       <div className="flex justify-between items-start">
         <div>
-          <h3 className="font-semibold">{documentLabel}</h3>
+          <h3 className="font-semibold text-foreground">{documentLabel}</h3>
           <p className="text-sm text-muted-foreground">
             Submitted{" "}
             {request.createdAt
@@ -195,7 +195,7 @@ export default function MyRequestsPage() {
     <div className="flex flex-col min-h-screen bg-background text-foreground">
       <Header />
       <main className="flex-1 p-4 lg:p-6">
-        <Card>
+        <Card className="bg-card">
           <CardHeader>
             <CardTitle className="font-headline flex items-center gap-2">
               <ShieldQuestion className="h-6 w-6 text-primary" />
@@ -223,7 +223,7 @@ export default function MyRequestsPage() {
             )}
             
             {!showLoading && activeRequests.length === 0 && approvedRequests.length === 0 && (
-              <div className="text-center py-12 text-muted-foreground border-2 border-dashed rounded-lg">
+              <div className="text-center py-12 text-muted-foreground border-2 border-dashed border-border rounded-lg bg-muted/20">
                 <p className="font-semibold">No Active Requests</p>
                 <p className="text-sm">
                   You have not submitted any pending verification requests yet.

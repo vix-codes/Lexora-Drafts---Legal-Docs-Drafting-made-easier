@@ -34,7 +34,7 @@ function LawyerDashboardLinkCard() {
   }
 
   return (
-    <Card>
+    <Card className="bg-card">
       <CardHeader>
         <CardTitle className="font-headline flex items-center gap-2">
           Are you a lawyer?
@@ -59,7 +59,7 @@ export default function HomeContent() {
       <MainContent />
       <Lawbot />
        {user && (
-        <Card>
+        <Card className="bg-card">
             <CardHeader>
                 <CardTitle className="font-headline flex items-center gap-2">
                     <ShieldQuestion className="h-5 w-5 text-primary" />
@@ -74,7 +74,7 @@ export default function HomeContent() {
             </CardContent>
         </Card>
       )}
-      <Card>
+      <Card className="bg-card">
         <CardHeader>
           <CardTitle className="font-headline flex items-center gap-2">
             <Search className="h-5 w-5 text-primary" />

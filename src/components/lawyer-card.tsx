@@ -58,7 +58,7 @@ const renderStars = (rating: number) => {
 export function LawyerCard({ lawyer }: LawyerCardProps) {
   // We only render internal lawyers now
   return (
-    <Card className="flex flex-col">
+    <Card className="flex flex-col bg-card border-border shadow-sm">
       <CardContent className="p-6 flex flex-col flex-1">
         <div className="flex items-start gap-4">
           <Avatar className="w-20 h-20">
@@ -66,12 +66,12 @@ export function LawyerCard({ lawyer }: LawyerCardProps) {
             <AvatarFallback>{lawyer.name.charAt(0)}</AvatarFallback>
           </Avatar>
           <div className="flex-1">
-            <h3 className="font-semibold text-lg flex items-center gap-2">
+            <h3 className="font-semibold text-lg flex items-center gap-2 text-foreground">
               {lawyer.name}
               {lawyer.isVerified && <ShieldCheck className="h-5 w-5 text-accent fill-current" title='Verified Professional' />}
             </h3>
             {lawyer.specializations && lawyer.specializations.length > 0 && (
-              <p className="text-primary text-sm font-medium">{lawyer.specializations[0]}</p>
+              <p className="text-secondary text-sm font-medium">{lawyer.specializations[0]}</p>
             )}
             <p className="text-muted-foreground text-sm">
               {lawyer?.location?.city && lawyer?.location?.state
@@ -96,7 +96,7 @@ export function LawyerCard({ lawyer }: LawyerCardProps) {
           </div>
         </div>
         
-        <div className="mt-4 pt-4 border-t flex-1 flex flex-col justify-end">
+        <div className="mt-4 pt-4 border-t border-border flex-1 flex flex-col justify-end">
           <Button className="w-full">Message Now</Button>
         </div>
       </CardContent>

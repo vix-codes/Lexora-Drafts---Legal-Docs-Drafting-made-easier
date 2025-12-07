@@ -36,7 +36,7 @@ export function LawyerProfilePromptCard() {
     <>
       <Card
         onClick={handleClick}
-        className="h-full hover:border-primary transition-colors hover:shadow-lg cursor-pointer group"
+        className="h-full bg-card hover:border-secondary transition-colors hover:shadow-lg cursor-pointer group"
       >
         <CardHeader className="flex flex-row items-center gap-4">
           <Briefcase className="h-8 w-8 text-primary" />

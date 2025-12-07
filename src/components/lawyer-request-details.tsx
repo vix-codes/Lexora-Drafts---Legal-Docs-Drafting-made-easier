@@ -109,7 +109,7 @@ export function LawyerRequestDetails({ request, username, isOpen, onOpenChange }
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
       <DialogContent className="max-w-6xl h-[90vh] flex flex-col p-0">
-        <DialogHeader className="p-6 pb-4 border-b">
+        <DialogHeader className="p-6 pb-4 border-b border-border">
           <DialogTitle className="font-headline">Review: {documentLabel}</DialogTitle>
           <DialogDescription className="flex items-center gap-1.5">
             <User className="h-3.5 w-3.5" /> 
@@ -121,7 +121,7 @@ export function LawyerRequestDetails({ request, username, isOpen, onOpenChange }
           {/* Left Column: Draft / Profile Details */}
           <div className="flex flex-col gap-2">
             <h3 className="font-semibold text-foreground">{isLawyerRequest ? 'Submitted Profile Details' : 'Generated Draft'}</h3>
-            <div className="rounded-md border bg-muted/30 flex-1">
+            <div className="rounded-md border border-border bg-muted/30 flex-1">
               <ScrollArea className="h-[calc(80vh_-_200px)]">
                 <pre className="text-sm whitespace-pre-wrap font-body p-4">{request.draftContent}</pre>
               </ScrollArea>
@@ -133,7 +133,7 @@ export function LawyerRequestDetails({ request, username, isOpen, onOpenChange }
              {(isLawyerRequest || (request.formInputs && Object.keys(request.formInputs).length > 1)) && (
                  <div className="flex flex-col gap-2">
                     <h3 className="font-semibold text-foreground">User-Provided Inputs</h3>
-                    <div className="rounded-md border p-4 bg-muted/30">
+                    <div className="rounded-md border border-border p-4 bg-muted/30">
                         <ScrollArea className="h-48">
                             <div className="space-y-2 text-sm">
                             {Object.entries(request.formInputs).filter(([key]) => key !== 'userId').map(([key, value]) => {
@@ -153,12 +153,12 @@ export function LawyerRequestDetails({ request, username, isOpen, onOpenChange }
             
             <div className="flex flex-col gap-2 flex-1">
                 <h3 className="font-semibold text-foreground">Comments History</h3>
-                <div className="rounded-md border p-4 bg-muted/30 flex-1">
+                <div className="rounded-md border border-border p-4 bg-muted/30 flex-1">
                   <ScrollArea className="h-full">
                       {request.lawyerComments && request.lawyerComments.length > 0 ? (
                           <div className="space-y-3">
                               {request.lawyerComments.slice().reverse().map((c, i) => (
-                                <div key={i} className="p-3 rounded-md bg-background/50 border">
+                                <div key={i} className="p-3 rounded-md bg-background/50 border border-border">
                                     <p className="text-sm">{c.text}</p>
                                     {c.timestamp && (
                                       <p className="text-xs text-muted-foreground mt-2">
@@ -179,7 +179,7 @@ export function LawyerRequestDetails({ request, username, isOpen, onOpenChange }
           </div>
         </div>
 
-        <DialogFooter className="p-6 border-t bg-background/95">
+        <DialogFooter className="p-6 border-t border-border bg-background/95">
            <div className="w-full flex items-start gap-4">
                 <Textarea
                     placeholder="Add a new comment or suggest changes here..."

@@ -10,7 +10,7 @@ const DRAFT_URL = '/draft';
 
 export default function MainContent() {
   return (
-      <Card>
+      <Card className="bg-card">
         <CardHeader>
           <CardTitle className="font-headline flex items-center gap-2">
             <Wand2 className="h-5 w-5 text-primary" />

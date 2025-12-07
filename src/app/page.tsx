@@ -40,9 +40,9 @@ function PublicLandingPage() {
   return (
     <>
       {/* Hero Section */}
-      <section className="text-center py-20 lg:py-32 px-4">
-        <h1 className="font-headline text-4xl md:text-6xl font-bold tracking-tight">
-          Legal Intelligence, <span className="text-primary">Simplified.</span>
+      <section className="text-center py-20 lg:py-32 px-4 bg-background">
+        <h1 className="font-headline text-4xl md:text-6xl font-bold tracking-tight text-foreground">
+          Legal Intelligence, <span className="text-secondary">Simplified.</span>
         </h1>
         <p className="mt-4 max-w-2xl mx-auto text-lg text-muted-foreground">
           Lexintel makes Indian law easier to access. From quick legal explanations to ready-to-use drafts and lawyer discovery, everything is available in one platform.
@@ -58,10 +58,10 @@ function PublicLandingPage() {
       </section>
 
       {/* Features Section */}
-      <section id="features" className="py-20 lg:py-24 px-4 bg-card/50">
+      <section id="features" className="py-20 lg:py-24 px-4 bg-muted/40">
         <div className="max-w-6xl mx-auto">
           <div className="text-center">
-            <h2 className="font-headline text-3xl md:text-4xl font-bold">Try It Now</h2>
+            <h2 className="font-headline text-3xl md:text-4xl font-bold text-foreground">Try It Now</h2>
             <p className="mt-3 max-w-xl mx-auto text-muted-foreground">
               Instant access. No login required.
             </p>
@@ -69,7 +69,7 @@ function PublicLandingPage() {
           <div className="mt-12 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-8">
             {features.map((feature) => (
               <Link href={feature.link} key={feature.title} className="block group">
-                <Card className="h-full hover:border-primary transition-colors hover:shadow-lg">
+                <Card className="h-full bg-card hover:border-secondary transition-colors hover:shadow-lg">
                   <CardHeader className="flex flex-row items-center gap-4">
                     {feature.icon}
                     <CardTitle className="font-headline text-xl">{feature.title}</CardTitle>
@@ -86,9 +86,9 @@ function PublicLandingPage() {
       </section>
 
       {/* About Section */}
-      <section id="about" className="py-20 lg:py-24 px-4">
+      <section id="about" className="py-20 lg:py-24 px-4 bg-background">
         <div className="max-w-4xl mx-auto text-center">
-          <h2 className="font-headline text-3xl md:text-4xl font-bold">About Lexintel</h2>
+          <h2 className="font-headline text-3xl md:text-4xl font-bold text-foreground">About Lexintel</h2>
            <div className="mt-4 text-lg text-muted-foreground space-y-4">
             {!isAboutExpanded ? (
                 <p>

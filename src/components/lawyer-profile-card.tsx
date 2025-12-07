@@ -210,7 +210,7 @@ export function LawyerProfileCard() {
   const cardIcon = <FilePlus className="h-6 w-6 text-primary" />;
   
   return (
-    <Card className="col-span-1">
+    <Card className="col-span-1 bg-card border-border shadow-sm">
         <CardHeader>
           <CardTitle className="font-headline flex items-center gap-2">
               {cardIcon}

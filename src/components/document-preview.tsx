@@ -78,7 +78,7 @@ export function DocumentPreview({ draft, isLoading, documentTypeLabel, onClose }
             <Skeleton className="h-4 w-1/2" />
           </div>
         ) : draft ? (
-          <div className="rounded-md border bg-background p-4 h-full overflow-auto">
+          <div className="rounded-md border bg-muted/30 p-4 h-full overflow-auto">
             <pre className="font-body text-sm text-foreground bg-transparent p-0 m-0 whitespace-pre-wrap">
               {draft}
             </pre>

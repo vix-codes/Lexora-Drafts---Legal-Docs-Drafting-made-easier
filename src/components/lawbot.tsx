@@ -1,3 +1,4 @@
+
 'use client';
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -9,7 +10,7 @@ const CHATBOT_URL = '/lawbot';
 
 export function Lawbot() {
   return (
-    <Card>
+    <Card className="bg-card">
       <CardHeader>
         <CardTitle className="font-headline flex items-center gap-2">
           <Bot className="h-5 w-5 text-primary" />
