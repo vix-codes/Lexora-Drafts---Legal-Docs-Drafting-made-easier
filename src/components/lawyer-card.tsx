@@ -1,3 +1,4 @@
+
 'use client';
 
 import { Card, CardContent } from '@/components/ui/card';
@@ -63,7 +64,9 @@ export function LawyerCard({ lawyer }: LawyerCardProps) {
               {lawyer.name}
               {lawyer.isVerified && <ShieldCheck className="h-5 w-5 text-accent fill-current" title='Verified Professional' />}
             </h3>
-            <p className="text-primary text-sm font-medium">{lawyer.specializations[0]}</p>
+            {lawyer.specializations && lawyer.specializations.length > 0 && (
+              <p className="text-primary text-sm font-medium">{lawyer.specializations[0]}</p>
+            )}
             <p className="text-muted-foreground text-sm">{lawyer.location.city}, {lawyer.location.state}</p>
           </div>
         </div>
