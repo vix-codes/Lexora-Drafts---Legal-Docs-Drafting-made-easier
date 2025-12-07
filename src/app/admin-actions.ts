@@ -78,7 +78,7 @@ export const addLawyerComment = withAdmin(async (
     const requestRef = db.collection('verificationRequests').doc(requestId);
     const newComment = {
       text: commentText,
-      timestamp: FieldValue.serverTimestamp()
+      timestamp: new Date() // FIX: Firestore does not allow serverTimestamp in arrayUnion. Use JS Date.
     };
     await requestRef.update({
       status: 'reviewed',
