@@ -97,15 +97,17 @@ export default function LawyerPanelPage() {
   const db = getFirestore(app);
   
   const [userProfiles, setUserProfiles] = useState<Record<string, string> | null>({});
-  const isLawyer = !isUserLoading && user?.email === 'lawyer@lexintel.com';
 
   const allRequestsQuery = useMemo(() => {
-    if (!isLawyer) return null;
+    // CRITICAL: Do not create the query unless the user is loaded and is the admin lawyer.
+    if (!user || user.email !== 'lawyer@lexintel.com') {
+        return null;
+    }
     return query(
         collection(db, 'verificationRequests'), 
         orderBy('createdAt', 'desc')
     );
-  }, [db, isLawyer]);
+  }, [db, user]);
 
   const { data: allRequestsData, isLoading, error } = useCollection<VerificationRequest>(allRequestsQuery);
 
@@ -126,14 +128,13 @@ export default function LawyerPanelPage() {
   }, [allRequestsData]);
 
   useEffect(() => {
-    // Only fetch profiles if we have requests and the profiles haven't been fetched yet or are not null
     if (allRequestsData && allRequestsData.length > 0 && userProfiles !== null) {
         const userIds = [...new Set(allRequestsData.map(r => r.userId))];
         getUserProfiles(userIds).then(profiles => {
-            setUserProfiles(profiles); // This can be an object or null
+            setUserProfiles(profiles); 
         });
     }
-  }, [allRequestsData, userProfiles]); // Rerun if requests data changes
+  }, [allRequestsData]); // Note: removed userProfiles from dependency array to prevent re-fetch loops
   
   if (isUserLoading) {
       return (
@@ -150,7 +151,7 @@ export default function LawyerPanelPage() {
       )
   }
   
-  if (!isLawyer) {
+  if (!user || user.email !== 'lawyer@lexintel.com') {
       return (
           <div className="flex flex-col min-h-screen bg-background text-foreground">
             <Header />
@@ -164,9 +165,8 @@ export default function LawyerPanelPage() {
       );
   }
 
-  const effectiveIsLoading = isLoading;
-  // This is the key change: Detect if the Admin SDK is disabled
-  const isAdminSdkDisabled = userProfiles === null || error !== null;
+  // Handle cases where Admin SDK might be disabled in preview environments.
+  const isAdminSdkDisabled = userProfiles === null || (error && error.message.includes('permission'));
 
   return (
     <div className="flex flex-col min-h-screen bg-background text-foreground">
@@ -181,7 +181,7 @@ export default function LawyerPanelPage() {
                 <CardDescription>Review and manage all user-submitted draft verification requests.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
-                 {effectiveIsLoading && !isAdminSdkDisabled && (
+                 {isLoading && !isAdminSdkDisabled && (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                         <Skeleton className="h-48 w-full" />
                         <Skeleton className="h-48 w-full" />
@@ -191,21 +191,21 @@ export default function LawyerPanelPage() {
 
                  {isAdminSdkDisabled && <AdminSdkDisabledWarning />}
 
-                 {!effectiveIsLoading && !isAdminSdkDisabled && activeRequests && activeRequests.length > 0 && userProfiles && (
+                 {!isLoading && !isAdminSdkDisabled && activeRequests && activeRequests.length > 0 && userProfiles && (
                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                         {activeRequests.map(request => (
                             <VerificationRequestCard key={request.id} request={request} username={userProfiles[request.userId] || '...'} />
                         ))}
                      </div>
                  )}
-                 {!effectiveIsLoading && !isAdminSdkDisabled && (!activeRequests || activeRequests.length === 0) && (
+                 {!isLoading && !isAdminSdkDisabled && (!activeRequests || activeRequests.length === 0) && (
                     <div className="text-center py-12 text-muted-foreground border-2 border-dashed rounded-lg">
                         <p className="font-semibold">No Active Requests</p>
                         <p>There are currently no pending or reviewed requests.</p>
                     </div>
                  )}
 
-                {!effectiveIsLoading && !isAdminSdkDisabled && approvedRequests && approvedRequests.length > 0 && userProfiles && (
+                {!isLoading && !isAdminSdkDisabled && approvedRequests && approvedRequests.length > 0 && userProfiles && (
                     <PreviouslyApprovedRequests requests={approvedRequests} profiles={userProfiles} />
                 )}
 
