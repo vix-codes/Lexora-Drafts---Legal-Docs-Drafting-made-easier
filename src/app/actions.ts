@@ -212,16 +212,19 @@ export async function addLawyerComment(
     return { success: false, error: 'Request ID and comment are required.' };
   }
 
+  const adminApp = createServerClient();
+  if (!adminApp) {
+    console.warn("Admin SDK disabled in preview environment.");
+    return { success: false, error: 'Admin SDK is not available in this environment.' };
+  }
+
   try {
-    const adminApp = createServerClient();
-    if (!adminApp) throw new Error('Admin client initialization failed.');
     const adminDb = getAdminFirestore(adminApp);
-    
     const requestRef = adminDb.collection('verificationRequests').doc(requestId);
 
     const newComment = {
       text: commentText,
-      timestamp: FieldValue.serverTimestamp() // Use Admin SDK server timestamp
+      timestamp: FieldValue.serverTimestamp()
     };
 
     await requestRef.update({
@@ -250,61 +253,61 @@ export async function approveRequest(
   requestId: string,
   requestData: ApproveRequestData
 ): Promise<{ success: boolean; error?: string }> {
-  if (!requestId || !requestData) {
-    return { success: false, error: 'Request ID and data are required.' };
-  }
-
-  try {
-    const adminApp = createServerClient();
-    if (!adminApp) throw new Error('Admin client initialization failed.');
-    const adminDb = getAdminFirestore(adminApp);
-
-    const requestRef = adminDb.collection('verificationRequests').doc(requestId);
-
-    // Handle Lawyer Profile Approval
-    if (requestData.type === 'lawyer' && requestData.userId && requestData.formInputs) {
-      const lawyerRef = adminDb.collection('lawyers').doc(requestData.userId);
-      const profileData = requestData.formInputs;
-      
-      await lawyerRef.set({
-        id: requestData.userId,
-        email: profileData.email,
-        name: profileData.name,
-        phone: profileData.phone,
-        location: profileData.location,
-        specializations: profileData.specializations,
-        experience: profileData.experience,
-        description: profileData.description,
-        isVerified: true,
-        rating: 4.0 + Math.random(),
-        createdAt: FieldValue.serverTimestamp(),
-        source: 'internal'
-      }, { merge: true });
-    
-    // Handle Document Draft Approval
-    } else if (requestData.type === 'document' && requestData.userId) {
-      const approvedDraftsRef = adminDb.collection('users').doc(requestData.userId).collection('approvedDrafts');
-      
-      await approvedDraftsRef.add({
-          originalRequestId: requestId,
-          documentType: requestData.documentType,
-          approvedContent: requestData.draftContent,
-          approvedAt: FieldValue.serverTimestamp(),
-      });
+    if (!requestId || !requestData) {
+        return { success: false, error: 'Request ID and data are required.' };
     }
-    
-    // Finally, update the original request's status to 'approved'
-    await requestRef.update({
-      status: 'approved',
-      updatedAt: FieldValue.serverTimestamp(),
-      lawyerNotification: `Your ${requestData.type ?? 'draft'} has been approved.`
-    });
 
-    return { success: true };
-  } catch (error: any) {
-    console.error('Error approving request:', error);
-    return { success: false, error: error.message || 'Failed to approve request.' };
-  }
+    const adminApp = createServerClient();
+    if (!adminApp) {
+        console.warn("Admin SDK disabled in preview environment.");
+        return { success: false, error: 'Admin SDK is not available in this environment.' };
+    }
+
+    try {
+        const adminDb = getAdminFirestore(adminApp);
+        const requestRef = adminDb.collection('verificationRequests').doc(requestId);
+
+        if (requestData.type === 'lawyer' && requestData.userId && requestData.formInputs) {
+            const lawyerRef = adminDb.collection('lawyers').doc(requestData.userId);
+            const profileData = requestData.formInputs;
+            
+            await lawyerRef.set({
+                id: requestData.userId,
+                email: profileData.email,
+                name: profileData.name,
+                phone: profileData.phone,
+                location: profileData.location,
+                specializations: profileData.specializations,
+                experience: profileData.experience,
+                description: profileData.description,
+                isVerified: true,
+                rating: 4.0 + Math.random(),
+                createdAt: FieldValue.serverTimestamp(),
+                source: 'internal'
+            }, { merge: true });
+        
+        } else if (requestData.type === 'document' && requestData.userId) {
+            const approvedDraftsRef = adminDb.collection('users').doc(requestData.userId).collection('approvedDrafts');
+            
+            await approvedDraftsRef.add({
+                originalRequestId: requestId,
+                documentType: requestData.documentType,
+                approvedContent: requestData.draftContent,
+                approvedAt: FieldValue.serverTimestamp(),
+            });
+        }
+        
+        await requestRef.update({
+            status: 'approved',
+            updatedAt: FieldValue.serverTimestamp(),
+            lawyerNotification: `Your ${requestData.type ?? 'draft'} has been approved.`
+        });
+
+        return { success: true };
+    } catch (error: any) {
+        console.error('Error approving request:', error);
+        return { success: false, error: error.message || 'Failed to approve request.' };
+    }
 }
 
 /* _-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-*/
@@ -315,10 +318,13 @@ export async function getUserRequests(
 ): Promise<any[]> {
   if (!userId) return [];
 
-  try {
-    const adminApp = createServerClient();
-    if (!adminApp) throw new Error('Service account client not found.');
+  const adminApp = createServerClient();
+  if (!adminApp) {
+    console.warn("Admin SDK disabled in preview environment. Returning empty array for user requests.");
+    return [];
+  }
 
+  try {
     const db = getAdminFirestore(adminApp);
     const requestsRef = db.collection('verificationRequests');
 
@@ -352,11 +358,14 @@ export async function getUserProfiles(userIds: string[]): Promise<Record<string,
   if (!userIds || userIds.length === 0) {
     return {};
   }
+  
+  const adminApp = createServerClient();
+  if (!adminApp) {
+    console.warn("Admin SDK disabled in preview environment. Returning empty object for user profiles.");
+    return {};
+  }
 
   try {
-    const adminApp = createServerClient();
-    if (!adminApp) throw new Error('Service account client not found.');
-
     const db = getAdminFirestore(adminApp);
     const usersRef = db.collection('users');
     
@@ -381,5 +390,3 @@ export async function getUserProfiles(userIds: string[]): Promise<Record<string,
     return {};
   }
 }
-
-    
