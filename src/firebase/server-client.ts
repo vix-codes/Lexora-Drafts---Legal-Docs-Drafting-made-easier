@@ -7,15 +7,18 @@ type ServerClientResult = {
   error: string | null;
 };
 
-const PREVIEW_ERROR_MSG = "Admin SDK is not available in the preview environment. Skipping initialization.";
+const PREVIEW_ERROR_MSG = "Admin SDK is not available in the preview environment. This is expected and not a bug. Admin actions will be disabled.";
 
 export function createServerClient(): ServerClientResult {
-  // Prevent admin SDK in Firebase Studio preview or Edge runtime where env vars are not available
-  if (process.env.NEXT_RUNTIME === "edge") {
+  // Firebase Studio/emulators set specific environment variables.
+  // Check for these to determine if we are in a preview environment.
+  const isStudioPreview = !!(process.env.FIREBASE_EMULATOR_HUB || process.env.FIREBASE_FIRESTORE_DT || process.env.FUNCTIONS_EMULATOR);
+
+  if (isStudioPreview) {
     console.warn(PREVIEW_ERROR_MSG);
     return { app: null, error: PREVIEW_ERROR_MSG };
   }
-  
+
   // Ensure we don't initialize the app more than once
   const existingApp = getApps().find(app => app.name === 'admin-sdk');
   if (existingApp) {

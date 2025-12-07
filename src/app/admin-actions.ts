@@ -10,17 +10,19 @@ let adminApp: App | null = null;
 let adminDb: ReturnType<typeof getAdminFirestore> | null = null;
 let initializationError: string | null = null;
 
+// This top-level try/catch block runs ONCE when the module is first loaded.
 try {
+  // createServerClient() now intelligently handles the preview environment.
   const result = createServerClient();
   if (result.app) {
     adminApp = result.app;
     adminDb = getAdminFirestore(adminApp);
   } else {
-    // The createServerClient function now returns a specific error message.
+    // If createServerClient returns an error, we store it.
     initializationError = result.error;
   }
 } catch (e: any) {
-    // This case handles any unexpected exception during initialization.
+    // This is a fallback for any unexpected catastrophic failure during initialization.
     console.error("CRITICAL: Failed to initialize Firebase Admin SDK in admin-actions.ts", e);
     initializationError = e.message || 'A critical server error occurred during initialization.';
 }
@@ -39,16 +41,19 @@ function withAdmin<T extends (...args: any[]) => Promise<any>>(
 ) {
   return async function(...args: Parameters<T>): Promise<Awaited<ReturnType<T>>> {
     // This guard is the most important part. It runs on every call.
+    // If initializationError was set at the module level, this check fails.
     if (initializationError || !adminDb) {
       console.warn(`Admin action blocked: ${initializationError}`);
 
       const funcName = fn.name || '';
-      // For functions that are expected to return an array, return an empty array on failure.
+      // For functions that are expected to return an array (like fetching data),
+      // return an empty array on failure to prevent UI crashes.
       if (funcName.toLowerCase().includes('get') && (funcName.toLowerCase().includes('requests') || funcName.toLowerCase().includes('profiles'))) {
          return [] as Awaited<ReturnType<T>>;
       }
 
-      // For other functions, return a standard error object.
+      // For other functions (like mutations), return a standard error object.
+      // Use the stored initializationError as the message.
       return { success: false, error: initializationError } as Awaited<ReturnType<T>>;
     }
     // If the check passes, execute the original function with the db instance.
@@ -58,7 +63,7 @@ function withAdmin<T extends (...args: any[]) => Promise<any>>(
 
 
 // --- EXPORTED ADMIN ACTIONS ---
-// Each action is now wrapped with the `withAdmin` guard.
+// Each action is now safely wrapped with the `withAdmin` guard.
 
 export const addLawyerComment = withAdmin(async (
   db,
@@ -115,7 +120,7 @@ export const approveRequest = withAdmin(async (
         email: profileData.email,
         name: profileData.name,
         phone: profileData.phone,
-        location: profileData.location,
+        location: profileData.location ?? { city: "Unknown", state: "Unknown" },
         specializations: profileData.specializations,
         experience: profileData.experience,
         description: profileData.description,
@@ -199,23 +204,5 @@ export const getUserProfiles = withAdmin(async (db, userIds: string[]): Promise<
   }
 });
 
-// A new safe wrapper that also handles array return types
-function withAdminSafe<T extends (...args: any[]) => Promise<any>>(
-  fn: (db: ReturnType<typeof getAdminFirestore>, ...args: Parameters<T>) => ReturnType<T>
-) {
-  return async function(...args: Parameters<T>): Promise<Awaited<ReturnType<T>>> {
-    if (initializationError || !adminDb) {
-      console.warn(`Admin action blocked: ${initializationError}`);
-      
-      // Attempt to infer return type. If it's likely an array, return []. Otherwise, return error object.
-      // This is a heuristic and might need refinement. For now, we check the function name.
-      const funcName = fn.name;
-      if (funcName.toLowerCase().includes('get') && (funcName.toLowerCase().includes('requests') || funcName.toLowerCase().includes('profiles'))) {
-         return [] as Awaited<ReturnType<T>>;
-      }
-
-      return { success: false, error: initializationError } as Awaited<ReturnType<T>>;
-    }
-    return fn(adminDb, ...args);
-  };
-}
+// This is an alias for withAdmin, kept for semantic clarity if needed, but they do the same thing.
+const withAdminSafe = withAdmin;
