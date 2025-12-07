@@ -24,6 +24,7 @@ import { collection, query, where, orderBy, getFirestore } from "firebase/firest
 import { app } from "@/firebase/client";
 import { PreviouslyApprovedRequests } from "@/components/previously-approved-requests";
 import { documentTemplates } from "@/lib/data";
+import { cn } from "@/lib/utils";
 
 type VerificationRequest = {
   userId: string;
@@ -39,10 +40,11 @@ type VerificationRequest = {
 };
 
 const statusConfig = {
-  pending: { label: "Pending", className: "bg-yellow-500 hover:bg-yellow-600 border-transparent text-white" },
-  reviewed: { label: "Reviewed", className: "bg-blue-500 hover:bg-blue-600 border-transparent text-white" },
-  approved: { label: "Approved", className: "bg-green-600 hover:bg-green-700 border-transparent text-white" },
+  pending: { label: 'Pending', className: 'bg-secondary text-secondary-foreground hover:bg-secondary/80' },
+  reviewed: { label: 'Reviewed', className: 'bg-muted text-muted-foreground border-border' },
+  approved: { label: 'Approved', className: 'bg-primary text-primary-foreground hover:bg-primary/90' },
 };
+
 
 function getDocumentLabel(docValue: string) {
     if (docValue === 'Lawyer Profile') return 'Lawyer Profile';
@@ -88,7 +90,7 @@ function RequestCard({ request, onResubmit }: { request: WithId<VerificationRequ
   };
 
   return (
-    <div className="border border-border rounded-lg p-4 space-y-3 bg-card hover:border-primary/50 transition-colors">
+    <div className="border border-border rounded-lg p-4 space-y-3 bg-card hover:border-secondary/50 transition-colors">
       <div className="flex justify-between items-start">
         <div>
           <h3 className="font-semibold text-foreground">{documentLabel}</h3>
@@ -99,7 +101,7 @@ function RequestCard({ request, onResubmit }: { request: WithId<VerificationRequ
               : "recently"}
           </p>
         </div>
-        {statusInfo && <Badge className={statusInfo.className}>{statusInfo.label}</Badge>}
+        {statusInfo && <Badge className={cn("border-transparent", statusInfo.className)}>{statusInfo.label}</Badge>}
       </div>
 
       {request.lawyerNotification && (
@@ -195,7 +197,7 @@ export default function MyRequestsPage() {
     <div className="flex flex-col min-h-screen bg-background text-foreground">
       <Header />
       <main className="flex-1 p-4 lg:p-6">
-        <Card className="bg-card">
+        <Card className="bg-card border-border shadow-sm">
           <CardHeader>
             <CardTitle className="font-headline flex items-center gap-2">
               <ShieldQuestion className="h-6 w-6 text-primary" />
@@ -223,7 +225,7 @@ export default function MyRequestsPage() {
             )}
             
             {!showLoading && activeRequests.length === 0 && approvedRequests.length === 0 && (
-              <div className="text-center py-12 text-muted-foreground border-2 border-dashed border-border rounded-lg bg-muted/20">
+              <div className="text-center py-12 text-muted-foreground border-2 border-dashed border-border rounded-lg bg-muted/50">
                 <p className="font-semibold">No Active Requests</p>
                 <p className="text-sm">
                   You have not submitted any pending verification requests yet.

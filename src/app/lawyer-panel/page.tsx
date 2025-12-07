@@ -16,6 +16,7 @@ import { Briefcase, CheckCircle, Clock, MessageSquare, User, AlertTriangle } fro
 import { useAuth } from '@/components/auth-provider';
 import { PreviouslyApprovedRequests } from '@/components/previously-approved-requests';
 import { documentTemplates } from '@/lib/data';
+import { cn } from '@/lib/utils';
 
 type VerificationRequest = {
   userId: string;
@@ -29,9 +30,9 @@ type VerificationRequest = {
 };
 
 const statusConfig = {
-  pending: { label: 'Pending', icon: Clock, className: 'bg-yellow-500 hover:bg-yellow-600' },
-  reviewed: { label: 'Reviewed', icon: MessageSquare, className: 'bg-blue-500 hover:bg-blue-600' },
-  approved: { label: 'Approved', icon: CheckCircle, className: 'bg-green-500 hover:bg-green-600' },
+  pending: { label: 'Pending', className: 'bg-secondary text-secondary-foreground hover:bg-secondary/80' },
+  reviewed: { label: 'Reviewed', className: 'bg-muted text-muted-foreground border-border' },
+  approved: { label: 'Approved', className: 'bg-primary text-primary-foreground hover:bg-primary/90' },
 };
 
 function getDocumentLabel(docValue: string) {
@@ -47,17 +48,17 @@ function VerificationRequestCard({ request, username }: { request: WithId<Verifi
 
     return (
         <>
-            <Card>
+            <Card className="bg-card border-border shadow-sm">
                 <CardHeader>
                     <div className="flex justify-between items-start">
                         <div>
-                            <CardTitle>{documentLabel}</CardTitle>
+                            <CardTitle className="font-headline">{documentLabel}</CardTitle>
                             <CardDescription className="flex items-center gap-1 pt-1">
                                 <User className="h-3 w-3" />
                                 {username}
                             </CardDescription>
                         </div>
-                        <Badge className={statusInfo.className}>{statusInfo.label}</Badge>
+                        <Badge className={cn("border-transparent", statusInfo.className)}>{statusInfo.label}</Badge>
                     </div>
                 </CardHeader>
                 <CardContent>
@@ -157,7 +158,7 @@ export default function LawyerPanelPage() {
     <div className="flex flex-col min-h-screen bg-background text-foreground">
       <Header />
       <main className="flex-1 p-4 lg:p-6">
-        <Card>
+        <Card className="bg-card border-border shadow-sm">
             <CardHeader>
                 <CardTitle className="font-headline flex items-center gap-2">
                     <Briefcase className="h-6 w-6 text-primary" />
@@ -182,7 +183,7 @@ export default function LawyerPanelPage() {
                      </div>
                  )}
                  {!isLoading && (!activeRequests || activeRequests.length === 0) && (
-                    <div className="text-center py-12 text-muted-foreground border-2 border-dashed rounded-lg">
+                    <div className="text-center py-12 text-muted-foreground border-2 border-dashed rounded-lg bg-muted/50">
                         <p className="font-semibold">No Active Requests</p>
                         <p>There are currently no pending or reviewed requests.</p>
                     </div>
