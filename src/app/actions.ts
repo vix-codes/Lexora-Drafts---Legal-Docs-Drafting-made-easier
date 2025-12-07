@@ -7,10 +7,10 @@ import {
   getFirestore,
   collection,
   addDoc,
-  serverTimestamp,
+  serverTimestamp as clientServerTimestamp,
   doc,
   updateDoc,
-  arrayUnion,
+  arrayUnion as clientArrayUnion,
   setDoc,
 } from 'firebase/firestore';
 
@@ -20,7 +20,7 @@ import { initializeApp, getApps, getApp, type FirebaseApp } from 'firebase/app';
 import { firebaseConfig } from '@/firebase/config';
 
 import { createServerClient } from '@/firebase/server-client';
-import { getFirestore as getAdminFirestore } from 'firebase-admin/firestore';
+import { getFirestore as getAdminFirestore, FieldValue } from 'firebase-admin/firestore';
 
 /* -----------------------------------------
    Initialize Client Firebase App (Next.js)
@@ -68,7 +68,7 @@ export const generateDraft = async (
         await addDoc(activitiesRef, {
           action: 'Generated',
           subject: docLabel,
-          timestamp: serverTimestamp(),
+          timestamp: clientServerTimestamp(),
           userId
         });
       } catch (err) {
@@ -146,8 +146,8 @@ export async function requestVerification(
       status: 'pending',
       lawyerComments: [],
       lawyerNotification: '',
-      createdAt: serverTimestamp(),
-      updatedAt: serverTimestamp(),
+      createdAt: clientServerTimestamp(),
+      updatedAt: clientServerTimestamp(),
       type: 'document' as const // Distinguish from lawyer verification
     };
 
@@ -191,8 +191,8 @@ Bio: ${profileData.description}`,
             status: 'pending',
             lawyerComments: [],
             lawyerNotification: '',
-            createdAt: serverTimestamp(),
-            updatedAt: serverTimestamp(),
+            createdAt: clientServerTimestamp(),
+            updatedAt: clientServerTimestamp(),
             type: 'lawyer' as const // Distinguish from document verification
         };
 
@@ -226,13 +226,13 @@ export async function addLawyerComment(
 
     const newComment = {
       text: commentText,
-      timestamp: new Date()
+      timestamp: new Date() // Admin SDK can use native Date which becomes a timestamp
     };
 
     await requestRef.update({
       status: 'reviewed',
-      lawyerComments: arrayUnion(newComment),
-      updatedAt: serverTimestamp(),
+      lawyerComments: FieldValue.arrayUnion(newComment),
+      updatedAt: FieldValue.serverTimestamp(),
       lawyerNotification: 'Your draft has been reviewed.'
     });
 
@@ -271,7 +271,7 @@ export async function approveRequest(requestId: string, requestData?: any): Prom
           description: profileData.description,
           isVerified: true,
           rating: 4.0 + Math.random(), // Assign a default rating
-          createdAt: serverTimestamp(),
+          createdAt: FieldValue.serverTimestamp(),
           source: 'internal'
         };
         await lawyerRef.set(newLawyerData);
@@ -279,7 +279,7 @@ export async function approveRequest(requestId: string, requestData?: any): Prom
     
     await requestRef.update({
       status: 'approved',
-      updatedAt: serverTimestamp(),
+      updatedAt: FieldValue.serverTimestamp(),
       lawyerNotification: `Your ${requestData?.type ?? 'draft'} has been approved.`
     });
 
