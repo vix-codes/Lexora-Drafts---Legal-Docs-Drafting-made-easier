@@ -12,11 +12,12 @@ import { Badge } from '@/components/ui/badge';
 import { formatDistanceToNow } from 'date-fns';
 import { LawyerRequestDetails } from '@/components/lawyer-request-details';
 import { Button } from '@/components/ui/button';
-import { Briefcase, CheckCircle, Clock, MessageSquare, User, AlertTriangle } from 'lucide-react';
+import { Briefcase, User } from 'lucide-react';
 import { useAuth } from '@/components/auth-provider';
 import { PreviouslyApprovedRequests } from '@/components/previously-approved-requests';
 import { documentTemplates } from '@/lib/data';
 import { cn } from '@/lib/utils';
+import { getUserProfiles } from '../admin-actions';
 
 type VerificationRequest = {
   userId: string;
@@ -83,11 +84,9 @@ function VerificationRequestCard({ request, username }: { request: WithId<Verifi
 export default function LawyerPanelPage() {
   const { user, isUserLoading } = useAuth();
   const db = getFirestore(app);
+  const [userProfiles, setUserProfiles] = useState<Record<string, string>>({});
   
   const allRequestsQuery = useMemo(() => {
-    // CRITICAL: Only construct the query if the user is loaded and is the admin lawyer.
-    // This prevents unauthorized queries from ever being created.
-    // This prevents unauthorized queries from ever being created.
     if (!user || user.email !== 'lawyer@lexintel.com') {
         return null;
     }
@@ -98,6 +97,19 @@ export default function LawyerPanelPage() {
   }, [db, user]);
 
   const { data: allRequestsData, isLoading, error } = useCollection<VerificationRequest>(allRequestsQuery);
+
+  useEffect(() => {
+    async function fetchProfiles() {
+        if (!allRequestsData || allRequestsData.length === 0) {
+            return;
+        }
+
+        const userIds = [...new Set(allRequestsData.map(req => req.userId))];
+        const profiles = await getUserProfiles(userIds);
+        setUserProfiles(profiles);
+    }
+    fetchProfiles();
+  }, [allRequestsData]);
 
   const activeRequests = useMemo(() => {
     if (!allRequestsData) return [];
@@ -145,15 +157,6 @@ export default function LawyerPanelPage() {
       );
   }
 
-  const userProfiles: Record<string, string> = {};
-  if (allRequestsData) {
-      for (const req of allRequestsData) {
-          if (!userProfiles[req.userId]) {
-              userProfiles[req.userId] = req.formInputs?.username || req.formInputs?.name || req.userId;
-          }
-      }
-  }
-
   return (
     <div className="flex flex-col min-h-screen bg-background text-foreground">
       <Header />
@@ -178,7 +181,7 @@ export default function LawyerPanelPage() {
                  {!isLoading && activeRequests && activeRequests.length > 0 && (
                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                         {activeRequests.map(request => (
-                            <VerificationRequestCard key={request.id} request={request} username={userProfiles[request.userId] || '...'} />
+                            <VerificationRequestCard key={request.id} request={request} username={userProfiles[request.userId] || 'Loading...'} />
                         ))}
                      </div>
                  )}

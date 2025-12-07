@@ -3,7 +3,6 @@
 
 import { useEffect, useState, useMemo, useCallback } from "react";
 import { useAuth } from "@/components/auth-provider";
-import { requestVerification } from "@/app/actions";
 import {
   Card,
   CardHeader,
@@ -20,7 +19,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { useCollection, type WithId } from "@/firebase/firestore/use-collection";
-import { collection, query, where, orderBy, getFirestore } from "firebase/firestore";
+import { collection, query, where, orderBy, getFirestore, doc, updateDoc, serverTimestamp } from "firebase/firestore";
 import { app } from "@/firebase/client";
 import { PreviouslyApprovedRequests } from "@/components/previously-approved-requests";
 import { documentTemplates } from "@/lib/data";
@@ -61,6 +60,7 @@ function RequestCard({ request, onResubmit }: { request: WithId<VerificationRequ
 
   const statusInfo = statusConfig[request.status];
   const documentLabel = getDocumentLabel(request.documentType);
+  const db = getFirestore(app);
 
   const handleResubmit = async () => {
     if (!editingContent.trim()) {
@@ -69,21 +69,21 @@ function RequestCard({ request, onResubmit }: { request: WithId<VerificationRequ
     }
     setIsSubmitting(true);
     try {
-      const result = await requestVerification(
-        request.userId,
-        request.documentType,
-        editingContent,
-        request.formInputs
-      );
-      if (result.success) {
-        toast({ title: "Resubmitted Successfully", description: "Your updated draft has been sent for review." });
-        setIsEditing(false);
-        onResubmit();
-      } else {
-        throw new Error(result.error);
-      }
+      const requestRef = doc(db, 'verificationRequests', request.id);
+      await updateDoc(requestRef, {
+        draftContent: editingContent,
+        status: 'pending', // Reset status to pending
+        updatedAt: serverTimestamp(),
+        lawyerNotification: '', // Clear old notification
+        lawyerComments: request.lawyerComments, // Keep old comments for history
+      });
+
+      toast({ title: "Resubmitted Successfully", description: "Your updated draft has been sent for review." });
+      setIsEditing(false);
+      onResubmit(); // This will trigger a forceRefetch in the parent
     } catch (error: any) {
-      toast({ variant: "destructive", title: "Resubmission Failed", description: error.message });
+      console.error("Resubmission error:", error);
+      toast({ variant: "destructive", title: "Resubmission Failed", description: error.message || 'An unexpected error occurred.' });
     } finally {
       setIsSubmitting(false);
     }
