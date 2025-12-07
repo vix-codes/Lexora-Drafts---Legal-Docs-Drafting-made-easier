@@ -74,25 +74,16 @@ export function LawyerRequestDetails({ request, username, isOpen, onOpenChange }
   const handleApprove = async () => {
     setIsSubmitting(true);
     try {
-      // Manually create a plain object to pass to the server action
-      const serializableRequest = {
-        ...request,
-        createdAt: new Date(request.createdAt.seconds * 1000).toISOString(),
-        // Safely handle optional updatedAt
-        updatedAt: request.updatedAt
-          ? new Date(request.updatedAt.seconds * 1000).toISOString()
-          : new Date().toISOString(),
-        // Safely handle optional lawyerComments and their timestamps
-        lawyerComments: (request.lawyerComments || []).map(c => ({
-          ...c,
-          timestamp: c.timestamp 
-            ? new Date(c.timestamp.seconds * 1000).toISOString() 
-            : new Date().toISOString(),
-        })),
-      };
-      
-      const result = await approveRequest(request.id, serializableRequest);
-       if (result.success) {
+      // Pass only the necessary, simple data to the server action.
+      const result = await approveRequest(request.id, {
+        userId: request.userId,
+        type: request.type || 'document',
+        documentType: request.documentType,
+        draftContent: request.draftContent,
+        formInputs: request.formInputs,
+      });
+
+      if (result.success) {
         toast({ title: 'Request Approved', description: "The user has been notified and relevant actions are taken." });
         onOpenChange(false);
       } else {
