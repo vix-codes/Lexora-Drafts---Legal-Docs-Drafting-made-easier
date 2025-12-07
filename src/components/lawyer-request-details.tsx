@@ -13,7 +13,7 @@ import {
 import { Button } from './ui/button';
 import { Textarea } from './ui/textarea';
 import { useToast } from '@/hooks/use-toast';
-import { approveRequest, addLawyerComment } from '@/app/actions';
+import { approveRequest, addLawyerComment } from '@/app/admin-actions';
 import { type WithId } from '@/firebase/firestore/use-collection';
 import { ScrollArea } from './ui/scroll-area';
 import { Loader2, User } from 'lucide-react';
