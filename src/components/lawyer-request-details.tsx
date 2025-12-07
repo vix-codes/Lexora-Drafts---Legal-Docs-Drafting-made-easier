@@ -50,6 +50,7 @@ interface LawyerRequestDetailsProps {
   username: string;
   isOpen: boolean;
   onOpenChange: (isOpen: boolean) => void;
+  onActionComplete: () => void;
 }
 
 function getDocumentLabel(docValue: string) {
@@ -58,24 +59,20 @@ function getDocumentLabel(docValue: string) {
     return template ? template.label : docValue.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
 }
 
-export function LawyerRequestDetails({ request, username, isOpen, onOpenChange }: LawyerRequestDetailsProps) {
+export function LawyerRequestDetails({ request, username, isOpen, onOpenChange, onActionComplete }: LawyerRequestDetailsProps) {
   const { toast } = useToast();
   const [comment, setComment] = useState('');
   const [rejectionReason, setRejectionReason] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleSendAdvice = async () => {
-    if (!comment.trim()) {
-      toast({ variant: 'destructive', title: 'Comment cannot be empty.' });
-      return;
-    }
+  const handleAction = async (action: () => Promise<{success: boolean, error?: string | undefined}>, successTitle: string, successDesc: string) => {
     setIsSubmitting(true);
     try {
-      const result = await addLawyerComment(request.id, comment);
+      const result = await action();
       if (result.success) {
-        toast({ title: 'Advice Sent', description: "The user has been notified of your comments." });
-        setComment('');
-        onOpenChange(false);
+        toast({ title: successTitle, description: successDesc });
+        onActionComplete();
+        handleClose();
       } else {
         throw new Error(result.error);
       }
@@ -84,48 +81,42 @@ export function LawyerRequestDetails({ request, username, isOpen, onOpenChange }
     } finally {
       setIsSubmitting(false);
     }
+  }
+
+  const handleSendAdvice = () => {
+    if (!comment.trim()) {
+      toast({ variant: 'destructive', title: 'Comment cannot be empty.' });
+      return;
+    }
+    handleAction(
+      () => addLawyerComment(request.id, comment),
+      'Advice Sent',
+      "The user has been notified of your comments."
+    );
+    setComment('');
   };
 
-  const handleApprove = async () => {
-    setIsSubmitting(true);
-    try {
-      const result = await approveRequest(request.id, {
+  const handleApprove = () => {
+     handleAction(
+      () => approveRequest(request.id, {
         userId: request.userId,
         type: request.type || 'document',
         documentType: request.documentType,
         draftContent: request.draftContent,
         formInputs: request.formInputs,
-      });
-
-      if (result.success) {
-        toast({ title: 'Request Approved', description: "The user has been notified and relevant actions are taken." });
-        onOpenChange(false);
-      } else {
-        throw new Error(result.error);
-      }
-    } catch (error: any) {
-      toast({ variant: 'destructive', title: 'Error', description: error.message });
-    } finally {
-      setIsSubmitting(false);
-    }
+      }),
+      'Request Approved',
+      "The user has been notified and relevant actions are taken."
+    );
   };
 
-  const handleReject = async () => {
-    setIsSubmitting(true);
-    try {
-        const result = await rejectRequest(request.id, rejectionReason);
-        if (result.success) {
-            toast({ title: 'Request Rejected', description: "The user has been notified." });
-            setRejectionReason('');
-            onOpenChange(false);
-        } else {
-            throw new Error(result.error);
-        }
-    } catch (error: any) {
-        toast({ variant: 'destructive', title: 'Error', description: error.message });
-    } finally {
-        setIsSubmitting(false);
-    }
+  const handleReject = () => {
+    handleAction(
+      () => rejectRequest(request.id, rejectionReason),
+      'Request Rejected',
+      "The user has been notified."
+    );
+    setRejectionReason('');
   };
 
   const handleClose = () => {
@@ -170,7 +161,7 @@ export function LawyerRequestDetails({ request, username, isOpen, onOpenChange }
                     <div className="rounded-md border border-border p-4 bg-muted/30">
                         <ScrollArea className="h-48">
                             <div className="space-y-2 text-sm">
-                            {Object.entries(request.formInputs).filter(([key]) => key !== 'userId').map(([key, value]) => {
+                            {Object.entries(request.formInputs).filter(([key]) => key !== 'userId' && key !== 'documentType').map(([key, value]) => {
                                 const formattedValue = typeof value === 'object' ? JSON.stringify(value) : String(value);
                                 return (
                                     <div key={key} className="grid grid-cols-2 gap-2">
@@ -215,21 +206,21 @@ export function LawyerRequestDetails({ request, username, isOpen, onOpenChange }
 
         <DialogFooter className="p-6 border-t border-border bg-background/95">
            <div className="w-full flex justify-end items-start gap-4">
-                {!isLawyerRequest && (
+                {!isLawyerRequest && isActionable && (
                     <Textarea
                         placeholder="Add a new comment or suggest changes here..."
                         value={comment}
                         onChange={(e) => setComment(e.target.value)}
                         rows={2}
                         className="flex-1 bg-muted/50"
-                        disabled={isSubmitting || !isActionable}
+                        disabled={isSubmitting}
                     />
                 )}
                 <div className="flex flex-col gap-2">
-                     {!isLawyerRequest && (
+                     {!isLawyerRequest && isActionable && (
                         <Button
                             onClick={handleSendAdvice}
-                            disabled={isSubmitting || !comment.trim() || !isActionable}
+                            disabled={isSubmitting || !comment.trim()}
                             className="w-[120px]"
                         >
                             {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Send Advice'}
@@ -240,7 +231,7 @@ export function LawyerRequestDetails({ request, username, isOpen, onOpenChange }
                           <AlertDialog>
                               <AlertDialogTrigger asChild>
                                   <Button variant="destructive" className="w-[120px]" disabled={isSubmitting}>
-                                      <Ban className="mr-2" /> Reject
+                                      <Ban className="mr-2 h-4 w-4" /> Reject
                                   </Button>
                               </AlertDialogTrigger>
                               <AlertDialogContent>

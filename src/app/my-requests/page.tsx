@@ -76,6 +76,7 @@ function RequestCard({ request, onResubmit }: { request: WithId<VerificationRequ
         draftContent: editingContent,
         status: 'pending', // Reset status to pending
         updatedAt: serverTimestamp(),
+        lawyerComments: [], // Clear old comments on resubmission
         lawyerNotification: '', // Clear old notification
       });
 
@@ -89,6 +90,11 @@ function RequestCard({ request, onResubmit }: { request: WithId<VerificationRequ
       setIsSubmitting(false);
     }
   };
+  
+  // Keep card in sync with external data changes
+  useEffect(() => {
+    setEditingContent(request.draftContent);
+  }, [request.draftContent]);
 
   return (
     <div className="border border-border rounded-lg p-4 space-y-3 bg-card hover:border-secondary/50 transition-colors">
@@ -112,7 +118,7 @@ function RequestCard({ request, onResubmit }: { request: WithId<VerificationRequ
         )}>
           <p className={cn(
             "font-semibold text-sm",
-             request.status === 'rejected' ? "text-destructive-foreground/90" : "text-accent-foreground/90"
+             request.status === 'rejected' ? "text-destructive" : "text-accent-foreground/90"
           )}>
             {request.lawyerNotification}
           </p>
@@ -153,7 +159,7 @@ function RequestCard({ request, onResubmit }: { request: WithId<VerificationRequ
           </div>
         </div>
       ) : (
-        !isEditing && request.status === 'reviewed' && request.type === 'document' && (
+        !isEditing && (request.status === 'reviewed' || request.status === 'rejected') && request.type === 'document' && (
           <div className="flex justify-end pt-2">
             <Button variant="outline" onClick={() => setIsEditing(true)}>
               <Edit className="mr-2 h-4 w-4" />
@@ -250,5 +256,3 @@ export default function MyRequestsPage() {
     </div>
   );
 }
-
-    

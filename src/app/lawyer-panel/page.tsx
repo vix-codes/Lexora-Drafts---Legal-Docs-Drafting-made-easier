@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useMemo, useState, useEffect } from 'react';
+import { useMemo, useState, useEffect, useCallback } from 'react';
 import { collection, query, orderBy, getFirestore } from 'firebase/firestore';
 import { app } from '@/firebase/client';
 import { useCollection, type WithId } from '@/firebase/firestore/use-collection';
@@ -43,7 +43,7 @@ function getDocumentLabel(docValue: string) {
     return template ? template.label : docValue.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
 }
 
-function VerificationRequestCard({ request, username }: { request: WithId<VerificationRequest>, username: string }) {
+function VerificationRequestCard({ request, username, onActionComplete }: { request: WithId<VerificationRequest>, username: string, onActionComplete: () => void }) {
     const [isDetailsOpen, setIsDetailsOpen] = useState(false);
     const statusInfo = statusConfig[request.status];
     const documentLabel = getDocumentLabel(request.documentType);
@@ -77,6 +77,7 @@ function VerificationRequestCard({ request, username }: { request: WithId<Verifi
                 username={username}
                 isOpen={isDetailsOpen}
                 onOpenChange={setIsDetailsOpen}
+                onActionComplete={onActionComplete}
             />
         </>
     );
@@ -97,7 +98,13 @@ export default function LawyerPanelPage() {
     );
   }, [db, user]);
 
-  const { data: allRequestsData, isLoading, error } = useCollection<VerificationRequest>(allRequestsQuery);
+  const { data: allRequestsData, isLoading, error, forceRefetch } = useCollection<VerificationRequest>(allRequestsQuery);
+
+  const handleActionComplete = useCallback(() => {
+      if(forceRefetch) {
+        forceRefetch();
+      }
+  }, [forceRefetch]);
 
   useEffect(() => {
     async function fetchProfiles() {
@@ -106,11 +113,16 @@ export default function LawyerPanelPage() {
         }
 
         const userIds = [...new Set(allRequestsData.map(req => req.userId))];
-        const profiles = await getUserProfiles(userIds);
-        setUserProfiles(profiles);
+        const existingProfileIds = Object.keys(userProfiles);
+        const newUserIds = userIds.filter(id => !existingProfileIds.includes(id));
+
+        if (newUserIds.length > 0) {
+            const newProfiles = await getUserProfiles(newUserIds);
+            setUserProfiles(prev => ({...prev, ...newProfiles}));
+        }
     }
     fetchProfiles();
-  }, [allRequestsData]);
+  }, [allRequestsData, userProfiles]);
 
   const activeRequests = useMemo(() => {
     if (!allRequestsData) return [];
@@ -182,7 +194,7 @@ export default function LawyerPanelPage() {
                  {!isLoading && activeRequests && activeRequests.length > 0 && (
                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                         {activeRequests.map(request => (
-                            <VerificationRequestCard key={request.id} request={request} username={userProfiles[request.userId] || 'Loading...'} />
+                            <VerificationRequestCard key={request.id} request={request} username={userProfiles[request.userId] || 'Loading...'} onActionComplete={handleActionComplete} />
                         ))}
                      </div>
                  )}
