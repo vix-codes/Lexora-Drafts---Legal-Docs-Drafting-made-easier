@@ -169,13 +169,7 @@ export async function requestLawyerVerification(
         const requestData = {
             userId,
             documentType: 'Lawyer Profile', // Specific type for this request
-            draftContent: `Verification request for ${profileData.name}.
-Email: ${profileData.email}
-Phone: ${profileData.phone}
-Location: ${profileData.location.city}, ${profileData.location.state}
-Specializations: ${profileData.specializations.join(', ')}
-Experience: ${profileData.experience} years
-Bio: ${profileData.description}`,
+            draftContent: `Verification request for ${profileData.name}.\nEmail: ${profileData.email}\nPhone: ${profileData.phone}\nLocation: ${profileData.location.city}, ${profileData.location.state}\nSpecializations: ${profileData.specializations.join(', ')}\nExperience: ${profileData.experience} years\nBio: ${profileData.description}`,
             formInputs: profileData, // Store the raw form data
             status: 'pending',
             lawyerComments: [],
