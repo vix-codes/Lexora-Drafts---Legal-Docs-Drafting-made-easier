@@ -5,7 +5,7 @@ import MainContent from '@/app/main-content';
 import { Lawbot } from '@/components/lawbot';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Search, ShieldQuestion } from 'lucide-react';
+import { Search, ShieldQuestion, HelpCircle } from 'lucide-react';
 import Link from 'next/link';
 import { useAuth } from '@/components/auth-provider';
 import { useDoc } from '@/firebase/firestore/use-doc';
@@ -15,6 +15,7 @@ import { useMemo } from 'react';
 
 const FIND_LAWYER_URL = '/find-lawyer';
 const MY_REQUESTS_URL = '/my-requests';
+const FAQ_URL = '/faq';
 
 function LawyerDashboardLinkCard() {
   const { user } = useAuth();
@@ -91,6 +92,17 @@ export default function HomeContent() {
           </Button>
         </CardContent>
       </Card>
+      <Link href={FAQ_URL} className="block group">
+        <Card className="h-full bg-card hover:border-secondary transition-colors hover:shadow-lg">
+            <CardHeader>
+                <CardTitle className="font-headline flex items-center gap-2">
+                    <HelpCircle className="h-5 w-5 text-primary" />
+                    Legal FAQs
+                </CardTitle>
+                <CardDescription>Short answers to India’s most common legal questions.</CardDescription>
+            </CardHeader>
+        </Card>
+      </Link>
       <LawyerDashboardLinkCard />
     </div>
   );
