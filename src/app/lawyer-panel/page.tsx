@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useMemo, useState, useEffect } from 'react';
@@ -87,12 +86,20 @@ export default function LawyerPanelPage() {
   const [userProfiles, setUserProfiles] = useState<Record<string, string>>({});
   const isLawyer = !isUserLoading && user?.email === 'lawyer@lexintel.com';
 
-  const activeRequestsQuery = useMemo(() => {
+  const pendingRequestsQuery = useMemo(() => {
     if (isUserLoading || !isLawyer) return null;
     return query(
         collection(db, 'verificationRequests'), 
-        where('status', '!=', 'approved'),
-        orderBy('status', 'desc'),
+        where('status', '==', 'pending'),
+        orderBy('createdAt', 'desc')
+    );
+  }, [db, isUserLoading, isLawyer]);
+
+  const reviewedRequestsQuery = useMemo(() => {
+    if (isUserLoading || !isLawyer) return null;
+    return query(
+        collection(db, 'verificationRequests'), 
+        where('status', '==', 'reviewed'),
         orderBy('createdAt', 'desc')
     );
   }, [db, isUserLoading, isLawyer]);
@@ -106,8 +113,20 @@ export default function LawyerPanelPage() {
     );
   }, [db, isUserLoading, isLawyer]);
 
-  const { data: activeRequests, isLoading: isLoadingActive } = useCollection<VerificationRequest>(activeRequestsQuery);
+  const { data: pendingRequests, isLoading: isLoadingPending } = useCollection<VerificationRequest>(pendingRequestsQuery);
+  const { data: reviewedRequests, isLoading: isLoadingReviewed } = useCollection<VerificationRequest>(reviewedRequestsQuery);
   const { data: approvedRequests, isLoading: isLoadingApproved } = useCollection<VerificationRequest>(approvedRequestsQuery);
+
+  const activeRequests = useMemo(() => {
+    const combined = [...(reviewedRequests || []), ...(pendingRequests || [])];
+    // This sort ensures 'reviewed' items appear before 'pending' items.
+    combined.sort((a, b) => {
+        if (a.status === 'reviewed' && b.status !== 'reviewed') return -1;
+        if (a.status !== 'reviewed' && b.status === 'reviewed') return 1;
+        return (b.createdAt?.seconds ?? 0) - (a.createdAt?.seconds ?? 0);
+    });
+    return combined;
+  }, [pendingRequests, reviewedRequests]);
 
   useEffect(() => {
     const allRequests = [...(activeRequests || []), ...(approvedRequests || [])];
@@ -132,7 +151,7 @@ export default function LawyerPanelPage() {
       );
   }
 
-  const effectiveIsLoading = isUserLoading || isLoadingActive || isLoadingApproved;
+  const effectiveIsLoading = isUserLoading || isLoadingPending || isLoadingReviewed || isLoadingApproved;
 
   return (
     <div className="flex flex-col min-h-screen bg-background text-foreground">
