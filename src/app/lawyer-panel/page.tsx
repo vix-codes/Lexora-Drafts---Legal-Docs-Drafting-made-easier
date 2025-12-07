@@ -99,7 +99,8 @@ export default function LawyerPanelPage() {
   const [userProfiles, setUserProfiles] = useState<Record<string, string> | null>({});
 
   const allRequestsQuery = useMemo(() => {
-    // CRITICAL: Do not create the query unless the user is loaded and is the admin lawyer.
+    // CRITICAL: Only construct the query if the user is loaded and is the admin lawyer.
+    // This prevents unauthorized queries from ever being created.
     if (!user || user.email !== 'lawyer@lexintel.com') {
         return null;
     }
@@ -134,7 +135,7 @@ export default function LawyerPanelPage() {
             setUserProfiles(profiles); 
         });
     }
-  }, [allRequestsData]); // Note: removed userProfiles from dependency array to prevent re-fetch loops
+  }, [allRequestsData, userProfiles]);
   
   if (isUserLoading) {
       return (
