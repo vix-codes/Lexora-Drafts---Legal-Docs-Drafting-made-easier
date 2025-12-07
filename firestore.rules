@@ -4,7 +4,10 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
   
-    // Helper functions
+    // =================================
+    // Helper Functions
+    // =================================
+    
     function isOwner(userId) {
       return request.auth != null && request.auth.uid == userId;
     }
@@ -13,6 +16,15 @@ service cloud.firestore {
       return request.auth != null && request.auth.token.email == 'lawyer@lexintel.com';
     }
     
+    // Check if the incoming user profile data is valid for creation
+    function isNewUserDocValid() {
+      let incomingData = request.resource.data;
+      return incomingData.email == request.auth.token.email &&
+             incomingData.username == request.auth.token.email.split('@')[0] &&
+             incomingData.createdAt == request.time;
+    }
+
+    // Check if the incoming verification request data is valid on creation
     function isNewRequestValid(userId) {
       let incomingData = request.resource.data;
       return isOwner(userId) &&
@@ -23,53 +35,83 @@ service cloud.firestore {
              incomingData.updatedAt == request.time;
     }
 
-    // /users/{userId}
+    // =================================
+    // User Collections
+    // =================================
+
     match /users/{userId} {
-      // Users can only access their own document
-      allow read, write: if isOwner(userId);
+      // CREATE: A user can create their own document.
+      allow create: if isOwner(userId) && isNewUserDocValid();
       
-      // Users can create activity logs under their own document
+      // READ, UPDATE: A user can read or update their own document.
+      allow read, update: if isOwner(userId);
+      
+      // DELETE: Users cannot delete their accounts through Firestore.
+      allow delete: if false;
+
+      // Sub-collection: Activity logs for a user
       match /activities/{activityId} {
+        // CREATE: The user can create their own activity logs.
         allow create: if isOwner(userId);
-        allow read, update, delete: if false; // Logs are immutable
+        
+        // READ: The user can read their own activity logs.
+        allow read: if isOwner(userId);
+        
+        // UPDATE, DELETE: Logs are immutable.
+        allow update, delete: if false;
       }
       
-      // Users can read their own approved drafts
+      // Sub-collection: Drafts approved by a lawyer
       match /approvedDrafts/{draftId} {
+          // READ: The user can read their approved drafts.
           allow read: if isOwner(userId);
-          allow create, update, delete: if false; // Created by admin action
+          
+          // CREATE, UPDATE, DELETE: Only created by an admin action, not directly by users.
+          allow create, update, delete: if false;
       }
     }
     
-    // /lawyers/{lawyerId}
+    // =================================
+    // Lawyer Profile Collection
+    // =================================
+    
     match /lawyers/{lawyerId} {
-        // Anyone can read verified lawyer profiles
+        // READ: Anyone can read a lawyer's profile, but only if it's verified.
         allow get: if resource.data.isVerified == true;
-        // The collection can be listed by anyone (to show all lawyers)
+        // LIST: The collection can be listed by anyone to show all lawyers.
         allow list: if true;
-        // Only lawyer admin can create or update lawyer profiles
+        
+        // CREATE, UPDATE: Only the lawyer admin can create or update lawyer profiles.
+        // This is done via a server-side action (approveRequest).
         allow create, update: if isLawyerAdmin();
+        
+        // DELETE: Lawyers cannot be deleted.
         allow delete: if false;
     }
     
-    // /verificationRequests/{requestId}
+    // =================================
+    // Verification Request Collection
+    // =================================
+    
     match /verificationRequests/{requestId} {
         // CREATE: A user can create a verification request for themselves.
         allow create: if isNewRequestValid(request.resource.data.userId);
 
         // READ: 
-        // A user can read their own requests.
-        // The lawyer admin can read all requests.
+        // 1. A user can read their own requests.
+        // 2. The lawyer admin can read all requests.
         allow get, list: if isOwner(resource.data.userId) || isLawyerAdmin();
 
         // UPDATE:
-        // The lawyer admin can update any request (to add comments, change status).
-        // A user can resubmit a 'reviewed' request.
+        // 1. The lawyer admin can update any request (to add comments, change status).
+        // 2. A user can update their own request ONLY if it has been 'reviewed' (to resubmit).
         allow update: if isLawyerAdmin() || 
                       (isOwner(resource.data.userId) && resource.data.status == 'reviewed');
         
-        // DELETE: No one can delete requests.
+        // DELETE: No one can delete verification requests.
         allow delete: if false;
     }
   }
 }
+
+    
