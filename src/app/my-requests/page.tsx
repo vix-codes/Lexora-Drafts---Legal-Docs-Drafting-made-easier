@@ -15,7 +15,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { formatDistanceToNow } from "date-fns";
 import Header from "@/components/header";
-import { ShieldQuestion, Edit, Send, Loader2 } from "lucide-react";
+import { ShieldQuestion, Edit, Send, Loader2, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
@@ -31,6 +31,7 @@ type VerificationRequest = {
   formInputs: Record<string, any>;
   lawyerComments: { text: string; timestamp: string }[];
   lawyerNotification: string;
+  type?: 'document' | 'lawyer';
 };
 
 const statusConfig = {
@@ -146,7 +147,7 @@ function RequestCard({ request, onResubmit }: { request: VerificationRequest, on
 
 export default function MyRequestsPage() {
   const { user, isUserLoading } = useAuth();
-  const [requests, setRequests] = useState<VerificationRequest[]>([]);
+  const [requests, setRequests] = useState<VerificationRequest[] | null>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [fetchTrigger, setFetchTrigger] = useState(0); // Used to trigger re-fetch
 
@@ -155,7 +156,7 @@ export default function MyRequestsPage() {
       setIsLoading(true);
       getUserRequests(user.uid)
         .then((data) => {
-          setRequests(data as VerificationRequest[]);
+          setRequests(data); // Can be null
         })
         .catch((err) => {
           console.error("Failed to fetch requests:", err);
@@ -181,6 +182,7 @@ export default function MyRequestsPage() {
   }
 
   const showLoading = isUserLoading || isLoading;
+  const isFeatureDisabled = requests === null;
 
   return (
     <div className="flex flex-col min-h-screen bg-background text-foreground">
@@ -205,11 +207,21 @@ export default function MyRequestsPage() {
               </>
             )}
 
-            {!showLoading && requests.length > 0 && requests.map((req) => (
+            {isFeatureDisabled && (
+              <div className="text-center py-12 text-yellow-500 border-2 border-dashed border-yellow-500/50 rounded-lg bg-yellow-500/10">
+                <AlertTriangle className="mx-auto h-10 w-10 mb-4" />
+                <p className="font-semibold">Feature Disabled in Preview</p>
+                <p className="text-sm max-w-md mx-auto">
+                    This feature requires server functions that are not available in this preview environment. Please deploy to view your requests.
+                </p>
+              </div>
+            )}
+
+            {!showLoading && requests && requests.length > 0 && requests.map((req) => (
                 <RequestCard key={req.id} request={req} onResubmit={handleResubmitSuccess} />
             ))}
 
-            {!showLoading && requests.length === 0 && (
+            {!showLoading && requests && requests.length === 0 && (
               <div className="text-center py-16 text-muted-foreground border-2 border-dashed rounded-lg">
                 <p className="font-semibold">No Requests Found</p>
                 <p className="text-sm">
