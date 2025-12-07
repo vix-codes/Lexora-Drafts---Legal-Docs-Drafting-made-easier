@@ -10,19 +10,6 @@ export function createServerClient(): App | null {
     return null;
   }
   
-  const projectId = process.env.FIREBASE_PROJECT_ID;
-  const clientEmail = process.env.FIREBASE_CLIENT_EMAIL;
-  let privateKey = process.env.FIREBASE_PRIVATE_KEY;
-
-  if (!projectId || !clientEmail || !privateKey) {
-    const missingVars: string[] = [];
-    if (!projectId) missingVars.push('FIREBASE_PROJECT_ID');
-    if (!clientEmail) missingVars.push('FIREBASE_CLIENT_EMAIL');
-    if (!privateKey) missingVars.push('FIREBASE_PRIVATE_KEY');
-    console.error(`Error: Missing Firebase Admin SDK environment variables: [${missingVars.join(', ')}]. ${PREVIEW_ERROR_MSG}`);
-    return null;
-  }
-
   // Ensure we don't initialize the app more than once
   const existingApp = getApps().find(app => app.name === 'admin-sdk');
   if (existingApp) {
@@ -30,6 +17,19 @@ export function createServerClient(): App | null {
   }
 
   try {
+    const projectId = process.env.FIREBASE_PROJECT_ID;
+    const clientEmail = process.env.FIREBASE_CLIENT_EMAIL;
+    let privateKey = process.env.FIREBASE_PRIVATE_KEY;
+
+    if (!projectId || !clientEmail || !privateKey) {
+        const missingVars: string[] = [];
+        if (!projectId) missingVars.push('FIREBASE_PROJECT_ID');
+        if (!clientEmail) missingVars.push('FIREBASE_CLIENT_EMAIL');
+        if (!privateKey) missingVars.push('FIREBASE_PRIVATE_KEY');
+        console.error(`Error: Missing Firebase Admin SDK environment variables: [${missingVars.join(', ')}]. ${PREVIEW_ERROR_MSG}`);
+        return null;
+    }
+
     // When storing multiline strings in environment variables, newline characters
     // are often escaped. This line replaces the escaped `\\n` with actual newline
     // characters `\n` to ensure the private key is parsed correctly.
@@ -51,3 +51,5 @@ export function createServerClient(): App | null {
       return null;
   }
 }
+
+    
