@@ -202,7 +202,6 @@ export const getUserProfiles = withAdmin(async (db, userIds: string[]): Promise<
   }
 });
 
-
 // A new safe wrapper that also handles array return types
 function withAdminSafe<T extends (...args: any[]) => Promise<any>>(
   fn: (db: ReturnType<typeof getAdminFirestore>, ...args: Parameters<T>) => ReturnType<T>
