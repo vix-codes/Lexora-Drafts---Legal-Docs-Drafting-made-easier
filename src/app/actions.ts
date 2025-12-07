@@ -10,8 +10,6 @@ import {
   serverTimestamp as clientServerTimestamp,
   doc,
   updateDoc,
-  arrayUnion as clientArrayUnion,
-  setDoc,
 } from 'firebase/firestore';
 
 import { documentTemplates } from '@/lib/data';
@@ -255,12 +253,12 @@ export async function approveRequest(requestId: string, requestData?: any): Prom
 
     const requestRef = adminDb.collection('verificationRequests').doc(requestId);
 
+    // Handle Lawyer Profile Approval
     if (requestData?.type === 'lawyer' && requestData.userId && requestData.formInputs) {
         const lawyerRef = adminDb.collection('lawyers').doc(requestData.userId);
-
         const profileData = requestData.formInputs;
         
-        const newLawyerData = {
+        await lawyerRef.set({
           id: requestData.userId,
           email: profileData.email,
           name: profileData.name,
@@ -270,13 +268,24 @@ export async function approveRequest(requestId: string, requestData?: any): Prom
           experience: profileData.experience,
           description: profileData.description,
           isVerified: true,
-          rating: 4.0 + Math.random(), // Assign a default rating
+          rating: 4.0 + Math.random(),
           createdAt: FieldValue.serverTimestamp(),
           source: 'internal'
-        };
-        await lawyerRef.set(newLawyerData);
+        }, { merge: true });
+    
+    // Handle Document Draft Approval
+    } else if (requestData?.type === 'document' && requestData.userId) {
+        const approvedDraftsRef = adminDb.collection('users').doc(requestData.userId).collection('approvedDrafts');
+        
+        await approvedDraftsRef.add({
+            originalRequestId: requestId,
+            documentType: requestData.documentType,
+            approvedContent: requestData.draftContent,
+            approvedAt: FieldValue.serverTimestamp(),
+        });
     }
     
+    // Finally, update the original request's status to 'approved'
     await requestRef.update({
       status: 'approved',
       updatedAt: FieldValue.serverTimestamp(),

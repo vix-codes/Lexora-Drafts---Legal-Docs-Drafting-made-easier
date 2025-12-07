@@ -169,6 +169,18 @@
             "lawyerNotification": { "type": "string" }
         },
         "required": ["userId", "documentType", "draftContent", "status", "createdAt", "updatedAt", "type"]
+    },
+    "ApprovedDraft": {
+      "title": "Approved Draft",
+      "description": "A legal draft that has been approved by a lawyer.",
+      "type": "object",
+      "properties": {
+        "originalRequestId": { "type": "string" },
+        "documentType": { "type": "string" },
+        "approvedContent": { "type": "string" },
+        "approvedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["originalRequestId", "documentType", "approvedContent", "approvedAt"]
     }
   },
   "auth": {
@@ -189,6 +201,12 @@
             "$ref": "#/entities/RecentActivity"
         },
         "description": "Stores a log of recent activities for a specific user."
+    },
+    "/users/{userId}/approvedDrafts/{draftId}": {
+      "schema": {
+        "$ref": "#/entities/ApprovedDraft"
+      },
+      "description": "Stores legal drafts that have been approved for a specific user."
     },
     "/lawyers/{lawyerId}": {
       "schema": {
