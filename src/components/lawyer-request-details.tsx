@@ -75,7 +75,6 @@ export function LawyerRequestDetails({ request, username, isOpen, onOpenChange }
   const handleApprove = async () => {
     setIsSubmitting(true);
     try {
-      // Pass only the necessary, simple data to the server action.
       const result = await approveRequest(request.id, {
         userId: request.userId,
         type: request.type || 'document',

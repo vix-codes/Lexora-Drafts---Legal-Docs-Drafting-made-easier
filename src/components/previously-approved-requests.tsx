@@ -9,7 +9,6 @@ import {
 } from "@/components/ui/accordion";
 import { Badge } from "./ui/badge";
 import { formatDistanceToNow } from "date-fns";
-import { User } from "lucide-react";
 import { documentTemplates } from "@/lib/data";
 import type { WithId } from "@/firebase/firestore/use-collection";
 
@@ -21,6 +20,7 @@ type VerificationRequest = {
 
 interface PreviouslyApprovedRequestsProps {
   requests: WithId<VerificationRequest>[];
+  profiles?: Record<string, string> | null;
 }
 
 function getDocumentLabel(docValue: string) {
@@ -29,7 +29,7 @@ function getDocumentLabel(docValue: string) {
     return template ? template.label : docValue.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
 }
 
-export function PreviouslyApprovedRequests({ requests }: PreviouslyApprovedRequestsProps) {
+export function PreviouslyApprovedRequests({ requests, profiles }: PreviouslyApprovedRequestsProps) {
   return (
     <div className="pt-6">
       <Accordion type="single" collapsible defaultValue="item-1">

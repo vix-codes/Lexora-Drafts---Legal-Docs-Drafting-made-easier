@@ -76,7 +76,7 @@ function RequestCard({ request, onResubmit }: { request: WithId<VerificationRequ
       if (result.success) {
         toast({ title: "Resubmitted Successfully", description: "Your updated draft has been sent for review." });
         setIsEditing(false);
-        onResubmit(); // This is now more of a symbolic action as the view is real-time
+        onResubmit();
       } else {
         throw new Error(result.error);
       }
@@ -170,7 +170,7 @@ export default function MyRequestsPage() {
       );
   }, [db, user]);
 
-  const { data: allRequests, isLoading: isRequestsLoading, error } = useCollection<VerificationRequest>(userRequestsQuery);
+  const { data: allRequests, isLoading: isRequestsLoading } = useCollection<VerificationRequest>(userRequestsQuery);
 
   const activeRequests = useMemo(() => {
     return allRequests?.filter(r => r.status === 'pending' || r.status === 'reviewed') ?? [];
@@ -182,7 +182,6 @@ export default function MyRequestsPage() {
 
   const showLoading = isUserLoading || (user && isRequestsLoading);
   
-  // This handles the case where the server actions are disabled in preview environments.
   const isFeatureDisabled = allRequests === null && !isRequestsLoading && user;
 
   return (
