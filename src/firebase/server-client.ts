@@ -1,10 +1,12 @@
 
 import { initializeApp, getApps, App, cert } from 'firebase-admin/app';
 
+const PREVIEW_ERROR_MSG = "Admin SDK is not available in the preview environment. Skipping initialization.";
+
 export function createServerClient(): App | null {
   // Prevent admin SDK in Firebase Studio preview or Edge runtime where env vars are not available
   if (process.env.NEXT_RUNTIME === "edge") {
-    console.warn("Firebase Admin SDK is not available in this environment. Skipping initialization.");
+    console.warn(PREVIEW_ERROR_MSG);
     return null;
   }
   
@@ -13,7 +15,7 @@ export function createServerClient(): App | null {
   let privateKey = process.env.FIREBASE_PRIVATE_KEY;
 
   if (!projectId || !clientEmail || !privateKey) {
-    console.error("Missing admin credentials. Admin SDK will not be initialized.");
+    console.error("Missing admin credentials. " + PREVIEW_ERROR_MSG);
     return null;
   }
 

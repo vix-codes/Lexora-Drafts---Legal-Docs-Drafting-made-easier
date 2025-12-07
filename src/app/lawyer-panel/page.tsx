@@ -107,7 +107,7 @@ export default function LawyerPanelPage() {
     );
   }, [db, isLawyer]);
 
-  const { data: allRequestsData, isLoading } = useCollection<VerificationRequest>(allRequestsQuery);
+  const { data: allRequestsData, isLoading, error } = useCollection<VerificationRequest>(allRequestsQuery);
 
   const activeRequests = useMemo(() => {
     if (!allRequestsData) return [];
@@ -126,13 +126,14 @@ export default function LawyerPanelPage() {
   }, [allRequestsData]);
 
   useEffect(() => {
-    if (allRequestsData && allRequestsData.length > 0) {
+    // Only fetch profiles if we have requests and the profiles haven't been fetched yet or are not null
+    if (allRequestsData && allRequestsData.length > 0 && userProfiles !== null) {
         const userIds = [...new Set(allRequestsData.map(r => r.userId))];
         getUserProfiles(userIds).then(profiles => {
-            setUserProfiles(profiles);
+            setUserProfiles(profiles); // This can be an object or null
         });
     }
-  }, [allRequestsData]);
+  }, [allRequestsData, userProfiles]); // Rerun if requests data changes
   
   if (isUserLoading) {
       return (
@@ -164,7 +165,8 @@ export default function LawyerPanelPage() {
   }
 
   const effectiveIsLoading = isLoading;
-  const isAdminSdkDisabled = userProfiles === null;
+  // This is the key change: Detect if the Admin SDK is disabled
+  const isAdminSdkDisabled = userProfiles === null || error !== null;
 
   return (
     <div className="flex flex-col min-h-screen bg-background text-foreground">

@@ -157,6 +157,18 @@ function RequestCard({ request, onResubmit }: { request: WithId<VerificationRequ
   );
 }
 
+function AdminSdkDisabledWarning() {
+    return (
+        <div className="text-center py-12 text-yellow-500 border-2 border-dashed border-yellow-500/50 rounded-lg bg-yellow-500/10">
+            <AlertTriangle className="mx-auto h-10 w-10 mb-4" />
+            <p className="font-semibold">Feature Disabled in Preview</p>
+            <p className="text-sm max-w-md mx-auto">
+                This feature requires server functions that are not available in this preview environment. Please deploy your application to use this feature.
+            </p>
+        </div>
+    );
+}
+
 export default function MyRequestsPage() {
   const { user, isUserLoading } = useAuth();
   const db = getFirestore(app);
@@ -170,7 +182,7 @@ export default function MyRequestsPage() {
       );
   }, [db, user]);
 
-  const { data: allRequests, isLoading: isRequestsLoading, forceRefetch } = useCollection<VerificationRequest>(userRequestsQuery);
+  const { data: allRequests, isLoading: isRequestsLoading, error, forceRefetch } = useCollection<VerificationRequest>(userRequestsQuery);
 
   const activeRequests = useMemo(() => {
     if (!allRequests) return [];
@@ -190,8 +202,7 @@ export default function MyRequestsPage() {
 
 
   const showLoading = isUserLoading || (user && isRequestsLoading);
-  
-  const isFeatureDisabled = allRequests === null && !isRequestsLoading && user;
+  const isFeatureDisabled = allRequests === null && !isRequestsLoading && user && error !== null;
 
   return (
     <div className="flex flex-col min-h-screen bg-background text-foreground">
@@ -209,7 +220,7 @@ export default function MyRequestsPage() {
           </CardHeader>
 
           <CardContent className="space-y-6">
-            {showLoading && (
+            {showLoading && !isFeatureDisabled && (
               <div className="space-y-4">
                 <Skeleton className="h-32 w-full" />
                 <Skeleton className="h-32 w-full" />
@@ -217,13 +228,7 @@ export default function MyRequestsPage() {
             )}
             
             {isFeatureDisabled && (
-              <div className="text-center py-12 text-yellow-500 border-2 border-dashed border-yellow-500/50 rounded-lg bg-yellow-500/10">
-                <AlertTriangle className="mx-auto h-10 w-10 mb-4" />
-                <p className="font-semibold">Feature Disabled in Preview</p>
-                <p className="text-sm max-w-md mx-auto">
-                    This feature requires server functions that are not available in this preview environment. Please deploy to view your requests.
-                </p>
-              </div>
+              <AdminSdkDisabledWarning />
             )}
 
             {!showLoading && !isFeatureDisabled && activeRequests.length > 0 && (

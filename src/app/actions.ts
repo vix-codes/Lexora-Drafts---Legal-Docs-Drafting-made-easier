@@ -200,6 +200,8 @@ Bio: ${profileData.description}`,
 /* _-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-*/
 /* _-_-_-_-_-_-_-_-_-_-_-_-  LAWYER ACTIONS   -_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_*/
 
+const PREVIEW_ENV_ERROR = 'This feature is not available in the preview environment. Please deploy your application to use this function.';
+
 export async function addLawyerComment(
   requestId: string,
   commentText: string
@@ -210,8 +212,7 @@ export async function addLawyerComment(
 
   const adminApp = createServerClient();
   if (!adminApp) {
-    console.warn("Admin SDK disabled in preview environment.");
-    return { success: false, error: 'Admin SDK is not available in this environment.' };
+    return { success: false, error: PREVIEW_ENV_ERROR };
   }
 
   try {
@@ -255,8 +256,7 @@ export async function approveRequest(
 
     const adminApp = createServerClient();
     if (!adminApp) {
-        console.warn("Admin SDK disabled in preview environment.");
-        return { success: false, error: 'Admin SDK is not available in this environment.' };
+        return { success: false, error: PREVIEW_ENV_ERROR };
     }
 
     try {
