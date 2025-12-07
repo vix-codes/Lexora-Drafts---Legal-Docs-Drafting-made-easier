@@ -3,16 +3,12 @@
 
 import { generateLegalDraft } from '@/ai/flows/generate-legal-draft';
 import { answerLegalQuery, type LegalQueryOutput } from '@/ai/flows/answer-legal-query';
-import {
-  getFirestore as getClientFirestore,
-  collection,
-  addDoc,
-  serverTimestamp as clientServerTimestamp,
-} from 'firebase/firestore';
 
 import { documentTemplates } from '@/lib/data';
 
 import { initializeApp, getApps, getApp, type FirebaseApp } from 'firebase/app';
+import { getFirestore as getClientFirestore, collection, addDoc, serverTimestamp as clientServerTimestamp } from 'firebase/firestore';
+
 import { firebaseConfig } from '@/firebase/config';
 
 import { createServerClient } from '@/firebase/server-client';

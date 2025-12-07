@@ -12,7 +12,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Briefcase, Loader2, FilePlus } from 'lucide-react';
+import { FilePlus, Loader2 } from 'lucide-react';
 import { requestLawyerVerification } from '@/app/actions';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { allStates, citiesByState } from '@/lib/data';
