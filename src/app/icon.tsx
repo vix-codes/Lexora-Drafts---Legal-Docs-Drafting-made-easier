@@ -18,15 +18,14 @@ export default function Icon() {
       <div
         style={{
           fontSize: 24,
-          background: 'hsl(261 44% 11%)',
+          background: 'hsl(215 48% 12%)',
           width: '100%',
           height: '100%',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          color: 'hsl(262 80% 70%)',
+          color: 'hsl(40 33% 97%)',
           borderRadius: '5px',
-          filter: 'drop-shadow(0 0 3px hsl(262 80% 70%))',
         }}
       >
         <svg

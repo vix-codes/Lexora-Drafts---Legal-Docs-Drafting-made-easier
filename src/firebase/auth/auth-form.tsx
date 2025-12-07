@@ -126,7 +126,7 @@ export function AuthForm({ mode }: AuthFormProps) {
           {...register('email')}
           required
           autoComplete="email"
-          className="bg-background border-input text-foreground focus-visible:ring-primary"
+          className="bg-background border-input text-foreground"
         />
         {errors.email && <p className="text-destructive text-sm mt-1">{errors.email.message}</p>}
       </div>
@@ -139,7 +139,7 @@ export function AuthForm({ mode }: AuthFormProps) {
           {...register('password')}
           required
           autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
-          className="bg-background border-input text-foreground focus-visible:ring-primary"
+          className="bg-background border-input text-foreground"
         />
         {errors.password && <p className="text-destructive text-sm mt-1">{errors.password.message}</p>}
       </div>

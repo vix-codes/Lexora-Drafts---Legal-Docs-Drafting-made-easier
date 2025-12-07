@@ -15,7 +15,7 @@ export default function SignupForm({ children }: { children: ReactNode }) {
             <Logo className="h-8 w-8 text-primary" />
             <h1 className="font-headline text-2xl font-semibold tracking-tight">lexintel</h1>
         </div>
-        <Card className="w-full max-w-sm border-0 lg:border bg-card shadow-none lg:shadow-sm">
+        <Card className="w-full max-w-sm border-border bg-card shadow-sm">
             <CardHeader className="text-center">
                 <CardTitle>Create an Account</CardTitle>
                 <CardDescription>Fill out the form below to get started.</CardDescription>
