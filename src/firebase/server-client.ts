@@ -23,11 +23,6 @@ export function createServerClient(): App | null {
     return null;
   }
 
-  // When storing multiline strings in environment variables, newline characters
-  // are often escaped. This line replaces the escaped `\\n` with actual newline
-  // characters `\n` to ensure the private key is parsed correctly.
-  privateKey = privateKey.replace(/\\n/g, '\n');
-
   // Ensure we don't initialize the app more than once
   const existingApp = getApps().find(app => app.name === 'admin-sdk');
   if (existingApp) {
@@ -35,6 +30,11 @@ export function createServerClient(): App | null {
   }
 
   try {
+    // When storing multiline strings in environment variables, newline characters
+    // are often escaped. This line replaces the escaped `\\n` with actual newline
+    // characters `\n` to ensure the private key is parsed correctly.
+    privateKey = privateKey.replace(/\\n/g, '\n');
+
     return initializeApp(
       {
         credential: cert({
@@ -47,6 +47,7 @@ export function createServerClient(): App | null {
     );
   } catch (error: any) {
       console.error("Failed to initialize Firebase Admin SDK:", error.message);
+      // If initialization fails for any reason (e.g., invalid key), return null.
       return null;
   }
 }

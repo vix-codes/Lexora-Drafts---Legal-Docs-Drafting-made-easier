@@ -1,3 +1,4 @@
+
 import { NextResponse } from "next/server";
 
 export function GET() {
@@ -7,3 +8,5 @@ export function GET() {
     PRIVATE_KEY: process.env.FIREBASE_PRIVATE_KEY ? 'loaded' : 'missing'
   });
 }
+
+    
