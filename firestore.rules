@@ -35,11 +35,20 @@ service cloud.firestore {
     }
     
     match /verificationRequests/{requestId} {
+      // Any logged-in user can create a request.
       allow create: if request.auth != null;
-      allow list, update: if isLawyer();
+
+      // The lawyer can list all requests. This is crucial for the panel.
+      allow list: if isLawyer();
+      
+      // The lawyer can update any request (to add comments or approve).
+      allow update: if isLawyer();
+
+      // The lawyer can get any single request. A regular user can only get their own.
       allow get: if isLawyer() || (request.auth != null && resource.data.userId == request.auth.uid);
     }
 
+    // Prevent accidental client-side deletes on all collections.
     match /{document=**} {
       allow delete: if false;
     }
