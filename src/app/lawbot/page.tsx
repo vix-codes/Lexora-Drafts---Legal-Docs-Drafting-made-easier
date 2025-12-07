@@ -79,8 +79,8 @@ export default function LawbotPage() {
                 {messages.map((message, index) => (
                   <div key={message.id} className={`flex items-start gap-3 ${message.sender === 'user' ? 'justify-end' : ''}`}>
                     {message.sender === 'bot' && (
-                      <Avatar className="w-8 h-8 bg-primary text-primary-foreground">
-                        <AvatarFallback><Bot size={20} /></AvatarFallback>
+                      <Avatar className="w-8 h-8">
+                        <AvatarFallback className="bg-black text-white"><Bot size={20} /></AvatarFallback>
                       </Avatar>
                     )}
                     <div 
@@ -94,15 +94,15 @@ export default function LawbotPage() {
                     </div>
                     {message.sender === 'user' && (
                       <Avatar className="w-8 h-8">
-                        <AvatarFallback><User size={20} /></AvatarFallback>
+                        <AvatarFallback className="bg-black text-white"><User size={20} /></AvatarFallback>
                       </Avatar>
                     )}
                   </div>
                 ))}
                 {isPending && (
                   <div className="flex items-start gap-3">
-                    <Avatar className="w-8 h-8 bg-primary text-primary-foreground">
-                      <AvatarFallback><Bot size={20} /></AvatarFallback>
+                    <Avatar className="w-8 h-8">
+                      <AvatarFallback className="bg-black text-white"><Bot size={20} /></AvatarFallback>
                     </Avatar>
                     <div className="rounded-lg px-4 py-2 max-w-[80%] bg-muted flex items-center space-x-2">
                         <span className="h-2 w-2 bg-foreground rounded-full animate-pulse [animation-delay:-0.3s]"></span>
