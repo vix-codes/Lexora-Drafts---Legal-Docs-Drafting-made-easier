@@ -173,10 +173,12 @@ export default function MyRequestsPage() {
   const { data: allRequests, isLoading: isRequestsLoading } = useCollection<VerificationRequest>(userRequestsQuery);
 
   const activeRequests = useMemo(() => {
+    if (!allRequests) return [];
     return allRequests?.filter(r => r.status === 'pending' || r.status === 'reviewed') ?? [];
   }, [allRequests]);
   
   const approvedRequests = useMemo(() => {
+    if (!allRequests) return [];
     return allRequests?.filter(r => r.status === 'approved') ?? [];
   }, [allRequests]);
 

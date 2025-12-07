@@ -100,12 +100,12 @@ export default function LawyerPanelPage() {
   const isLawyer = !isUserLoading && user?.email === 'lawyer@lexintel.com';
 
   const allRequestsQuery = useMemo(() => {
-    if (isUserLoading || !isLawyer) return null;
+    if (!isLawyer) return null;
     return query(
         collection(db, 'verificationRequests'), 
         orderBy('createdAt', 'desc')
     );
-  }, [db, isUserLoading, isLawyer]);
+  }, [db, isLawyer]);
 
   const { data: allRequestsData, isLoading } = useCollection<VerificationRequest>(allRequestsQuery);
 
@@ -134,20 +134,36 @@ export default function LawyerPanelPage() {
     }
   }, [allRequestsData]);
   
-  if (!isUserLoading && !isLawyer) {
+  if (isUserLoading) {
+      return (
+        <div className="flex flex-col min-h-screen bg-background text-foreground">
+            <Header />
+            <main className="flex-1 p-4 lg:p-6">
+                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <Skeleton className="h-48 w-full" />
+                    <Skeleton className="h-48 w-full" />
+                    <Skeleton className="h-48 w-full" />
+                </div>
+            </main>
+        </div>
+      )
+  }
+  
+  if (!isLawyer) {
       return (
           <div className="flex flex-col min-h-screen bg-background text-foreground">
             <Header />
             <main className="flex-1 p-4 lg:p-6">
                 <div className="text-center py-12 text-destructive">
-                    <p>Access Denied. You do not have permission to view this page.</p>
+                    <p className="font-semibold text-lg">Access Denied</p>
+                    <p>You do not have permission to view this page.</p>
                 </div>
             </main>
           </div>
       );
   }
 
-  const effectiveIsLoading = isUserLoading || isLoading;
+  const effectiveIsLoading = isLoading;
   const isAdminSdkDisabled = userProfiles === null;
 
   return (
