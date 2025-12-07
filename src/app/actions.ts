@@ -315,13 +315,13 @@ export async function approveRequest(
 
 export async function getUserRequests(
   userId: string
-): Promise<any[]> {
+): Promise<any[] | null> {
   if (!userId) return [];
 
   const adminApp = createServerClient();
   if (!adminApp) {
-    console.warn("Admin SDK disabled in preview environment. Returning empty array for user requests.");
-    return [];
+    console.warn("Admin SDK disabled in preview environment. Returning null for user requests.");
+    return null;
   }
 
   try {
@@ -354,15 +354,15 @@ export async function getUserRequests(
   }
 }
 
-export async function getUserProfiles(userIds: string[]): Promise<Record<string, string>> {
+export async function getUserProfiles(userIds: string[]): Promise<Record<string, string> | null> {
   if (!userIds || userIds.length === 0) {
     return {};
   }
   
   const adminApp = createServerClient();
   if (!adminApp) {
-    console.warn("Admin SDK disabled in preview environment. Returning empty object for user profiles.");
-    return {};
+    console.warn("Admin SDK disabled in preview environment. Returning null for user profiles.");
+    return null;
   }
 
   try {
