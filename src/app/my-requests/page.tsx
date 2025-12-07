@@ -202,7 +202,8 @@ export default function MyRequestsPage() {
 
 
   const showLoading = isUserLoading || (user && isRequestsLoading);
-  const isFeatureDisabled = allRequests === null && !isRequestsLoading && user && error !== null;
+  // This is the key change: Detect if the error is a permission error from the hook.
+  const isFeatureDisabled = error?.name === 'FirebaseError' && error?.message.includes('Missing or insufficient permissions');
 
   return (
     <div className="flex flex-col min-h-screen bg-background text-foreground">
