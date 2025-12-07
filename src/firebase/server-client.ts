@@ -16,8 +16,10 @@ export function createServerClient(): App | null {
     return null;
   }
 
-  // Fix newline issue
-  privateKey = privateKey.replace(/\\n/g, "\n");
+  // When storing multiline strings in environment variables, newline characters
+  // are often escaped. This line replaces the escaped `\\n` with actual newline
+  // characters `\n` to ensure the private key is parsed correctly.
+  privateKey = privateKey.replace(/\\n/g, '\n');
 
   if (getApps().some(app => app.name === 'admin-sdk')) {
     return getApps().find(app => app.name === 'admin-sdk')!;
