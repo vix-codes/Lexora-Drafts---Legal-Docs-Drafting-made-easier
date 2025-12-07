@@ -1,4 +1,3 @@
-
 'use server';
 
 import { generateLegalDraft } from '@/ai/flows/generate-legal-draft';
@@ -8,8 +7,6 @@ import {
   collection,
   addDoc,
   serverTimestamp as clientServerTimestamp,
-  doc,
-  updateDoc,
 } from 'firebase/firestore';
 
 import { documentTemplates } from '@/lib/data';
@@ -224,7 +221,7 @@ export async function addLawyerComment(
 
     const newComment = {
       text: commentText,
-      timestamp: new Date() // Admin SDK can use native Date which becomes a timestamp
+      timestamp: FieldValue.serverTimestamp() // Use Admin SDK server timestamp
     };
 
     await requestRef.update({

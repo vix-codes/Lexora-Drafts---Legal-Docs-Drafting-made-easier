@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState } from 'react';
@@ -79,10 +78,16 @@ export function LawyerRequestDetails({ request, username, isOpen, onOpenChange }
       const serializableRequest = {
         ...request,
         createdAt: new Date(request.createdAt.seconds * 1000).toISOString(),
-        updatedAt: request.updatedAt ? new Date(request.updatedAt.seconds * 1000).toISOString() : new Date().toISOString(),
-        lawyerComments: request.lawyerComments.map(c => ({
+        // Safely handle optional updatedAt
+        updatedAt: request.updatedAt
+          ? new Date(request.updatedAt.seconds * 1000).toISOString()
+          : new Date().toISOString(),
+        // Safely handle optional lawyerComments and their timestamps
+        lawyerComments: (request.lawyerComments || []).map(c => ({
           ...c,
-          timestamp: new Date(c.timestamp.seconds * 1000).toISOString(),
+          timestamp: c.timestamp 
+            ? new Date(c.timestamp.seconds * 1000).toISOString() 
+            : new Date().toISOString(),
         })),
       };
       
