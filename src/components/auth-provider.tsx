@@ -60,16 +60,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // Handle authenticated users
     if (user) {
       if (isLawyer) {
-        // If lawyer is logged in and not on their panel, redirect them.
-        if (pathname !== '/lawyer-panel') {
-          router.push('/lawyer-panel');
-        }
+        // A lawyer can be anywhere, no forced redirects.
       } else { // Regular user
-        // If a regular user tries to access a lawyer-only page, sign them out and redirect.
+        // If a regular user tries to access a lawyer-only page, redirect them.
         if (pathIsLawyerOnly) {
-          signOut(auth).then(() => {
-            router.push('/');
-          });
+          router.push('/');
         }
         // If a regular user is on a public-only page (e.g. /login), redirect to homepage.
         else if (pathIsPublicOnly) {
@@ -81,14 +76,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     else {
       // If the user is not logged in and tries to access a protected route, redirect to login.
       if (pathIsAuthRequired) {
-        if(pathIsLawyerOnly) {
-            router.push('/login');
-        } else {
-            router.push('/login');
-        }
+        router.push('/login');
       }
     }
-  }, [user, isUserLoading, router, pathname, auth]);
+  }, [user, isUserLoading, router, pathname]);
   
   if (isUserLoading && authRequiredRoutes.some(route => pathname.startsWith(route))) {
     return <LoadingScreen />;

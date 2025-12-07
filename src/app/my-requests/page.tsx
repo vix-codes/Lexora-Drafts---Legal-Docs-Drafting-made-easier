@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useCallback } from "react";
 import { useAuth } from "@/components/auth-provider";
 import { requestVerification } from "@/app/actions";
 import {
@@ -170,7 +170,7 @@ export default function MyRequestsPage() {
       );
   }, [db, user]);
 
-  const { data: allRequests, isLoading: isRequestsLoading } = useCollection<VerificationRequest>(userRequestsQuery);
+  const { data: allRequests, isLoading: isRequestsLoading, forceRefetch } = useCollection<VerificationRequest>(userRequestsQuery);
 
   const activeRequests = useMemo(() => {
     if (!allRequests) return [];
@@ -181,6 +181,13 @@ export default function MyRequestsPage() {
     if (!allRequests) return [];
     return allRequests?.filter(r => r.status === 'approved') ?? [];
   }, [allRequests]);
+
+  const handleResubmitSuccess = useCallback(() => {
+    if (forceRefetch) {
+      forceRefetch();
+    }
+  }, [forceRefetch]);
+
 
   const showLoading = isUserLoading || (user && isRequestsLoading);
   
@@ -222,7 +229,7 @@ export default function MyRequestsPage() {
             {!showLoading && !isFeatureDisabled && activeRequests.length > 0 && (
                 <div className="space-y-4">
                     {activeRequests.map((req) => (
-                        <RequestCard key={req.id} request={req} onResubmit={() => {}} />
+                        <RequestCard key={req.id} request={req} onResubmit={handleResubmitSuccess} />
                     ))}
                 </div>
             )}
