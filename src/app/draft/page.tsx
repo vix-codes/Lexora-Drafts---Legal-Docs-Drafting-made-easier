@@ -92,7 +92,7 @@ export default function DraftPage() {
     <div className="flex flex-col min-h-screen bg-background text-foreground p-4 lg:p-6 space-y-6">
       <form action={formAction}>
         {user && <input type="hidden" name="userId" value={user.uid} />}
-        <Card>
+        <Card className="bg-card border-border shadow-sm">
           <CardHeader>
             <CardTitle className="font-headline flex items-center gap-2">
               <Wand2 className="h-5 w-5 text-primary" />
@@ -155,7 +155,7 @@ export default function DraftPage() {
         </Card>
       </form>
       {(pending || (isDraftVisible && state?.draft)) && (
-        <Card className="flex-1 flex flex-col">
+        <Card className="flex-1 flex flex-col bg-card border-border shadow-sm">
             <DocumentPreview 
               draft={state?.draft} 
               isLoading={pending} 

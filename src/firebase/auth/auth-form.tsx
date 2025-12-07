@@ -118,7 +118,7 @@ export function AuthForm({ mode }: AuthFormProps) {
   return (
     <form onSubmit={handleSubmit(handleAuthAction)} className="space-y-6">
       <div className="space-y-2">
-        <Label htmlFor="email">Email</Label>
+        <Label htmlFor="email" className="text-foreground">Email</Label>
         <Input
           id="email"
           type="email"
@@ -126,11 +126,12 @@ export function AuthForm({ mode }: AuthFormProps) {
           {...register('email')}
           required
           autoComplete="email"
+          className="bg-background border-input text-foreground focus-visible:ring-primary"
         />
         {errors.email && <p className="text-destructive text-sm mt-1">{errors.email.message}</p>}
       </div>
       <div className="space-y-2">
-        <Label htmlFor="password">Password</Label>
+        <Label htmlFor="password" className="text-foreground">Password</Label>
         <Input
           id="password"
           type="password"
@@ -138,6 +139,7 @@ export function AuthForm({ mode }: AuthFormProps) {
           {...register('password')}
           required
           autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
+          className="bg-background border-input text-foreground focus-visible:ring-primary"
         />
         {errors.password && <p className="text-destructive text-sm mt-1">{errors.password.message}</p>}
       </div>

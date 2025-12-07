@@ -1,3 +1,4 @@
+
 'use client';
 
 import Link from 'next/link';
@@ -8,7 +9,7 @@ import type { ReactNode } from 'react';
 
 export default function LoginForm({ children }: { children: ReactNode }) {
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center p-4 bg-background">
+    <div className="flex min-h-screen flex-col items-center justify-center p-4 bg-background text-foreground">
         <div className="absolute top-6 left-6 flex items-center gap-3">
             <Logo className="h-8 w-8 text-primary" />
             <h1 className="font-headline text-2xl font-semibold tracking-tight">lexintel</h1>
