@@ -206,13 +206,13 @@ export async function addLawyerComment(
   requestId: string,
   commentText: string
 ): Promise<{ success: boolean; error?: string }> {
-  if (!requestId || !commentText) {
-    return { success: false, error: 'Request ID and comment are required.' };
-  }
-
   const adminApp = createServerClient();
   if (!adminApp) {
     return { success: false, error: PREVIEW_ENV_ERROR };
+  }
+
+  if (!requestId || !commentText) {
+    return { success: false, error: 'Request ID and comment are required.' };
   }
 
   try {
@@ -250,13 +250,13 @@ export async function approveRequest(
   requestId: string,
   requestData: ApproveRequestData
 ): Promise<{ success: boolean; error?: string }> {
-    if (!requestId || !requestData) {
-        return { success: false, error: 'Request ID and data are required.' };
-    }
-
     const adminApp = createServerClient();
     if (!adminApp) {
         return { success: false, error: PREVIEW_ENV_ERROR };
+    }
+
+    if (!requestId || !requestData) {
+        return { success: false, error: 'Request ID and data are required.' };
     }
 
     try {
@@ -312,13 +312,13 @@ export async function approveRequest(
 export async function getUserRequests(
   userId: string
 ): Promise<any[] | null> {
-  if (!userId) return [];
-
   const adminApp = createServerClient();
   if (!adminApp) {
     console.warn("Admin SDK disabled in preview environment. Returning null for user requests.");
     return null;
   }
+  
+  if (!userId) return [];
 
   try {
     const db = getAdminFirestore(adminApp);
@@ -351,16 +351,16 @@ export async function getUserRequests(
 }
 
 export async function getUserProfiles(userIds: string[]): Promise<Record<string, string> | null> {
-  if (!userIds || userIds.length === 0) {
-    return {};
-  }
-  
   const adminApp = createServerClient();
   if (!adminApp) {
     console.warn("Admin SDK disabled in preview environment. Returning null for user profiles.");
     return null;
   }
 
+  if (!userIds || userIds.length === 0) {
+    return {};
+  }
+  
   try {
     const db = getAdminFirestore(adminApp);
     const usersRef = db.collection('users');
@@ -386,5 +386,3 @@ export async function getUserProfiles(userIds: string[]): Promise<Record<string,
     return {};
   }
 }
-
-    
