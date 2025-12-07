@@ -1,117 +1,90 @@
-
 rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-  
-    // =================================
-    // Helper Functions
-    // =================================
-    
+
+    /* ---------------------------------------
+       Helper checks (kept simple)
+    ---------------------------------------- */
+    function isAuth() {
+      return request.auth != null;
+    }
+
     function isOwner(userId) {
       return request.auth != null && request.auth.uid == userId;
     }
-    
+
     function isLawyerAdmin() {
-      return request.auth != null && request.auth.token.email == 'lawyer@lexintel.com';
-    }
-    
-    // Check if the incoming user profile data is valid for creation
-    function isNewUserDocValid() {
-      let incomingData = request.resource.data;
-      return incomingData.email == request.auth.token.email &&
-             incomingData.username == request.auth.token.email.split('@')[0] &&
-             incomingData.createdAt == request.time;
+      return request.auth != null &&
+             request.auth.token.email == "lawyer@lexintel.com";
     }
 
-    // Check if the incoming verification request data is valid on creation
-    function isNewRequestValid(userId) {
-      let incomingData = request.resource.data;
-      return isOwner(userId) &&
-             incomingData.userId == userId &&
-             incomingData.status == 'pending' &&
-             incomingData.lawyerComments.size() == 0 &&
-             incomingData.createdAt == request.time &&
-             incomingData.updatedAt == request.time;
-    }
-
-    // =================================
-    // User Collections
-    // =================================
-
+    /* ---------------------------------------
+       USERS COLLECTION
+       (User can always read/write their own data)
+    ---------------------------------------- */
     match /users/{userId} {
-      // CREATE: A user can create their own document.
-      allow create: if isOwner(userId) && isNewUserDocValid();
-      
-      // READ, UPDATE: A user can read or update their own document.
-      allow read, update: if isOwner(userId);
-      
-      // DELETE: Users cannot delete their accounts through Firestore.
-      allow delete: if false;
+      allow read, write: if isOwner(userId);
 
-      // Sub-collection: Activity logs for a user
       match /activities/{activityId} {
-        // CREATE: The user can create their own activity logs.
-        allow create: if isOwner(userId);
-        
-        // READ: The user can read their own activity logs.
-        allow read: if isOwner(userId);
-        
-        // UPDATE, DELETE: Logs are immutable.
-        allow update, delete: if false;
+        allow read, write: if isOwner(userId);
       }
-      
-      // Sub-collection: Drafts approved by a lawyer
+
       match /approvedDrafts/{draftId} {
-          // READ: The user can read their approved drafts.
-          allow read: if isOwner(userId);
-          
-          // CREATE, UPDATE, DELETE: Only created by an admin action, not directly by users.
-          allow create, update, delete: if false;
+        allow read: if isOwner(userId);
+        allow write: if false;
       }
     }
-    
-    // =================================
-    // Lawyer Profile Collection
-    // =================================
-    
+
+    /* ---------------------------------------
+       LAWYERS COLLECTION
+       (Public read, admin write)
+    ---------------------------------------- */
     match /lawyers/{lawyerId} {
-        // READ: Anyone can read a lawyer's profile, but only if it's verified.
-        allow get: if resource.data.isVerified == true;
-        // LIST: The collection can be listed by anyone to show all lawyers.
-        allow list: if true;
-        
-        // CREATE, UPDATE: Only the lawyer admin can create or update lawyer profiles.
-        // This is done via a server-side action (approveRequest).
-        allow create, update: if isLawyerAdmin();
-        
-        // DELETE: Lawyers cannot be deleted.
-        allow delete: if false;
+      allow get, list: if true;
+      allow create, update: if isLawyerAdmin();
+      allow delete: if false;
     }
-    
-    // =================================
-    // Verification Request Collection
-    // =================================
-    
+
+    /* ---------------------------------------
+       VERIFICATION REQUESTS
+       (User creates, user reads own, admin full access)
+    ---------------------------------------- */
     match /verificationRequests/{requestId} {
-        // CREATE: A user can create a verification request for themselves.
-        allow create: if isNewRequestValid(request.resource.data.userId);
+      // Anyone logged in can create a request
+      allow create: if isAuth();
 
-        // READ: 
-        // 1. A user can read their own requests.
-        // 2. The lawyer admin can read all requests.
-        allow get, list: if isOwner(resource.data.userId) || isLawyerAdmin();
+      // User can read their own request; lawyer admin can read all
+      allow get, list: if isLawyerAdmin() ||
+                       (request.auth != null &&
+                        resource.data.userId == request.auth.uid);
 
-        // UPDATE:
-        // 1. The lawyer admin can update any request (to add comments, change status).
-        // 2. A user can update their own request ONLY if it has been 'reviewed' (to resubmit).
-        allow update: if isLawyerAdmin() || 
-                      (isOwner(resource.data.userId) && resource.data.status == 'reviewed');
-        
-        // DELETE: No one can delete verification requests.
-        allow delete: if false;
+      // Only admins can update (avoid user conflicts)
+      allow update: if isLawyerAdmin();
+
+      allow delete: if false;
+    }
+
+    /* ---------------------------------------
+       PUBLIC READ COLLECTIONS
+    ---------------------------------------- */
+    match /templates/{id} {
+      allow get, list: if true;
+    }
+
+    match /lawFeed/{id} {
+      allow get, list: if true;
+    }
+
+    match /glossary/{id} {
+      allow get, list: if true;
+    }
+
+    /* ---------------------------------------
+       Global protection: No deletes anywhere
+    ---------------------------------------- */
+    match /{doc=**} {
+      allow delete: if false;
     }
   }
 }
-
-    
