@@ -25,6 +25,7 @@ type VerificationRequest = {
   documentType: string;
   status: 'pending' | 'reviewed' | 'approved';
   createdAt: { seconds: number; nanoseconds: number };
+  updatedAt?: { seconds: number; nanoseconds: number };
   draftContent: string;
   formInputs: Record<string, any>;
   lawyerComments: { text: string; timestamp: { seconds: number, nanoseconds: number } }[];
@@ -78,7 +79,6 @@ export function LawyerRequestDetails({ request, username, isOpen, onOpenChange }
       const serializableRequest = {
         ...request,
         createdAt: new Date(request.createdAt.seconds * 1000).toISOString(),
-        // @ts-ignore
         updatedAt: request.updatedAt ? new Date(request.updatedAt.seconds * 1000).toISOString() : new Date().toISOString(),
         lawyerComments: request.lawyerComments.map(c => ({
           ...c,
