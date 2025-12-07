@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo, useState, useEffect } from 'react';
-import { collection, query, orderBy, getFirestore, where } from 'firebase/firestore';
+import { collection, query, orderBy, getFirestore } from 'firebase/firestore';
 import { app } from '@/firebase/client';
 import { useCollection, type WithId } from '@/firebase/firestore/use-collection';
 import Header from '@/components/header';
@@ -86,47 +86,40 @@ export default function LawyerPanelPage() {
   const [userProfiles, setUserProfiles] = useState<Record<string, string>>({});
   const isLawyer = !isUserLoading && user?.email === 'lawyer@lexintel.com';
 
-  const activeRequestsQuery = useMemo(() => {
+  const allRequestsQuery = useMemo(() => {
     if (isUserLoading || !isLawyer) return null;
     return query(
         collection(db, 'verificationRequests'), 
-        where('status', 'in', ['pending', 'reviewed']),
         orderBy('createdAt', 'desc')
     );
   }, [db, isUserLoading, isLawyer]);
 
-  const approvedRequestsQuery = useMemo(() => {
-    if (isUserLoading || !isLawyer) return null;
-    return query(
-        collection(db, 'verificationRequests'), 
-        where('status', '==', 'approved'),
-        orderBy('createdAt', 'desc')
-    );
-  }, [db, isUserLoading, isLawyer]);
-
-  const { data: activeRequestsData, isLoading: isLoadingActive } = useCollection<VerificationRequest>(activeRequestsQuery);
-  const { data: approvedRequests, isLoading: isLoadingApproved } = useCollection<VerificationRequest>(approvedRequestsQuery);
+  const { data: allRequestsData, isLoading } = useCollection<VerificationRequest>(allRequestsQuery);
 
   const activeRequests = useMemo(() => {
-    if (!activeRequestsData) return [];
-    // Sort so 'reviewed' items appear before 'pending' items.
-    return [...activeRequestsData].sort((a, b) => {
+    if (!allRequestsData) return [];
+    return allRequestsData
+      .filter(r => r.status === 'pending' || r.status === 'reviewed')
+      .sort((a, b) => {
         if (a.status === 'reviewed' && b.status !== 'reviewed') return -1;
         if (a.status !== 'reviewed' && b.status === 'reviewed') return 1;
         return (b.createdAt?.seconds ?? 0) - (a.createdAt?.seconds ?? 0);
-    });
-  }, [activeRequestsData]);
+      });
+  }, [allRequestsData]);
 
+  const approvedRequests = useMemo(() => {
+    if (!allRequestsData) return [];
+    return allRequestsData.filter(r => r.status === 'approved');
+  }, [allRequestsData]);
 
   useEffect(() => {
-    const allRequests = [...(activeRequests || []), ...(approvedRequests || [])];
-    if (allRequests.length > 0) {
-        const userIds = [...new Set(allRequests.map(r => r.userId))];
+    if (allRequestsData && allRequestsData.length > 0) {
+        const userIds = [...new Set(allRequestsData.map(r => r.userId))];
         getUserProfiles(userIds).then(profiles => {
             setUserProfiles(profiles);
         });
     }
-  }, [activeRequests, approvedRequests]);
+  }, [allRequestsData]);
   
   if (!isUserLoading && !isLawyer) {
       return (
@@ -141,7 +134,7 @@ export default function LawyerPanelPage() {
       );
   }
 
-  const effectiveIsLoading = isUserLoading || isLoadingActive || isLoadingApproved;
+  const effectiveIsLoading = isUserLoading || isLoading;
 
   return (
     <div className="flex flex-col min-h-screen bg-background text-foreground">
