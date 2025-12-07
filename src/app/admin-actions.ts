@@ -5,7 +5,9 @@ import { createServerClient } from '@/firebase/server-client';
 import { getFirestore as getAdminFirestore, FieldValue } from 'firebase-admin/firestore';
 import type { App } from 'firebase-admin/app';
 
-const PREVIEW_ENV_ERROR = 'This feature is not available in the preview environment. Please deploy your application to use this function.';
+const PROD_INIT_ERROR = 'Failed to initialize server functionality due to a configuration issue. Check server logs.';
+const PREVIEW_ENV_ERROR = 'This feature is not available in the preview environment. Deploy to a live environment to use this function.';
+
 
 // Initialize Admin SDK once at the module level.
 let adminApp: App | null = null;
@@ -17,13 +19,13 @@ try {
   if (adminApp) {
     adminDb = getAdminFirestore(adminApp);
   } else {
-    // This case handles when createServerClient returns null (e.g., missing env vars)
-    initializationError = PREVIEW_ENV_ERROR;
+    // Determine the appropriate error message based on the environment.
+    initializationError = process.env.NODE_ENV === 'production' ? PROD_INIT_ERROR : PREVIEW_ENV_ERROR;
   }
 } catch (e: any) {
     // This case handles any unexpected exception during initialization.
     console.error("CRITICAL: Failed to initialize Firebase Admin SDK in admin-actions.ts", e);
-    initializationError = e.message || 'Failed to initialize server functionality.';
+    initializationError = e.message || 'A critical server error occurred during initialization.';
 }
 
 
@@ -42,9 +44,14 @@ function withAdmin<T extends (...args: any[]) => Promise<any>>(
     // This guard is the most important part. It runs on every call.
     if (initializationError || !adminDb) {
       console.warn(`Admin action blocked: ${initializationError}`);
-      // This is a generic way to return an error that should work for most of our actions.
-      // It assumes actions return an object with `success` and `error` or an array.
-      // You might need to adjust this if your actions have different return types.
+
+      const funcName = fn.name || '';
+      // For functions that are expected to return an array, return an empty array on failure.
+      if (funcName.toLowerCase().includes('get') && (funcName.toLowerCase().includes('requests') || funcName.toLowerCase().includes('profiles'))) {
+         return [] as Awaited<ReturnType<T>>;
+      }
+
+      // For other functions, return a standard error object.
       return { success: false, error: initializationError } as Awaited<ReturnType<T>>;
     }
     // If the check passes, execute the original function with the db instance.
@@ -169,24 +176,32 @@ export const getUserRequests = withAdmin(async(db, userId: string): Promise<any[
 });
 
 export const getUserProfiles = withAdmin(async (db, userIds: string[]): Promise<Record<string, string>> => {
+  const profiles: Record<string, string> = {};
   if (!userIds || userIds.length === 0) {
-    return {};
+    return profiles;
   }
   try {
     const usersRef = db.collection('users');
+    // Firestore 'in' queries are limited to 30 elements. 
+    // We don't expect more here, but in a real-world scenario, this would need chunking.
     const q = usersRef.where('__name__', 'in', userIds);
     const snapshot = await q.get();
-    if (snapshot.empty) return {};
-    const profiles: Record<string, string> = {};
+    
+    if (snapshot.empty) {
+      return profiles;
+    }
+
     snapshot.docs.forEach(doc => {
       profiles[doc.id] = doc.data()?.username || 'Unknown User';
     });
     return profiles;
   } catch (err) {
     console.error('Error fetching user profiles:', err);
-    return {};
+    // Return an empty object on error to ensure a consistent return type.
+    return profiles;
   }
 });
+
 
 // A new safe wrapper that also handles array return types
 function withAdminSafe<T extends (...args: any[]) => Promise<any>>(
