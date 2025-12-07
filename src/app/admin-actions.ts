@@ -5,22 +5,19 @@ import { createServerClient } from '@/firebase/server-client';
 import { getFirestore as getAdminFirestore, FieldValue } from 'firebase-admin/firestore';
 import type { App } from 'firebase-admin/app';
 
-const PROD_INIT_ERROR = 'Failed to initialize server functionality due to a configuration issue. Check server logs.';
-const PREVIEW_ENV_ERROR = 'This feature is not available in the preview environment. Deploy to a live environment to use this function.';
-
-
 // Initialize Admin SDK once at the module level.
 let adminApp: App | null = null;
 let adminDb: ReturnType<typeof getAdminFirestore> | null = null;
 let initializationError: string | null = null;
 
 try {
-  adminApp = createServerClient();
-  if (adminApp) {
+  const result = createServerClient();
+  if (result.app) {
+    adminApp = result.app;
     adminDb = getAdminFirestore(adminApp);
   } else {
-    // Determine the appropriate error message based on the environment.
-    initializationError = process.env.NODE_ENV === 'production' ? PROD_INIT_ERROR : PREVIEW_ENV_ERROR;
+    // The createServerClient function now returns a specific error message.
+    initializationError = result.error;
   }
 } catch (e: any) {
     // This case handles any unexpected exception during initialization.
