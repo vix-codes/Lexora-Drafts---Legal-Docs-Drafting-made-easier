@@ -60,7 +60,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // Handle authenticated users
     if (user) {
       if (isLawyer) {
-        // A lawyer can be anywhere, no forced redirects.
+        // If lawyer logs in, redirect from login/signup to the lawyer panel.
+        if (pathIsPublicOnly) {
+          router.push('/lawyer-panel');
+        }
       } else { // Regular user
         // If a regular user tries to access a lawyer-only page, redirect them.
         if (pathIsLawyerOnly) {
