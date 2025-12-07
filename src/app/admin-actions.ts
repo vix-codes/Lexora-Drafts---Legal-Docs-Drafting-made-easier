@@ -7,7 +7,7 @@ import type { App } from 'firebase-admin/app';
 
 const PREVIEW_ENV_ERROR = 'This feature is not available in the preview environment. Please deploy your application to use this function.';
 
-// Initialize Admin SDK once
+// Initialize Admin SDK once at the module level.
 let adminApp: App | null = null;
 let adminDb: ReturnType<typeof getAdminFirestore> | null = null;
 let initializationError: string | null = null;
@@ -17,25 +17,44 @@ try {
   if (adminApp) {
     adminDb = getAdminFirestore(adminApp);
   } else {
+    // This case handles when createServerClient returns null (e.g., missing env vars)
     initializationError = PREVIEW_ENV_ERROR;
   }
 } catch (e: any) {
+    // This case handles any unexpected exception during initialization.
     console.error("CRITICAL: Failed to initialize Firebase Admin SDK in admin-actions.ts", e);
     initializationError = e.message || 'Failed to initialize server functionality.';
 }
 
 
-// Wrapper function to check for initialization status
-function withAdmin<T extends (...args: any[]) => Promise<any>>(fn: (db: ReturnType<typeof getAdminFirestore>, ...args: Parameters<T>) => ReturnType<T>) {
+/**
+ * A higher-order function that wraps an admin action.
+ * It checks for the Admin SDK initialization status before executing the action.
+ * If the SDK is not available, it returns a consistent error object, preventing crashes.
+ *
+ * @param fn The admin action function to wrap.
+ * @returns An async function that is safe to call from components.
+ */
+function withAdmin<T extends (...args: any[]) => Promise<any>>(
+  fn: (db: ReturnType<typeof getAdminFirestore>, ...args: Parameters<T>) => ReturnType<T>
+) {
   return async function(...args: Parameters<T>): Promise<Awaited<ReturnType<T>>> {
+    // This guard is the most important part. It runs on every call.
     if (initializationError || !adminDb) {
-      // Ensure a consistent error object structure for all functions
+      console.warn(`Admin action blocked: ${initializationError}`);
+      // This is a generic way to return an error that should work for most of our actions.
+      // It assumes actions return an object with `success` and `error` or an array.
+      // You might need to adjust this if your actions have different return types.
       return { success: false, error: initializationError } as Awaited<ReturnType<T>>;
     }
+    // If the check passes, execute the original function with the db instance.
     return fn(adminDb, ...args);
   };
 }
 
+
+// --- EXPORTED ADMIN ACTIONS ---
+// Each action is now wrapped with the `withAdmin` guard.
 
 export const addLawyerComment = withAdmin(async (
   db,
@@ -123,7 +142,7 @@ export const approveRequest = withAdmin(async (
 });
 
 
-export const getUserRequests = withAdmin(async(db, userId: string): Promise<any[] | null> => {
+export const getUserRequests = withAdmin(async(db, userId: string): Promise<any[]> => {
   if (!userId) return [];
   try {
     const requestsRef = db.collection('verificationRequests');
@@ -149,7 +168,7 @@ export const getUserRequests = withAdmin(async(db, userId: string): Promise<any[
   }
 });
 
-export const getUserProfiles = withAdmin(async (db, userIds: string[]): Promise<Record<string, string> | null> => {
+export const getUserProfiles = withAdmin(async (db, userIds: string[]): Promise<Record<string, string>> => {
   if (!userIds || userIds.length === 0) {
     return {};
   }
@@ -168,3 +187,24 @@ export const getUserProfiles = withAdmin(async (db, userIds: string[]): Promise<
     return {};
   }
 });
+
+// A new safe wrapper that also handles array return types
+function withAdminSafe<T extends (...args: any[]) => Promise<any>>(
+  fn: (db: ReturnType<typeof getAdminFirestore>, ...args: Parameters<T>) => ReturnType<T>
+) {
+  return async function(...args: Parameters<T>): Promise<Awaited<ReturnType<T>>> {
+    if (initializationError || !adminDb) {
+      console.warn(`Admin action blocked: ${initializationError}`);
+      
+      // Attempt to infer return type. If it's likely an array, return []. Otherwise, return error object.
+      // This is a heuristic and might need refinement. For now, we check the function name.
+      const funcName = fn.name;
+      if (funcName.toLowerCase().includes('get') && (funcName.toLowerCase().includes('requests') || funcName.toLowerCase().includes('profiles'))) {
+         return [] as Awaited<ReturnType<T>>;
+      }
+
+      return { success: false, error: initializationError } as Awaited<ReturnType<T>>;
+    }
+    return fn(adminDb, ...args);
+  };
+}
