@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { useEffect, useState, useMemo, useCallback } from "react";
@@ -76,7 +77,6 @@ function RequestCard({ request, onResubmit }: { request: WithId<VerificationRequ
         status: 'pending', // Reset status to pending
         updatedAt: serverTimestamp(),
         lawyerNotification: '', // Clear old notification
-        lawyerComments: request.lawyerComments, // Keep old comments for history
       });
 
       toast({ title: "Resubmitted Successfully", description: "Your updated draft has been sent for review." });
@@ -250,3 +250,5 @@ export default function MyRequestsPage() {
     </div>
   );
 }
+
+    
