@@ -157,18 +157,6 @@ function RequestCard({ request, onResubmit }: { request: WithId<VerificationRequ
   );
 }
 
-function AdminSdkDisabledWarning() {
-    return (
-        <div className="text-center py-12 text-yellow-500 border-2 border-dashed border-yellow-500/50 rounded-lg bg-yellow-500/10">
-            <AlertTriangle className="mx-auto h-10 w-10 mb-4" />
-            <p className="font-semibold">Feature Disabled in Preview</p>
-            <p className="text-sm max-w-md mx-auto">
-                This feature requires server functions that are not available in this preview environment. Please deploy your application to use this feature.
-            </p>
-        </div>
-    );
-}
-
 export default function MyRequestsPage() {
   const { user, isUserLoading } = useAuth();
   const db = getFirestore(app);
@@ -202,8 +190,6 @@ export default function MyRequestsPage() {
 
 
   const showLoading = isUserLoading || (user && isRequestsLoading);
-  // This is the key change: Detect if the error is a permission error from the hook.
-  const isFeatureDisabled = error?.name === 'FirebaseError' && error?.message.includes('Missing or insufficient permissions');
 
   return (
     <div className="flex flex-col min-h-screen bg-background text-foreground">
@@ -221,18 +207,14 @@ export default function MyRequestsPage() {
           </CardHeader>
 
           <CardContent className="space-y-6">
-            {showLoading && !isFeatureDisabled && (
+            {showLoading && (
               <div className="space-y-4">
                 <Skeleton className="h-32 w-full" />
                 <Skeleton className="h-32 w-full" />
               </div>
             )}
             
-            {isFeatureDisabled && (
-              <AdminSdkDisabledWarning />
-            )}
-
-            {!showLoading && !isFeatureDisabled && activeRequests.length > 0 && (
+            {!showLoading && activeRequests.length > 0 && (
                 <div className="space-y-4">
                     {activeRequests.map((req) => (
                         <RequestCard key={req.id} request={req} onResubmit={handleResubmitSuccess} />
@@ -240,7 +222,7 @@ export default function MyRequestsPage() {
                 </div>
             )}
             
-            {!showLoading && !isFeatureDisabled && activeRequests.length === 0 && approvedRequests.length === 0 && (
+            {!showLoading && activeRequests.length === 0 && approvedRequests.length === 0 && (
               <div className="text-center py-12 text-muted-foreground border-2 border-dashed rounded-lg">
                 <p className="font-semibold">No Active Requests</p>
                 <p className="text-sm">
@@ -249,7 +231,7 @@ export default function MyRequestsPage() {
               </div>
             )}
 
-            {!showLoading && !isFeatureDisabled && approvedRequests.length > 0 && (
+            {!showLoading && approvedRequests.length > 0 && (
                 <PreviouslyApprovedRequests requests={approvedRequests} />
             )}
 

@@ -15,7 +15,6 @@ import { Button } from '@/components/ui/button';
 import { Briefcase, CheckCircle, Clock, MessageSquare, User, AlertTriangle } from 'lucide-react';
 import { useAuth } from '@/components/auth-provider';
 import { PreviouslyApprovedRequests } from '@/components/previously-approved-requests';
-import { getUserProfiles } from '@/app/actions';
 import { documentTemplates } from '@/lib/data';
 
 type VerificationRequest = {
@@ -80,24 +79,10 @@ function VerificationRequestCard({ request, username }: { request: WithId<Verifi
     );
 }
 
-function AdminSdkDisabledWarning() {
-    return (
-        <div className="text-center py-12 text-yellow-500 border-2 border-dashed border-yellow-500/50 rounded-lg bg-yellow-500/10">
-            <AlertTriangle className="mx-auto h-10 w-10 mb-4" />
-            <p className="font-semibold">Feature Disabled in Preview</p>
-            <p className="text-sm max-w-md mx-auto">
-                The Lawyer Panel requires server functions that are not available in this preview environment. Please deploy your application to a hosting provider to use this feature.
-            </p>
-        </div>
-    );
-}
-
 export default function LawyerPanelPage() {
   const { user, isUserLoading } = useAuth();
   const db = getFirestore(app);
   
-  const [userProfiles, setUserProfiles] = useState<Record<string, string> | null>({});
-
   const allRequestsQuery = useMemo(() => {
     // CRITICAL: Only construct the query if the user is loaded and is the admin lawyer.
     // This prevents unauthorized queries from ever being created.
@@ -128,14 +113,6 @@ export default function LawyerPanelPage() {
     return allRequestsData.filter(r => r.status === 'approved');
   }, [allRequestsData]);
 
-  useEffect(() => {
-    if (allRequestsData && allRequestsData.length > 0 && userProfiles !== null) {
-        const userIds = [...new Set(allRequestsData.map(r => r.userId))];
-        getUserProfiles(userIds).then(profiles => {
-            setUserProfiles(profiles); 
-        });
-    }
-  }, [allRequestsData, userProfiles]);
   
   if (isUserLoading) {
       return (
@@ -166,8 +143,14 @@ export default function LawyerPanelPage() {
       );
   }
 
-  // Handle cases where Admin SDK might be disabled in preview environments.
-  const isAdminSdkDisabled = userProfiles === null || (error && error.message.includes('permission'));
+  const userProfiles: Record<string, string> = {};
+  if (allRequestsData) {
+      for (const req of allRequestsData) {
+          if (!userProfiles[req.userId]) {
+              userProfiles[req.userId] = req.formInputs?.username || req.formInputs?.name || req.userId;
+          }
+      }
+  }
 
   return (
     <div className="flex flex-col min-h-screen bg-background text-foreground">
@@ -182,7 +165,7 @@ export default function LawyerPanelPage() {
                 <CardDescription>Review and manage all user-submitted draft verification requests.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
-                 {isLoading && !isAdminSdkDisabled && (
+                 {isLoading && (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                         <Skeleton className="h-48 w-full" />
                         <Skeleton className="h-48 w-full" />
@@ -190,23 +173,21 @@ export default function LawyerPanelPage() {
                     </div>
                  )}
 
-                 {isAdminSdkDisabled && <AdminSdkDisabledWarning />}
-
-                 {!isLoading && !isAdminSdkDisabled && activeRequests && activeRequests.length > 0 && userProfiles && (
+                 {!isLoading && activeRequests && activeRequests.length > 0 && (
                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                         {activeRequests.map(request => (
                             <VerificationRequestCard key={request.id} request={request} username={userProfiles[request.userId] || '...'} />
                         ))}
                      </div>
                  )}
-                 {!isLoading && !isAdminSdkDisabled && (!activeRequests || activeRequests.length === 0) && (
+                 {!isLoading && (!activeRequests || activeRequests.length === 0) && (
                     <div className="text-center py-12 text-muted-foreground border-2 border-dashed rounded-lg">
                         <p className="font-semibold">No Active Requests</p>
                         <p>There are currently no pending or reviewed requests.</p>
                     </div>
                  )}
 
-                {!isLoading && !isAdminSdkDisabled && approvedRequests && approvedRequests.length > 0 && userProfiles && (
+                {!isLoading && approvedRequests && approvedRequests.length > 0 && (
                     <PreviouslyApprovedRequests requests={approvedRequests} profiles={userProfiles} />
                 )}
 
