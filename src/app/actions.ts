@@ -1,9 +1,10 @@
+
 'use server';
 
 import { generateLegalDraft } from '@/ai/flows/generate-legal-draft';
 import { answerLegalQuery, type LegalQueryOutput } from '@/ai/flows/answer-legal-query';
 import {
-  getFirestore,
+  getFirestore as getClientFirestore,
   collection,
   addDoc,
   serverTimestamp as clientServerTimestamp,
@@ -27,7 +28,7 @@ function getFirebaseApp(): FirebaseApp {
 }
 
 /* _-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-*/
-/* _-_-_-_-_-_-_-_-_-_-_-_-_-  GENERATE DRAFT   -_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_*/
+/* _-_-_-_-_-_-_-_-_-_-_-_-  GENERATE DRAFT   -_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_*/
 
 type DraftState = {
   draft?: string;
@@ -54,7 +55,7 @@ export const generateDraft = async (
     if (userId) {
       try {
         const app = getFirebaseApp();
-        const db = getFirestore(app);
+        const db = getClientFirestore(app);
         const activitiesRef = collection(db, 'users', userId, 'activities');
 
         const docLabel =
@@ -129,7 +130,7 @@ export async function requestVerification(
 
   try {
     const app = getFirebaseApp();
-    const db = getFirestore(app);
+    const db = getClientFirestore(app);
     const requestsRef = collection(db, 'verificationRequests');
 
     const requestData = {
@@ -167,7 +168,7 @@ export async function requestLawyerVerification(
 
     try {
         const app = getFirebaseApp();
-        const db = getFirestore(app);
+        const db = getClientFirestore(app);
         const requestsRef = collection(db, 'verificationRequests');
 
         // Create a document that contains all the profile info for the admin to review
@@ -201,7 +202,7 @@ Bio: ${profileData.description}`,
 
 
 /* _-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-*/
-/* _-_-_-_-_-_-_-_-_-_-_-  LAWYER ACTIONS   -_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_*/
+/* _-_-_-_-_-_-_-_-_-_-_-_-  LAWYER ACTIONS   -_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_*/
 
 export async function addLawyerComment(
   requestId: string,
@@ -380,3 +381,5 @@ export async function getUserProfiles(userIds: string[]): Promise<Record<string,
     return {};
   }
 }
+
+    
