@@ -7,14 +7,19 @@ type ServerClientResult = {
   error: string | null;
 };
 
-const PREVIEW_ERROR_MSG = "Admin SDK is not available in the preview environment. This is expected and not a bug. Admin actions will be disabled.";
+const PREVIEW_ERROR_MSG = "Admin actions are not available in this preview environment. This is expected and not a bug.";
+
+function isPreviewMode() {
+  return Boolean(
+    process.env.FIREBASE_EMULATOR_HUB ||      // Firestore emulator
+    process.env.FIREBASE_FIRESTORE_DT ||     // Studio preview runtime
+    process.env.FUNCTIONS_EMULATOR           // Functions emulator
+  );
+}
 
 export function createServerClient(): ServerClientResult {
-  // Firebase Studio/emulators set specific environment variables.
-  // Check for these to determine if we are in a preview environment.
-  const isStudioPreview = !!(process.env.FIREBASE_EMULATOR_HUB || process.env.FIREBASE_FIRESTORE_DT || process.env.FUNCTIONS_EMULATOR);
-
-  if (isStudioPreview) {
+  // Case 1: Running in a preview/emulator environment
+  if (isPreviewMode()) {
     console.warn(PREVIEW_ERROR_MSG);
     return { app: null, error: PREVIEW_ERROR_MSG };
   }
@@ -24,27 +29,26 @@ export function createServerClient(): ServerClientResult {
   if (existingApp) {
     return { app: existingApp, error: null };
   }
+  
+  // Case 2: Missing credentials in a non-preview environment
+  const projectId = process.env.FIREBASE_PROJECT_ID;
+  const clientEmail = process.env.FIREBASE_CLIENT_EMAIL;
+  let privateKey = process.env.FIREBASE_PRIVATE_KEY;
+  
+  const missingVars: string[] = [];
+  if (!projectId) missingVars.push('FIREBASE_PROJECT_ID');
+  if (!clientEmail) missingVars.push('FIREBASE_CLIENT_EMAIL');
+  if (!privateKey) missingVars.push('FIREBASE_PRIVATE_KEY');
 
+  if (missingVars.length > 0) {
+      const errorMessage = `Failed to initialize Admin SDK: Missing environment variables [${missingVars.join(', ')}]. Please configure them in your deployment settings.`;
+      console.error(errorMessage);
+      return { app: null, error: errorMessage };
+  }
+
+
+  // Case 3: Initialize Admin SDK normally (Vercel, etc.)
   try {
-    const projectId = process.env.FIREBASE_PROJECT_ID;
-    const clientEmail = process.env.FIREBASE_CLIENT_EMAIL;
-    let privateKey = process.env.FIREBASE_PRIVATE_KEY;
-
-    // Check for missing variables and construct a specific error message.
-    const missingVars: string[] = [];
-    if (!projectId) missingVars.push('FIREBASE_PROJECT_ID');
-    if (!clientEmail) missingVars.push('FIREBASE_CLIENT_EMAIL');
-    if (!privateKey) missingVars.push('FIREBASE_PRIVATE_KEY');
-    
-    if (missingVars.length > 0) {
-        const errorMessage = `Failed to initialize Admin SDK: Missing environment variables [${missingVars.join(', ')}]. Please configure them in your deployment settings.`;
-        console.error(errorMessage);
-        return { app: null, error: errorMessage };
-    }
-
-    // When storing multiline strings in environment variables, newline characters
-    // are often escaped. This line replaces the escaped `\\n` with actual newline
-    // characters `\n` to ensure the private key is parsed correctly.
     privateKey = privateKey.replace(/\\n/g, '\n');
 
     const app = initializeApp(
@@ -62,9 +66,6 @@ export function createServerClient(): ServerClientResult {
   } catch (error: any) {
       const errorMessage = `Failed to parse Admin SDK credentials. Ensure the private key is correctly formatted. Error: ${error.message}`;
       console.error(errorMessage);
-      // If initialization fails for any reason (e.g., invalid key), return the specific error.
       return { app: null, error: errorMessage };
   }
 }
-
-    
