@@ -11,9 +11,11 @@ import { Badge } from "./ui/badge";
 import { formatDistanceToNow } from "date-fns";
 import { documentTemplates } from "@/lib/data";
 import type { WithId } from "@/firebase/firestore/use-collection";
+import { cn } from "@/lib/utils";
 
 type VerificationRequest = {
   documentType: string;
+  status: 'approved' | 'rejected';
   updatedAt: { seconds: number; nanoseconds: number; };
   type?: 'document' | 'lawyer';
   // This is a partial type; other properties exist on the actual object.
@@ -32,18 +34,22 @@ function getDocumentLabel(docValue: string) {
 }
 
 export function PreviouslyApprovedRequests({ requests, profiles }: PreviouslyApprovedRequestsProps) {
+  const sortedRequests = requests.sort((a, b) => b.updatedAt.seconds - a.updatedAt.seconds);
+  const title = profiles ? `Previously Completed (${requests.length})` : `My Past Submissions (${requests.length})`;
+
   return (
     <div className="pt-6">
       <Accordion type="single" collapsible defaultValue="item-1">
         <AccordionItem value="item-1" className="border-b-0">
           <AccordionTrigger>
-            <h3 className="text-lg font-semibold text-foreground">Previously Approved ({requests.length})</h3>
+            <h3 className="text-lg font-semibold text-foreground">{title}</h3>
           </AccordionTrigger>
           <AccordionContent>
             <div className="space-y-4 pt-4">
-              {requests.map((request) => {
+              {sortedRequests.map((request) => {
                 const documentLabel = getDocumentLabel(request.documentType);
                 const username = profiles && request.userId ? profiles[request.userId] : 'A user';
+                const isApproved = request.status === 'approved';
                 return (
                     <div key={request.id} className="border border-border p-4 rounded-lg bg-muted/50">
                         <div className="flex justify-between items-start">
@@ -52,13 +58,15 @@ export function PreviouslyApprovedRequests({ requests, profiles }: PreviouslyApp
                                 {profiles ? (
                                     <p className="text-sm text-muted-foreground">{`Submitted by: ${username}`}</p>
                                 ) : (
-                                   request.type === 'lawyer' && <p className="text-sm text-muted-foreground">Your professional profile is now active.</p>
+                                   request.type === 'lawyer' && <p className="text-sm text-muted-foreground">{isApproved ? 'Your professional profile is now active.' : 'Your profile was rejected.'}</p>
                                 )}
                             </div>
-                            <Badge variant="outline" className="text-green-600 border-green-500">Approved</Badge>
+                            <Badge variant={isApproved ? "default" : "destructive"} className={cn(isApproved ? "bg-primary text-primary-foreground" : "")}>
+                                {isApproved ? 'Approved' : 'Rejected'}
+                            </Badge>
                         </div>
                         <p className="text-xs text-muted-foreground mt-2">
-                            Approved {formatDistanceToNow(new Date(request.updatedAt.seconds * 1000), { addSuffix: true })}
+                            {isApproved ? 'Approved' : 'Rejected'} {formatDistanceToNow(new Date(request.updatedAt.seconds * 1000), { addSuffix: true })}
                         </p>
                     </div>
                 )

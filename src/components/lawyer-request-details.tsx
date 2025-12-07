@@ -13,17 +13,30 @@ import {
 import { Button } from './ui/button';
 import { Textarea } from './ui/textarea';
 import { useToast } from '@/hooks/use-toast';
-import { approveRequest, addLawyerComment } from '@/app/admin-actions';
+import { approveRequest, addLawyerComment, rejectRequest } from '@/app/admin-actions';
 import { type WithId } from '@/firebase/firestore/use-collection';
 import { ScrollArea } from './ui/scroll-area';
-import { Loader2, User } from 'lucide-react';
+import { Loader2, User, Ban } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { documentTemplates } from '@/lib/data';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
+import { Label } from './ui/label';
+import { Input } from './ui/input';
 
 type VerificationRequest = {
   userId: string;
   documentType: string;
-  status: 'pending' | 'reviewed' | 'approved';
+  status: 'pending' | 'reviewed' | 'approved' | 'rejected';
   createdAt: { seconds: number; nanoseconds: number };
   updatedAt?: { seconds: number; nanoseconds: number };
   draftContent: string;
@@ -48,6 +61,7 @@ function getDocumentLabel(docValue: string) {
 export function LawyerRequestDetails({ request, username, isOpen, onOpenChange }: LawyerRequestDetailsProps) {
   const { toast } = useToast();
   const [comment, setComment] = useState('');
+  const [rejectionReason, setRejectionReason] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSendAdvice = async () => {
@@ -96,14 +110,34 @@ export function LawyerRequestDetails({ request, username, isOpen, onOpenChange }
     }
   };
 
+  const handleReject = async () => {
+    setIsSubmitting(true);
+    try {
+        const result = await rejectRequest(request.id, rejectionReason);
+        if (result.success) {
+            toast({ title: 'Request Rejected', description: "The user has been notified." });
+            setRejectionReason('');
+            onOpenChange(false);
+        } else {
+            throw new Error(result.error);
+        }
+    } catch (error: any) {
+        toast({ variant: 'destructive', title: 'Error', description: error.message });
+    } finally {
+        setIsSubmitting(false);
+    }
+  };
+
   const handleClose = () => {
     if (isSubmitting) return;
     setComment('');
+    setRejectionReason('');
     onOpenChange(false);
   }
   
   const isLawyerRequest = request.type === 'lawyer';
   const documentLabel = getDocumentLabel(request.documentType);
+  const isActionable = request.status === 'pending' || request.status === 'reviewed';
 
 
   return (
@@ -182,29 +216,61 @@ export function LawyerRequestDetails({ request, username, isOpen, onOpenChange }
         <DialogFooter className="p-6 border-t border-border bg-background/95">
            <div className="w-full flex items-start gap-4">
                 <Textarea
-                    placeholder="Add a new comment or suggest changes here..."
+                    placeholder={isLawyerRequest ? "Only use this field to provide comments on a document draft..." : "Add a new comment or suggest changes here..."}
                     value={comment}
                     onChange={(e) => setComment(e.target.value)}
                     rows={2}
                     className="flex-1 bg-muted/50"
-                    disabled={isSubmitting || request.status === 'approved'}
+                    disabled={isSubmitting || !isActionable || isLawyerRequest}
                 />
                 <div className="flex flex-col gap-2">
                      <Button
                         onClick={handleSendAdvice}
-                        disabled={isSubmitting || !comment.trim() || request.status === 'approved'}
+                        disabled={isSubmitting || !comment.trim() || !isActionable || isLawyerRequest}
                         className="w-[120px]"
                     >
                         {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Send Advice'}
                     </Button>
-                    <Button 
-                        variant="outline"
-                        onClick={handleApprove} 
-                        disabled={isSubmitting || request.status === 'approved'} 
-                        className="w-[120px]"
-                    >
-                        {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : (request.status === 'approved' ? 'Approved' : 'Approve')}
-                    </Button>
+                    <div className="flex gap-2">
+                      {isLawyerRequest && (
+                          <AlertDialog>
+                              <AlertDialogTrigger asChild>
+                                  <Button variant="destructive" className="w-[120px]" disabled={isSubmitting || !isActionable}>
+                                      <Ban className="mr-2" /> Reject
+                                  </Button>
+                              </AlertDialogTrigger>
+                              <AlertDialogContent>
+                                  <AlertDialogHeader>
+                                      <AlertDialogTitle>Are you sure you want to reject this profile?</AlertDialogTitle>
+                                      <AlertDialogDescription>
+                                          This action cannot be undone. The user will be notified that their profile was rejected. You can provide an optional reason.
+                                      </AlertDialogDescription>
+                                  </AlertDialogHeader>
+                                  <div className="py-2 space-y-2">
+                                      <Label htmlFor="rejection-reason">Reason for Rejection (Optional)</Label>
+                                      <Input 
+                                        id="rejection-reason" 
+                                        value={rejectionReason}
+                                        onChange={(e) => setRejectionReason(e.target.value)}
+                                        placeholder="e.g., Invalid Bar Council ID"
+                                      />
+                                  </div>
+                                  <AlertDialogFooter>
+                                      <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                      <AlertDialogAction onClick={handleReject}>Confirm Rejection</AlertDialogAction>
+                                  </AlertDialogFooter>
+                              </AlertDialogContent>
+                          </AlertDialog>
+                      )}
+                      <Button 
+                          variant={isLawyerRequest ? "default" : "outline"}
+                          onClick={handleApprove} 
+                          disabled={isSubmitting || !isActionable} 
+                          className="w-[120px]"
+                      >
+                          {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : (request.status === 'approved' ? 'Approved' : 'Approve')}
+                      </Button>
+                    </div>
                 </div>
            </div>
         </DialogFooter>

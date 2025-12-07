@@ -28,7 +28,7 @@ import { cn } from "@/lib/utils";
 type VerificationRequest = {
   userId: string;
   documentType: string;
-  status: "pending" | "reviewed" | "approved";
+  status: "pending" | "reviewed" | "approved" | 'rejected';
   createdAt: { seconds: number; nanoseconds: number; };
   updatedAt: { seconds: number; nanoseconds: number; };
   draftContent: string;
@@ -42,6 +42,7 @@ const statusConfig = {
   pending: { label: 'Pending', className: 'bg-secondary text-secondary-foreground hover:bg-secondary/80' },
   reviewed: { label: 'Reviewed', className: 'bg-muted text-muted-foreground border-border' },
   approved: { label: 'Approved', className: 'bg-primary text-primary-foreground hover:bg-primary/90' },
+  rejected: { label: 'Rejected', className: 'bg-destructive text-destructive-foreground' },
 };
 
 
@@ -105,8 +106,14 @@ function RequestCard({ request, onResubmit }: { request: WithId<VerificationRequ
       </div>
 
       {request.lawyerNotification && (
-        <div className="border-l-4 border-accent p-3 bg-accent/10 rounded-r-md">
-          <p className="font-semibold text-sm text-accent-foreground/90">
+        <div className={cn(
+          "border-l-4 p-3 rounded-r-md",
+          request.status === 'rejected' ? "border-destructive bg-destructive/10" : "border-accent bg-accent/10"
+        )}>
+          <p className={cn(
+            "font-semibold text-sm",
+             request.status === 'rejected' ? "text-destructive-foreground/90" : "text-accent-foreground/90"
+          )}>
             {request.lawyerNotification}
           </p>
         </div>
@@ -176,7 +183,7 @@ export default function MyRequestsPage() {
 
   const activeRequests = useMemo(() => {
     if (!allRequests) return [];
-    return allRequests?.filter(r => r.status === 'pending' || r.status === 'reviewed') ?? [];
+    return allRequests?.filter(r => r.status === 'pending' || r.status === 'reviewed' || r.status === 'rejected') ?? [];
   }, [allRequests]);
   
   const approvedRequests = useMemo(() => {

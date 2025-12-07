@@ -152,6 +152,32 @@ export const approveRequest = withAdmin(async (
 });
 
 
+export const rejectRequest = withAdmin(async (
+  db,
+  requestId: string,
+  reason: string
+): Promise<{ success: boolean; error?: string }> => {
+  if (!requestId) {
+    return { success: false, error: 'Request ID is required.' };
+  }
+  
+  const finalReason = reason.trim() || 'Your profile verification has been rejected due to incomplete or invalid information.';
+
+  try {
+    const requestRef = db.collection('verificationRequests').doc(requestId);
+    await requestRef.update({
+      status: 'rejected',
+      updatedAt: FieldValue.serverTimestamp(),
+      lawyerNotification: finalReason,
+    });
+    return { success: true };
+  } catch (error: any) {
+    console.error('Error rejecting request:', error);
+    return { success: false, error: error.message || 'Failed to reject request.' };
+  }
+});
+
+
 export const getUserRequests = withAdmin(async(db, userId: string): Promise<any[]> => {
   if (!userId) return [];
   try {

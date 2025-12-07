@@ -22,7 +22,7 @@ import { getUserProfiles } from '../admin-actions';
 type VerificationRequest = {
   userId: string;
   documentType: string;
-  status: 'pending' | 'reviewed' | 'approved';
+  status: 'pending' | 'reviewed' | 'approved' | 'rejected';
   createdAt: { seconds: number; nanoseconds: number };
   draftContent: string;
   formInputs: Record<string, any>;
@@ -34,6 +34,7 @@ const statusConfig = {
   pending: { label: 'Pending', className: 'bg-secondary text-secondary-foreground hover:bg-secondary/80' },
   reviewed: { label: 'Reviewed', className: 'bg-muted text-muted-foreground border-border' },
   approved: { label: 'Approved', className: 'bg-primary text-primary-foreground hover:bg-primary/90' },
+  rejected: { label: 'Rejected', className: 'bg-destructive text-destructive-foreground' },
 };
 
 function getDocumentLabel(docValue: string) {
@@ -122,9 +123,9 @@ export default function LawyerPanelPage() {
       });
   }, [allRequestsData]);
 
-  const approvedRequests = useMemo(() => {
+  const completedRequests = useMemo(() => {
     if (!allRequestsData) return [];
-    return allRequestsData.filter(r => r.status === 'approved');
+    return allRequestsData.filter(r => r.status === 'approved' || r.status === 'rejected');
   }, [allRequestsData]);
 
   
@@ -192,8 +193,8 @@ export default function LawyerPanelPage() {
                     </div>
                  )}
 
-                {!isLoading && approvedRequests && approvedRequests.length > 0 && (
-                    <PreviouslyApprovedRequests requests={approvedRequests} profiles={userProfiles} />
+                {!isLoading && completedRequests && completedRequests.length > 0 && (
+                    <PreviouslyApprovedRequests requests={completedRequests} profiles={userProfiles} />
                 )}
 
             </CardContent>
