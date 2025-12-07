@@ -214,28 +214,32 @@ export function LawyerRequestDetails({ request, username, isOpen, onOpenChange }
         </div>
 
         <DialogFooter className="p-6 border-t border-border bg-background/95">
-           <div className="w-full flex items-start gap-4">
-                <Textarea
-                    placeholder={isLawyerRequest ? "Only use this field to provide comments on a document draft..." : "Add a new comment or suggest changes here..."}
-                    value={comment}
-                    onChange={(e) => setComment(e.target.value)}
-                    rows={2}
-                    className="flex-1 bg-muted/50"
-                    disabled={isSubmitting || !isActionable || isLawyerRequest}
-                />
+           <div className="w-full flex justify-end items-start gap-4">
+                {!isLawyerRequest && (
+                    <Textarea
+                        placeholder="Add a new comment or suggest changes here..."
+                        value={comment}
+                        onChange={(e) => setComment(e.target.value)}
+                        rows={2}
+                        className="flex-1 bg-muted/50"
+                        disabled={isSubmitting || !isActionable}
+                    />
+                )}
                 <div className="flex flex-col gap-2">
-                     <Button
-                        onClick={handleSendAdvice}
-                        disabled={isSubmitting || !comment.trim() || !isActionable || isLawyerRequest}
-                        className="w-[120px]"
-                    >
-                        {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Send Advice'}
-                    </Button>
+                     {!isLawyerRequest && (
+                        <Button
+                            onClick={handleSendAdvice}
+                            disabled={isSubmitting || !comment.trim() || !isActionable}
+                            className="w-[120px]"
+                        >
+                            {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Send Advice'}
+                        </Button>
+                     )}
                     <div className="flex gap-2">
-                      {isLawyerRequest && (
+                      {isActionable && isLawyerRequest && (
                           <AlertDialog>
                               <AlertDialogTrigger asChild>
-                                  <Button variant="destructive" className="w-[120px]" disabled={isSubmitting || !isActionable}>
+                                  <Button variant="destructive" className="w-[120px]" disabled={isSubmitting}>
                                       <Ban className="mr-2" /> Reject
                                   </Button>
                               </AlertDialogTrigger>
@@ -262,14 +266,16 @@ export function LawyerRequestDetails({ request, username, isOpen, onOpenChange }
                               </AlertDialogContent>
                           </AlertDialog>
                       )}
-                      <Button 
-                          variant={isLawyerRequest ? "default" : "outline"}
-                          onClick={handleApprove} 
-                          disabled={isSubmitting || !isActionable} 
-                          className="w-[120px]"
-                      >
-                          {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : (request.status === 'approved' ? 'Approved' : 'Approve')}
-                      </Button>
+                      {isActionable && (
+                        <Button 
+                            variant={isLawyerRequest ? "default" : "outline"}
+                            onClick={handleApprove} 
+                            disabled={isSubmitting} 
+                            className="w-[120px]"
+                        >
+                            {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Approve'}
+                        </Button>
+                      )}
                     </div>
                 </div>
            </div>
