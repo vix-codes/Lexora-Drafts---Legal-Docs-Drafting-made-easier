@@ -8,6 +8,7 @@ import { Logo } from './icons';
 import { Button } from './ui/button';
 import { useAuth } from './auth-provider';
 import Link from 'next/link';
+import { ThemeToggle } from './theme-toggle';
 
 export default function Header() {
   const { user } = useAuth();
@@ -39,13 +40,14 @@ export default function Header() {
         {user ? (
             <>
                 <span className="text-sm text-muted-foreground">Hi, {getUsername()}</span>
+                <ThemeToggle />
                 <Button variant="ghost" size="icon" onClick={handleSignOut} className="text-foreground hover:bg-muted hover:text-foreground">
                     <LogOut className="h-5 w-5" />
                     <span className="sr-only">Sign Out</span>
                 </Button>
             </>
         ) : (
-           null
+           <ThemeToggle />
         )}
       </div>
     </header>

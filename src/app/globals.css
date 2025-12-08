@@ -4,25 +4,25 @@
 
 @layer base {
   :root {
-    --background: 215 48% 12%; /* #0F1A2B */
-    --foreground: 40 33% 97%; /* #F9F7F2 */
-    --card: 214 46% 14%; /* #132033 */
-    --card-foreground: 40 33% 97%; /* #F9F7F2 */
-    --popover: 214 46% 14%;
-    --popover-foreground: 40 33% 97%;
-    --primary: 42 28% 60%; /* #B7A27A */
-    --primary-foreground: 215 48% 12%; /* #0F1A2B */
-    --secondary: 210 14% 50%; /* #708090 - For secondary button background */
-    --secondary-foreground: 40 33% 97%; /* #F9F7F2 - For secondary button text */
-    --muted: 210 14% 50%; /* #708090 */
-    --muted-foreground: 210 9% 73%; /* #A7B0BC */
-    --accent: 42 28% 60%; /* #B7A27A */
+    --background: 0 0% 100%;
+    --foreground: 215 48% 12%;
+    --card: 0 0% 100%;
+    --card-foreground: 215 48% 12%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 215 48% 12%;
+    --primary: 42 28% 60%;
+    --primary-foreground: 215 48% 12%;
+    --secondary: 210 14% 95%;
+    --secondary-foreground: 215 48% 12%;
+    --muted: 210 14% 90%;
+    --muted-foreground: 210 9% 45%;
+    --accent: 210 14% 95%;
     --accent-foreground: 215 48% 12%;
-    --destructive: 0 40% 40%; /* Soft Muted Red */
-    --destructive-foreground: 40 33% 97%;
-    --border: 214 34% 20%; /* #213046 */
-    --input: 214 34% 20%; /* #213046 - For input border */
-    --ring: 42 28% 60%; /* #B7A27A */
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+    --ring: 215 48% 12%;
     --radius: 0.5rem;
   }
  
