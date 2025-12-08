@@ -4,48 +4,48 @@
 
 @layer base {
   :root {
-    --background: 213 46% 11%;
-    --foreground: 40 33% 97%;
-    --card: 213 46% 14%;
-    --card-foreground: 40 33% 97%;
-    --popover: 213 46% 14%;
+    --background: 215 48% 12%; /* #0F1A2B */
+    --foreground: 40 33% 97%; /* #F9F7F2 */
+    --card: 214 46% 14%; /* #132033 */
+    --card-foreground: 40 33% 97%; /* #F9F7F2 */
+    --popover: 214 46% 14%;
     --popover-foreground: 40 33% 97%;
-    --primary: 42 28% 60%;
-    --primary-foreground: 213 46% 11%;
-    --secondary: 42 28% 60%;
-    --secondary-foreground: 213 46% 11%;
-    --muted: 210 14% 50%;
-    --muted-foreground: 210 9% 73%;
-    --accent: 42 28% 60%;
-    --accent-foreground: 213 46% 11%;
-    --destructive: 0 63% 31%;
+    --primary: 42 28% 60%; /* #B7A27A */
+    --primary-foreground: 215 48% 12%; /* #0F1A2B */
+    --secondary: 210 14% 50%; /* #708090 - For secondary button background */
+    --secondary-foreground: 40 33% 97%; /* #F9F7F2 - For secondary button text */
+    --muted: 210 14% 50%; /* #708090 */
+    --muted-foreground: 210 9% 73%; /* #A7B0BC */
+    --accent: 42 28% 60%; /* #B7A27A */
+    --accent-foreground: 215 48% 12%;
+    --destructive: 0 40% 40%; /* Soft Muted Red */
     --destructive-foreground: 40 33% 97%;
-    --border: 214 34% 20%;
-    --input: 214 34% 20%;
-    --ring: 42 28% 60%;
+    --border: 214 34% 20%; /* #213046 */
+    --input: 214 34% 20%; /* #213046 - For input border */
+    --ring: 42 28% 60%; /* #B7A27A */
     --radius: 0.5rem;
   }
  
   .dark {
-    --background: 213 46% 11%;
-    --foreground: 40 33% 97%;
-    --card: 213 46% 14%;
-    --card-foreground: 40 33% 97%;
-    --popover: 213 46% 14%;
+    --background: 215 48% 12%; /* #0F1A2B */
+    --foreground: 40 33% 97%; /* #F9F7F2 */
+    --card: 214 46% 14%; /* #132033 */
+    --card-foreground: 40 33% 97%; /* #F9F7F2 */
+    --popover: 214 46% 14%;
     --popover-foreground: 40 33% 97%;
-    --primary: 42 28% 60%;
-    --primary-foreground: 213 46% 11%;
-    --secondary: 42 28% 60%;
-    --secondary-foreground: 213 46% 11%;
-    --muted: 210 14% 50%;
-    --muted-foreground: 210 9% 73%;
-    --accent: 42 28% 60%;
-    --accent-foreground: 213 46% 11%;
-    --destructive: 0 63% 31%;
+    --primary: 42 28% 60%; /* #B7A27A */
+    --primary-foreground: 215 48% 12%; /* #0F1A2B */
+    --secondary: 210 14% 50%; /* #708090 - For secondary button background */
+    --secondary-foreground: 40 33% 97%; /* #F9F7F2 - For secondary button text */
+    --muted: 210 14% 50%; /* #708090 */
+    --muted-foreground: 210 9% 73%; /* #A7B0BC */
+    --accent: 42 28% 60%; /* #B7A27A */
+    --accent-foreground: 215 48% 12%;
+    --destructive: 0 40% 40%; /* Soft Muted Red */
     --destructive-foreground: 40 33% 97%;
-    --border: 214 34% 20%;
-    --input: 214 34% 20%;
-    --ring: 42 28% 60%;
+    --border: 214 34% 20%; /* #213046 */
+    --input: 214 34% 20%; /* #213046 - For input border */
+    --ring: 42 28% 60%; /* #B7A27A */
   }
 }
 
