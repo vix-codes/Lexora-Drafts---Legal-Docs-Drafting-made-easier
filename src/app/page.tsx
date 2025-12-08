@@ -34,29 +34,33 @@ const features = [
 ];
 
 
+function HeroBanner() {
+  return (
+    <section className="text-center py-20 lg:py-32 px-4 bg-background">
+      <h1 className="font-headline text-4xl md:text-6xl font-bold tracking-tight text-foreground">
+        Legal Intelligence, <span className="text-secondary">Simplified.</span>
+      </h1>
+      <p className="mt-4 max-w-2xl mx-auto text-lg text-muted-foreground">
+        Lexintel makes Indian law easier to access. From quick legal explanations to ready-to-use drafts and lawyer discovery, everything is available in one platform.
+      </p>
+    </section>
+  );
+}
+
 function PublicLandingPage() {
   const [isAboutExpanded, setIsAboutExpanded] = useState(false);
 
   return (
     <>
-      {/* Hero Section */}
-      <section className="text-center py-20 lg:py-32 px-4 bg-background">
-        <h1 className="font-headline text-4xl md:text-6xl font-bold tracking-tight text-foreground">
-          Legal Intelligence, <span className="text-secondary">Simplified.</span>
-        </h1>
-        <p className="mt-4 max-w-2xl mx-auto text-lg text-muted-foreground">
-          Lexintel makes Indian law easier to access. From quick legal explanations to ready-to-use drafts and lawyer discovery, everything is available in one platform.
-        </p>
-        <div className="mt-8 flex justify-center gap-4">
+      <div className="text-center">
           <Button asChild size="lg">
             <Link href="/signup">Create Account</Link>
           </Button>
-          <Button asChild variant="outline" size="lg">
+          <Button asChild variant="outline" size="lg" className="ml-4">
             <Link href="/login">Log In</Link>
           </Button>
-        </div>
-      </section>
-
+      </div>
+      
       {/* Features Section */}
       <section id="features" className="py-20 lg:py-24 px-4 bg-muted/40">
         <div className="max-w-6xl mx-auto">
@@ -130,6 +134,7 @@ export default function Page() {
     <div className="flex flex-col min-h-screen bg-background text-foreground">
       <Header />
       <main className="flex-1">
+        <HeroBanner />
         {user ? <HomeContent /> : <PublicLandingPage />}
       </main>
       <Footer />
