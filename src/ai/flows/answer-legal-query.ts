@@ -9,7 +9,7 @@
  * @exports answerLegalQuery - An async function that takes a user's query and returns a structured legal answer.
  */
 
-import { ai } from '@/ai/genkit';
+import { ai, chooseModel } from '@/ai/genkit';
 import { z } from 'zod';
 
 const LegalQueryInputSchema = z.object({
@@ -77,14 +77,34 @@ const answerLegalQueryFlow = ai.defineFlow(
     outputSchema: LegalQueryOutputSchema,
   },
   async ({ query, history }) => {
-    const { output } = await legalQueryPrompt({
-      query,
-      history: history ?? [],
-    });
+
+    // Pick the best available model
+    const selectedModel = await chooseModel();
+
+    if (selectedModel === "QUOTA_OVER") {
+      return {
+        answer:
+          "Daily AI quota is exhausted. Try again after the usage window resets.",
+      };
+    }
+
+    // Call prompt with selected model
+    const { output } = await legalQueryPrompt(
+      {
+        query,
+        history: history ?? [],
+      },
+      {
+        model: selectedModel, // override model dynamically
+      }
+    );
+
     return output!;
   }
 );
 
-export async function answerLegalQuery(input: LegalQueryInput): Promise<LegalQueryOutput> {
+export async function answerLegalQuery(
+  input: LegalQueryInput
+): Promise<LegalQueryOutput> {
   return answerLegalQueryFlow(input);
 }
