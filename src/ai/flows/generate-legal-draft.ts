@@ -1,7 +1,8 @@
 'use server';
 
 import { ai, chooseModel } from '@/ai/genkit';
-import { z } from 'genkit';
+import { z } from 'zod';
+import { gemini } from "@genkit-ai/google-genai";
 
 /* ----------------------------------------------
    ZOD SCHEMAS
@@ -10,15 +11,17 @@ const GenerateLegalDraftInputSchema = z.object({
   documentType: z.string(),
   formData: z.record(z.any()),
 });
+
 export type GenerateLegalDraftInput = z.infer<typeof GenerateLegalDraftInputSchema>;
 
 const GenerateLegalDraftOutputSchema = z.object({
   legalDraft: z.string(),
 });
+
 export type GenerateLegalDraftOutput = z.infer<typeof GenerateLegalDraftOutputSchema>;
 
 /* ----------------------------------------------
-   PROMPT (FIXED FORMATTING VERSION)
+   PROMPT (Legal Draft Generator)
 ---------------------------------------------- */
 const generateLegalDraftPrompt = ai.definePrompt({
   name: 'generateLegalDraftPrompt',
@@ -45,9 +48,7 @@ Formatting Rules:
    SIGNATURES
 4. Keep text plain. NO markdown symbols (*, **, ##).
 5. After each major clause, add a brief explanation in parentheses.
-6. The output must look like a real legal draft, not a single paragraph.
-
-Produce clean spacing and readable legal formatting.
+6. The output must look like a real legal draft with clean spacing.
 `,
   config: {
     safetySettings: [
@@ -58,87 +59,80 @@ Produce clean spacing and readable legal formatting.
 });
 
 /* ----------------------------------------------
-   FLOW
+   FLOW IMPLEMENTATION WITH MODEL SWITCHING
 ---------------------------------------------- */
-const generateLegalDraftFlow = ai.defineFlow(
+const FALLBACK_DRAFT = `
+AI service unavailable. This fallback draft was automatically generated.
+Please review manually or consult a legal expert.
+`;
+
+export const generateLegalDraftFlow = ai.defineFlow(
   {
     name: 'generateLegalDraftFlow',
     inputSchema: GenerateLegalDraftInputSchema,
     outputSchema: GenerateLegalDraftOutputSchema,
   },
-
   async ({ documentType, formData }) => {
-    // Remove backend-only values
-    const cleaned = { ...formData };
-    delete cleaned.userId;
-    delete cleaned.documentType;
+    const selectedModel = await chooseModel();
 
-    const formDataString = Object.entries(cleaned)
-      .map(([key, value]) =>
-        `${key.replace(/([A-Z])/g, ' $1').replace(/^./, x => x.toUpperCase())}: ${value}`
-      )
-      .join('\n');
+    // Quota fully exhausted
+    if (selectedModel === "QUOTA_OVER") {
+      return { legalDraft: FALLBACK_DRAFT };
+    }
 
+    const formDataString = JSON.stringify(formData, null, 2);
+
+    // Try primary model
     try {
-      /* 1. Auto-select model */
-      const selectedModel = await chooseModel();
+      console.log("Generating draft using:", selectedModel);
 
-      if (selectedModel === 'QUOTA_OVER') {
-        return {
-          legalDraft: `
-DOCUMENT TYPE: ${documentType.toUpperCase()}
-
---------------------------------------
-
-DETAILS:
-${formDataString}
-
---------------------------------------
-
-NOTICE:
-Daily AI quota is exhausted. Showing a basic fallback draft.
-Try again tomorrow.
-        `.trim(),
-        };
-      }
-
-      /* 2. Run the model */
       const { output } = await generateLegalDraftPrompt(
         {
           documentType,
           formDataString,
         },
-        { model: selectedModel }
+        {
+          model: selectedModel,
+        }
       );
 
-      return output!;
+      if (!output?.legalDraft) {
+        throw new Error("Empty response from primary model");
+      }
 
-    } catch (error) {
-      console.error('AI draft generation failed:', error);
-
-      /* 3. Fallback */
-      return {
-        legalDraft: `
-DOCUMENT TYPE: ${documentType.toUpperCase()}
-
---------------------------------------
-
-DETAILS:
-${formDataString}
-
---------------------------------------
-
-DISCLAIMER:
-AI service unavailable. This fallback draft was automatically generated.
-Please review manually or consult a legal expert.
-        `.trim(),
-      };
+      return output;
+    } catch (err) {
+      console.error("Primary model failed:", err);
     }
+
+    // Try backup model if first was not lite
+    if (selectedModel !== "googleai/gemini-2.5-flash-lite") {
+      try {
+        console.log("Trying backup model: gemini-2.5-flash-lite");
+
+        const { output } = await generateLegalDraftPrompt(
+          {
+            documentType,
+            formDataString,
+          },
+          {
+            model: "googleai/gemini-2.5-flash-lite",
+          }
+        );
+
+        if (output?.legalDraft) return output;
+      } catch (err2) {
+        console.error("Backup model also failed:", err2);
+      }
+    }
+
+    // Final fallback
+    return { legalDraft: FALLBACK_DRAFT };
   }
 );
 
 /* ----------------------------------------------
-   EXPORT
+   EXPORT FUNCTION
 ---------------------------------------------- */
 export async function generateLegalDraft(
   input: GenerateLegalDraftInput

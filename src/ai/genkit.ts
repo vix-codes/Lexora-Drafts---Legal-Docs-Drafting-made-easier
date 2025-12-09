@@ -1,31 +1,34 @@
-import { genkit } from 'genkit';
-import { googleAI } from '@genkit-ai/google-genai';
+import { genkit } from "genkit";
+import { googleAI, gemini } from "@genkit-ai/google-genai";
+
+export const ai = genkit({
+  plugins: [
+    googleAI({
+      apiKey: process.env.GEMINI_API_KEY,
+    }),
+  ],
+  // No default model because we switch models manually
+});
 
 /**
- * Try multiple models in priority order.
- * Returns the first one that is available.
+ * Returns best available model.
+ * flash → flash-lite → fallback.
  */
-export async function chooseModel(): Promise<string> {
+export async function chooseModel() {
   const models = [
-    'googleai/gemini-2.5-flash',
-    'googleai/gemini-2.5-flash-lite',
+    "googleai/gemini-2.5-flash",
+    "googleai/gemini-2.5-flash-lite",
   ];
 
-  for (const m of models) {
+  for (const model of models) {
     try {
-      // cheap dry-run check (model metadata fetch)
-      await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${m}?key=${process.env.GEMINI_API_KEY}`);
-      return m;
-    } catch (e) {
+      // Simple quota test
+      await gemini(model).generateContent("ping");
+      return model;
+    } catch (_) {
       continue;
     }
   }
 
-  return 'QUOTA_OVER';
+  return "QUOTA_OVER";
 }
-
-/** Main AI instance for all flows */
-export const ai = genkit({
-  plugins: [googleAI({ apiKey: process.env.GEMINI_API_KEY })],
-  model: 'googleai/gemini-2.5-flash', // default
-});
