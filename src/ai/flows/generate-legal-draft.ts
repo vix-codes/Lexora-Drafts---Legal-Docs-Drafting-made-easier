@@ -2,7 +2,6 @@
 
 import { ai, chooseModel } from '@/ai/genkit';
 import { z } from 'zod';
-import { gemini } from "@genkit-ai/google-genai";
 
 /* ----------------------------------------------
    ZOD SCHEMAS
